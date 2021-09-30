@@ -74,3 +74,69 @@ def getClosedShapes(im_filled,debug=False):
         cv2.imwrite("contoured.png", im_empty[:,:,0])
 
     return im_empty[:,:,0] , filtered_contoures
+
+
+#handling opened contours
+
+# find center of gravity from the moments:
+def scale_contours(contours, scale):
+    """Shrinks or grows an array of contours by the given factor (float). 
+    Returns the resized array of contours"""
+    for idx,contour in enumerate(contours):
+        moments = cv2.moments(contour)
+        midX = int(round(moments["m10"] / moments["m00"]))
+        midY = int(round(moments["m01"] / moments["m00"]))
+        mid = np.array([midX, midY])
+        contours[idx] = contour - mid
+        contours[idx] = (contours[idx] * scale).astype(np.int32)
+        contours[idx] = contours[idx] + mid
+    return contours
+
+def isOverlapped(c,imgContours):
+    cXmin,cYmin,cXmax,cYmax = cv2.boundingRect(c)
+    cArea = cXmax * cYmax
+    cXmax += cXmin
+    cYmax += cYmin
+    for imgContour in imgContours:
+        Xmin,Ymin,Xmax,Ymax = cv2.boundingRect(imgContour)
+        Xmax += Xmin
+        Ymax += Ymin
+        if(cXmin > Xmin and cXmax < Xmax and cYmin >= Ymin and cYmax <= Ymax):
+            return True
+    return False
+def getOpenedContours(img,closed_contours=[],debug = False):
+    closed_contours = scale_contours(closed_contours,1.2)
+    cv2.drawContours(img,closed_contours,-1, 255,-1 )
+    _,contours, hierarchy = cv2.findContours(255 - img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    img_parent = np.ones(img.shape, np.uint8) * 255
+    parentContours =[]
+    for i,cnt in enumerate(contours):
+        x,y,w,h = cv2.boundingRect(cnt)
+        if not isOverlapped(cnt,contours) and hierarchy[0,i,3]==-1 and h>10 and w>15 and w/h>1.5 and w/h<4:
+            parentContours.append(cnt)
+
+    cv2.drawContours(img_parent,parentContours,-1, 0, -1 )
+    img_parent = 255 - img_parent 
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(3,3))
+    dilated = cv2.dilate(img_parent,kernel,iterations=3)
+    edges = cv2.Canny(dilated, 0, 84, apertureSize=3)
+    #get child contours and draw hull
+    img_inner_contour = np.ones(img.shape, np.uint8) * 255
+    _,contours, hierarchy = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    contours = [cnt for i,cnt in enumerate(contours) if isOverlapped(cnt,contours) ]
+    cv2.drawContours(img_inner_contour,contours,-1, 0, 1 )
+    eroded = cv2.erode(img_inner_contour,kernel,iterations=3)
+    _,contours, hierarchy = cv2.findContours(255-eroded, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    opened_contours = np.ones(img.shape, np.uint8) * 255
+
+    cv2.drawContours(opened_contours,contours,-1, 0, 1 )
+    if(debug):
+        cv2.imwrite("contoured_img.png",img)
+        cv2.imwrite("img_parent.png",img_parent)
+        cv2.imwrite("dilated.png",dilated)
+        cv2.imwrite("edges.png",edges)
+        cv2.imwrite("img_inner_contour.png",img_inner_contour)
+        cv2.imwrite("eroded.png",eroded)
+        cv2.imwrite("opened_contours.png",opened_contours)
+    return opened_contours,contours
+

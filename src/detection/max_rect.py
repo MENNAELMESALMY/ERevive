@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+from numpy.__config__ import show
 def get_max_rect(mask):
     topleft_corner = []
     bottomright_corner = [] 
@@ -9,6 +10,7 @@ def get_max_rect(mask):
     for i in range(0,mask.shape[1]):
         line = mask[:,i]
         foreground_indecies = np.where(line == 255)
+        
         if len(foreground_indecies[0]) == 0:    
             continue
         top_p1 = foreground_indecies[0][0]
@@ -33,8 +35,8 @@ def get_max_rect(mask):
     max_area_index = np.argmax(np.array(rectangle_areas))
     top_left = topleft_corner[max_area_index]
     bottom_right = bottomright_corner[max_area_index]
-    cv2.rectangle(mask,(top_left[0],top_left[1]),(bottom_right[0],bottom_right[1]),(0,0,0),-1)
-
+    cv2.rectangle(mask,(top_left[0],top_left[1]),(bottom_right[0],bottom_right[1]),(120,8,100),-1)
+    
     return rectangle_areas[max_area_index],mask
 
 def area(contour,A, B, C):

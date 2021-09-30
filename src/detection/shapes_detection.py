@@ -98,7 +98,6 @@ def get_features(img):
 def detect_shapes(shapes_no):
     shapes = []
     for i in range(shapes_no):
-
         path = './output/shape'+str(i)+'.png'
         img = cv.imread(path)
         gray_img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)

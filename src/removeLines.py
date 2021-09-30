@@ -23,7 +23,7 @@ def FloodFromCorners(im_th,debug=False):
 ######################cv contours#########
 def getClosedShapes(im_filled,debug=False):
     hImg, wImg = im_filled.shape
-    _,contours_cv, hierarchy = cv2.findContours(im_filled, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    contours_cv, hierarchy = cv2.findContours(im_filled, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     hierarchy = hierarchy[0]
     #[Next, Previous, First_Child, Parent]
     im_empty = np.ones((hImg, wImg,3), np.uint8) * 255
@@ -107,7 +107,7 @@ def isOverlapped(c,imgContours):
 def getOpenedContours(img,closed_contours=[],debug = False):
     closed_contours = scale_contours(closed_contours,1.2)
     cv2.drawContours(img,closed_contours,-1, 255,-1 )
-    _,contours, hierarchy = cv2.findContours(255 - img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours, hierarchy = cv2.findContours(255 - img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     img_parent = np.ones(img.shape, np.uint8) * 255
     parentContours =[]
     for i,cnt in enumerate(contours):
@@ -122,11 +122,11 @@ def getOpenedContours(img,closed_contours=[],debug = False):
     edges = cv2.Canny(dilated, 0, 84, apertureSize=3)
     #get child contours and draw hull
     img_inner_contour = np.ones(img.shape, np.uint8) * 255
-    _,contours, hierarchy = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    contours, hierarchy = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     contours = [cnt for i,cnt in enumerate(contours) if isOverlapped(cnt,contours) ]
     cv2.drawContours(img_inner_contour,contours,-1, 0, 1 )
     eroded = cv2.erode(img_inner_contour,kernel,iterations=3)
-    _,contours, hierarchy = cv2.findContours(255-eroded, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours, hierarchy = cv2.findContours(255-eroded, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     opened_contours = np.ones(img.shape, np.uint8) * 255
 
     cv2.drawContours(opened_contours,contours,-1, 0, 1 )

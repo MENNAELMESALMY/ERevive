@@ -86,7 +86,7 @@ def get_features(img):
     img = dilation(img,np.ones((5,5)))
     features = convex_hull(img)
     shape=''
-    if features[2] >0.3 and features[2] <0.75 and features[3] <0.46:
+    if features[2] >0.3 and features[2] <0.75 and features[3] <0.47:
         shape='oval'
     elif features[0]>0.7 and features[1] >0.5 and features[2]>0.6 and features[3]<0.52:
         shape='rectangle'

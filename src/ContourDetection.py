@@ -10,7 +10,7 @@ def getContours(binary_img):
     closing = cv2.morphologyEx(binary_img, cv2.MORPH_CLOSE, kernel)
 
     #get contours
-    contours, hierarchy = cv2.findContours(closing, cv2.RETR_TREE , cv2.CHAIN_APPROX_SIMPLE)
+    _,contours, hierarchy = cv2.findContours(closing, cv2.RETR_TREE , cv2.CHAIN_APPROX_SIMPLE)
     return contours, hierarchy ,closing
 
 

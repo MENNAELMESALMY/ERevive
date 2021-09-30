@@ -23,7 +23,7 @@ def FloodFromCorners(im_th,debug=False):
 ######################cv contours#########
 def getClosedShapes(im_filled,debug=False):
     hImg, wImg = im_filled.shape
-    contours_cv, hierarchy = cv2.findContours(im_filled, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    _,contours_cv, hierarchy = cv2.findContours(im_filled, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     hierarchy = hierarchy[0]
     #[Next, Previous, First_Child, Parent]
     im_empty = np.ones((hImg, wImg,3), np.uint8) * 255

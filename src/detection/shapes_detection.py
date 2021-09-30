@@ -5,8 +5,8 @@ import cv2 as cv
 from matplotlib import pyplot as plt
 from skimage.util import invert
 from skimage.morphology import dilation
-from max_rect import get_max_rect, max_triangle
-from  min_bounding_rect import *
+from detection.max_rect import get_max_rect, max_triangle
+from  detection.min_bounding_rect import *
 
 
 

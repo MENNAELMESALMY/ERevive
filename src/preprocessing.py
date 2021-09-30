@@ -66,7 +66,7 @@ def GetMaxContour(img_dir,MORPH=9,CANNY=84,debug=False):
     edges = cv2.dilate(edges, kernel)
     edges = cv2.Canny(edges, 0, CANNY, apertureSize=3)
     # finding contours
-    contours,heirarchy = cv2.findContours(edges.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    _,contours,heirarchy = cv2.findContours(edges.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     maxArea=0
     adjustPrespective = False
     approx=[]

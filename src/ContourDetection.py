@@ -99,14 +99,21 @@ def seperateShapes(contours ,cnt_img ,binary_img):
     count = 0
     for cnt in contours:
         x,y,w,h = cv2.boundingRect(cnt)
+        xlpadding = min(10,x)
+        xrpadding = max(0,cnt_img.shape[0]-x-w-1)
+        xrpadding = min(10,xrpadding)
+        yupadding = min(10,y)
+        ydpadding = max(0,cnt_img.shape[1]-y-h-1)
+        ydpadding = min(10,ydpadding)
+        print(xlpadding , xrpadding , yupadding , ydpadding)
         #seperate shape
         shape_img = 255 * np.ones((cnt_img.shape[0],cnt_img.shape[1],3), np.uint8)
         cv2.drawContours(shape_img,[cnt],-1,(0,0,0),2)
-        cv2.imwrite("output/shape"+str(count)+'.png',shape_img[y-10:y+h+10, x-10:x+w+10 ,:]) #write output shapes image
+        cv2.imwrite("output/shape"+str(count)+'.png',shape_img[y-yupadding:y+h+ydpadding, x-xlpadding:x+w+xrpadding ,:]) #write output shapes image
         #seperate text
         
         cv2.drawContours(text_img,[cnt], -1, (255,255,255), -1)
-        text_img[y-10:y+h+10, x-10:x+w+10 ,:] = cv2.bitwise_and(text_img[y-10:y+h+10, x-10:x+w+10 ,:] , img[y-10:y+h+10, x-10:x+w+10 ,:])
+        text_img[y-yupadding:y+h+ydpadding, x-xlpadding:x+w+xrpadding ,:] = cv2.bitwise_and(text_img[y-yupadding:y+h+ydpadding, x-xlpadding:x+w+xrpadding ,:] , img[y-yupadding:y+h+ydpadding, x-xlpadding:x+w+xrpadding ,:])
         cv2.imwrite("output/text"+str(count)+'.png',text_img[y:y+h, x:x+w ,:]) #write output text image
         count+=1
     cv2.imwrite("text_img.png",text_img)

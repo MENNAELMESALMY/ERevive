@@ -112,7 +112,7 @@ def RemoveShadow(img_gray,debug=False):
     return thr_img
 
 def Binarize(img_gray,debug=False):
-    thres =threshold_yen(img_gray)
+    thres = threshold_yen(img_gray)
     final = (img_gray >thres)*255
     if(debug):
         cv2.imwrite("final.png",final)

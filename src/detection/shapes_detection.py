@@ -101,6 +101,7 @@ def detect_shapes(shapes_no):
         path = './output/shape'+str(i)+'.png'
         img = cv.imread(path)
         gray_img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+        gray_img = cv.copyMakeBorder(gray_img, 5, 5, 5, 5, cv.BORDER_CONSTANT, None, value = 255)
         features,shape = get_features(gray_img)
         print(features)
         shapes.append(shape)

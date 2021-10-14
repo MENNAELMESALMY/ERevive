@@ -98,36 +98,60 @@ def isOverlapped(c,imgContours):
         if(cXmin > Xmin and cXmax < Xmax and cYmin >= Ymin and cYmax <= Ymax):
             return True
     return False
+
+def isOverlapped_middle(c,imgContours):
+    cXmin,cYmin,cXmax,cYmax = cv2.boundingRect(c)
+    cXmax += cXmin
+    cYmax += cYmin
+    cXmid = (cXmin+cXmax)/2
+    cYmid = (cYmin+cYmax)/2
+    for imgContour in imgContours:
+        Xmin,Ymin,Xmax,Ymax = cv2.boundingRect(imgContour)
+        Xmax += Xmin
+        Ymax += Ymin
+        Xmid = (Xmin+Xmax)/2
+        Ymid = (Ymin+Ymax)/2
+        #overlapped and in middle of a contour
+        if(cXmin > Xmin and cXmax < Xmax and cYmin >= Ymin and cYmax <= Ymax
+            and abs(Xmid-cXmid)<= abs(Xmax-Xmin)/8 
+            and abs(Ymid-cYmid)<=10
+            ):
+            return True
+    return False
+
+
 def getOpenedContours(img,closed_contours=[],debug = False):
-    closed_contours = scale_contours(closed_contours,1.3)
+    closed_contours = scale_contours(closed_contours,1.15)
     cv2.drawContours(img,closed_contours,-1, 255,-1 )
     contours, hierarchy = cv2.findContours(255 - img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     img_parent = np.ones(img.shape, np.uint8) * 255
-    parentContours =[]
-    for i,cnt in enumerate(contours):
-        x,y,w,h = cv2.boundingRect(cnt)
-        if not isOverlapped(cnt,contours):# and hierarchy[0,i,3]==-1:#and h>10 and w>15 and w/h>1.5 and w/h<4:
-            parentContours.append(cnt)
+    parentContours =[ cnt for cnt in contours if not isOverlapped(cnt,contours)]
 
     cv2.drawContours(img_parent,parentContours,-1, 0, -1 )
     img_parent = 255 - img_parent 
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(7,3))
-    #dilated = cv2.dilate(img_parent,kernel,iterations=3)
-    dilated = cv2.morphologyEx(img_parent, cv2.MORPH_CLOSE, kernel,iterations=4)
-
-    #kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(1,3))
-    #dilated = cv2.dilate(dilated,kernel,iterations=1)
-    edges = cv2.Canny(dilated, 0, 84, apertureSize=3)
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(3,3))
+    dilated = cv2.dilate(img_parent,kernel,iterations=3)
+    #dilated = cv2.morphologyEx(img_parent, cv2.MORPH_CLOSE, kernel,iterations=4)
+    edges = cv2.Canny(dilated, 0, 200, apertureSize=3)
     #get child contours and draw hull
     img_inner_contour = np.ones(img.shape, np.uint8) * 255
-    contours, hierarchy = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    contours,_ = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     contours = [cnt for cnt in contours if isOverlapped(cnt,contours) ]
+    print(len(contours))
+    contours = [cnt for cnt in contours if not isOverlapped_middle(cnt,contours) ]
+    print(len(contours))
     cv2.drawContours(img_inner_contour,contours,-1, 0, 1 )
-    eroded = cv2.erode(img_inner_contour,kernel,iterations=3)
-    eroded = FloodFromCorners(eroded)
-    contours, hierarchy = cv2.findContours(eroded, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    eroded = cv2.erode(img_inner_contour,kernel,iterations=1)
+    flooded = FloodFromCorners(eroded)
+    flooded = cv2.dilate(flooded,kernel,iterations=3)
+    contours,_ = cv2.findContours(flooded, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     opened_contours = np.ones(img.shape, np.uint8) * 255
+    contours = scale_contours(contours,1.1)
+    #contours = [cnt for cnt in contours if not isOverlapped_middle(cnt,contours) ]
 
+    #contours = [cv2.convexHull(cnt,False) for cnt in contours]
+
+    print(len(contours))
     cv2.drawContours(opened_contours,contours,-1, 0, 1 )
     if(debug):
         cv2.imwrite("contoured_img.png",img)
@@ -136,6 +160,32 @@ def getOpenedContours(img,closed_contours=[],debug = False):
         cv2.imwrite("edges2.png",edges)
         cv2.imwrite("img_inner_contour.png",img_inner_contour)
         cv2.imwrite("eroded.png",eroded)
+        cv2.imwrite("filled.png",flooded)
         cv2.imwrite("opened_contours.png",opened_contours)
     return opened_contours,contours
 
+def getDerived(img,contours):
+    contours = [c for c in contours if not isOverlapped(c,contours)]
+    scaled_up_contours = scale_contours(contours.copy(),1.6)
+    scaled_down_contours = scale_contours(contours.copy(),0.85)
+    im_dashes = np.ones(img.shape, np.uint8) * 255
+    im_scaled_down = np.zeros(img.shape, np.uint8)
+    cv2.drawContours(im_scaled_down,scaled_down_contours,-1, 255, -1 )
+    img = cv2.bitwise_or(img , im_scaled_down)
+    contours, heirarchy= cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    small_contours = []
+    for cnt,heir in zip(contours,heirarchy[0]):
+        x,y,w,h = cv2.boundingRect(cnt)
+        if w<=35 and h<=20 and h>4 and w>4:
+            small_contours.append(cnt)
+
+    cv2.drawContours(im_dashes,small_contours,-1, 0, -1 )
+            
+    for cnt in scaled_up_contours:
+        dashedFound = sum([1 for c in small_contours if isOverlapped(c,[cnt])])
+        #print(dashedFound)
+        if dashedFound > 5:
+            print(dashedFound,"found dashed")
+            cv2.drawContours(im_dashes,[cnt],-1, 0, 1 )
+    cv2.imwrite("im_scaled_down.png",im_scaled_down)
+    cv2.imwrite("im_dashes.png",im_dashes)

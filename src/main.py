@@ -7,19 +7,22 @@ import cv2
 
 def detectWeakHelper(img):
     h,w = img.shape
-    countStartZerosVer = 0
-    countStartZerosH = 0
+    countStartZerosVer = []
+    #countStartZerosH = 0
     img = cv2.copyMakeBorder(img, 5, 5, 5, 5, cv2.BORDER_CONSTANT, None, value = 255)
-    #vertical 
-    for i in range(h-1):
-        if(img[i,int(w/2+5)]==255 and img[i+1,int(w/2+5)]==0):
-            countStartZerosVer+=1
+    #vertical
+    for j in range(w+10):
+        countCol=0
+        for i in range(h-1):
+            if(img[i,j]==255 and img[i+1,j]==0):
+                countCol+=1
+        countStartZerosVer.append(countCol)
 
-    for i in range(w-1):
-        if(img[int(h/2+5),i]==255 and img[int(h/2+5),i+1]==0):
-            countStartZerosH+=1
-
-    return countStartZerosH >= 3 and countStartZerosVer >=3
+    # for i in range(w-1):
+    #     if(img[int(h/2+5),i]==255 and img[int(h/2+5),i+1]==0):
+    #         countStartZerosH+=1
+    countAllVer = sum([1 for i in countStartZerosVer if i >=3])
+    return countAllVer/len(countStartZerosVer) >= 0.5
 
 def detectWeak(img,contours,shapes):
     bin_img = (img >180)*255
@@ -29,14 +32,12 @@ def detectWeak(img,contours,shapes):
     hImg,wImg = img.shape
     for c,s in zip(contours,shapes):
         x,y,w,h = cv2.boundingRect(c)
-        print('before',x,y,w+x,h+y)
         w = min(x+w+15,wImg)
         h = min(y+h+15,hImg)
         x = max(0,x-15)
         y = max(0,y-15)
 
-        print('after',x,y,w,h)
-        c_small = scale_contours([c.copy()],0.8)
+        c_small = scale_contours([c.copy()],0.65)
         cv2.drawContours(bin_img,c_small,-1,255,-1)
         imgContour = bin_img[y:h,x:w]
         cv2.imwrite('bin_img'+str(i)+'.png',imgContour)
@@ -46,7 +47,7 @@ def detectWeak(img,contours,shapes):
     return isWeak
 
 
-img_dir ="test2.jpg"
+img_dir ="input/16.jpeg"
 adjustPrespective,approxContour,grayImg = GetMaxContour(img_dir)
 warpedImg = grayImg
 if(adjustPrespective):
@@ -72,6 +73,7 @@ for c in allContours:
 
 getDerived(image_result.copy(),hulls.copy())
 hulls = scale_contours(hulls,0.95)
+hulls = [h for h in hulls if not isOverlapped(h,hulls)]
 cv2.drawContours(im,hulls,-1, 0, 1 )
 cv2.imwrite("im_hull.png",im)
 cv2.imwrite("allContoursImg.png",allContoursImg)

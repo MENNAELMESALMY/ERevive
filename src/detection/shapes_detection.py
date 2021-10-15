@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 from skimage.util import invert
 from skimage.morphology import dilation
 from detection.max_rect import get_max_rect, max_triangle
-from  detection.min_bounding_rect import *
+from detection.min_bounding_rect import *
 
 
 
@@ -22,11 +22,15 @@ def show(img):
 
 def fillHole(img):
     #thresholded image
-    
+    #show(img)
     im_th = img
     im_floodfill = im_th.copy()
     h, w = im_th.shape[:2]
+    #print(h,w)
+    #print(im_th.shape)
     mask = np.zeros((h+2, w+2), np.uint8)
+    #show(mask)
+    #show(im_floodfill)
     cv.floodFill(im_floodfill, mask, (0, 0), 255)
     #show(im_floodfill)
     im_floodfill_inv = cv.bitwise_not(im_floodfill)
@@ -81,12 +85,15 @@ def convex_hull(image):
 #gray scale img with white background
 def get_features(img):
     img = cv.resize(img, (256, 256)) 
-    img = cv.copyMakeBorder(img,5,5,5,5,cv.BORDER_CONSTANT,value=[255,255,255])   
+    img = cv.copyMakeBorder(img,5,5,5,5,cv.BORDER_CONSTANT,value=[255,255,255]) 
+    #show(img)     
     img = invert(img)
+    #show(img)
     img = dilation(img,np.ones((5,5)))
+    #show(img)
     features = convex_hull(img)
     shape=''
-    if features[2] >0.3 and features[2] <0.75 and features[3] <0.47:
+    if features[2] >0.3 and features[2] <0.75 and features[3] <0.48:
         shape='oval'
     elif features[0]>0.7 and features[1] >0.5 and features[2]>0.6 and features[3]<0.52:
         shape='rectangle'
@@ -101,11 +108,15 @@ def detect_shapes(shapes_no):
         path = './output/shape'+str(i)+'.png'
         img = cv.imread(path)
         gray_img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-        gray_img = cv.copyMakeBorder(gray_img, 5, 5, 5, 5, cv.BORDER_CONSTANT, None, value = 255)
+        #show(gray_img)
+        #gray_img = cv.copyMakeBorder(gray_img, 5, 5, 5, 5, cv.BORDER_CONSTANT, None, value = 255)
+        #show(gray_img)
         features,shape = get_features(gray_img)
         print(features)
+        #print(shape)
         shapes.append(shape)
             
     return shapes
 
 
+#detect_shapes(12)

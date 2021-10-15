@@ -29,13 +29,13 @@ def detectWeak(img,contours,shapes):
     hImg,wImg = img.shape
     for c,s in zip(contours,shapes):
         x,y,w,h = cv2.boundingRect(c)
-        print('before',x,y,w+x,h+y)
+        #print('before',x,y,w+x,h+y)
         w = min(x+w+15,wImg)
         h = min(y+h+15,hImg)
         x = max(0,x-15)
         y = max(0,y-15)
 
-        print('after',x,y,w,h)
+        #print('after',x,y,w,h)
         c_small = scale_contours([c.copy()],0.8)
         cv2.drawContours(bin_img,c_small,-1,255,-1)
         imgContour = bin_img[y:h,x:w]

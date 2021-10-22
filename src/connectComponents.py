@@ -2,6 +2,7 @@ import cv2
 from numpy.core.defchararray import count
 from skimage.morphology import skeletonize
 import numpy as np
+from math import sqrt
 #(y,x)
 neighbors =[
     (0,1),
@@ -18,7 +19,7 @@ def removeText():
     pass
     
 def findPixel(box,img,colored_im,idx):
-    x,y,h,w=box
+    x,y,w,h=box
     for i in range(y+2,y+h):
         for j in range(x+2,x+w):
             #b,g,r = colored_im[i,j]
@@ -87,10 +88,10 @@ def BFS(y,x,colored_contours,skeleton,idx,colored_contours_labelled,foundVis):
             colored_contours_labelled[y,x]=(0,255,0)
     return list(set(deadend)),list(set(found))
 
-def connectDeadEnds(deadEnds,colored_im,skelton):
+def connectDeadEndsToShapes(deadEnds,colored_im,skelton):
     for y,x,direction,idx in deadEnds:
         hImg,wImg,_ = colored_im.shape
-        m = 10
+        m = 5
         xL = max(0,x-m)
         xR = min(wImg,x+m+1)
         yUp = max(0,y-m)
@@ -98,18 +99,33 @@ def connectDeadEnds(deadEnds,colored_im,skelton):
         window = colored_im[yUp:yDown,xL:xR]
         h,w,_ = window.shape
         dirs = list(range(0,8))
-        #if()
+
         for i in range(h):
+            breaked = False
             for j in range(w):
                 if(sum(window[i,j]) != 255*3):
-                    shapeDir = getDirection(x,y,j,i)
-                    # if (direction == shapeDir or
-                    #     direction != shapeDir%4
-                    # ):
-                    print(j+x,i+y,x,y)
-                    cv2.line(skelton,(j+x,i+y),(x,y),1)
+                    shapeDir = getDirection(x,y,j+xL,i+yUp)
+                    if (direction == shapeDir or
+                        direction == dirs[direction-1] or
+                        direction == dirs[(direction+1)%8]
+                    ):
+                        print(j+x,i+y,x,y)
+                        cv2.line(skelton,(j+xL,i+yUp),(x,y),1)
+                        breaked = True
+                        break
+            if breaked:
+                break
 
-
+def connectDeadEndsToDeadEnds(deadEnds,skelton):
+    for y1,x1,_,_ in deadEnds:
+        for y2,x2,_,_ in deadEnds:
+            dist = sqrt((y2-y1)**2 + (x2-x1)**2)
+            print(x1,y1,x2,y2)
+            print('dist',dist)
+            if (dist <= 5):
+                
+                cv2.line(skelton,(x2,y2),(x1,y1),1)
+    
 
 
 def connectEntities(hulls,binarizedImg,shapes):
@@ -191,8 +207,8 @@ def connectEntities(hulls,binarizedImg,shapes):
     cv2.imwrite("sk2.png",skeleton)
     print("Running Not Found shapes")
     for i,f in enumerate(foundVis):
-        if f == 1 and shapes[i] != 'diamond':
-            continue
+        # if f == 1 and shapes[i] != 'diamond':
+        #     continue
         y,x  = findPixel(boxes[i],skeleton,colored_contours,i)
         colored_contours_labelled[y,x]=(0,0,255)
         deadEnds,foundShapes = BFS(y,x,colored_contours,skeleton,i,colored_contours_labelled,foundVis)
@@ -200,17 +216,23 @@ def connectEntities(hulls,binarizedImg,shapes):
         print(f"shape {i} deadends {deadEnds}")
         allDeadEnds += deadEnds
 
+    cv2.imwrite("sk3.png",skeleton)
 
 
-
-    connectDeadEnds(allDeadEnds,colored_contours,sk_copy)
-    cv2.imwrite("sk3.png",sk_copy)
-
-    sk_copy = (255 - sk_copy)/255
-    sk_copy = skeletonize(sk_copy)
-    sk_copy = (255 - sk_copy*255).astype(np.uint8).copy()
-
+    allDeadEnds = list(set(allDeadEnds))
+    connectDeadEndsToShapes(allDeadEnds,colored_contours,sk_copy)
+    connectDeadEndsToDeadEnds(allDeadEnds,sk_copy)
     cv2.imwrite("sk4.png",sk_copy)
+
+    # sk_copy = (255 - sk_copy)/255
+    # cv2.imwrite("sk4.png",sk_copy*255)
+
+    # sk_copy = skeletonize(sk_copy)
+    # cv2.imwrite("sk5.png",sk_copy*255)
+
+    # sk_copy = (255 - sk_copy*255).astype(np.uint8).copy()
+
+    # cv2.imwrite("sk6.png",sk_copy)
 
     for i,s in enumerate(shapes):
         if s == 'rectangle':

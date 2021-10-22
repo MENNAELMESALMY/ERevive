@@ -2,6 +2,7 @@ import numpy as np
 import cv2 as cv
 from numpy.lib.function_base import delete
 from skimage.morphology import dilation,closing,opening
+from skimage.morphology import skeletonize
 G=0
 from path_points import *
 # entities=[
@@ -27,21 +28,25 @@ def show(img):
     cv.waitKey(0)
     cv.destroyAllWindows()
 
-def prepare_data(contours):
+def prepare_data(contours,labels):
     print("Preparing data")
+    k=0
+    #for contour in contours:
+    #    print("shape : ",k," label ",labels[k]," bounding box: ",cv.boundingRect(contour))
+    #    k+=1
     entities=[
         {   
             "name":"Menna",
-            "contour":contours[8],
-            "bounding_box":cv.boundingRect(contours[8]),
+            "contour":contours[7],
+            "bounding_box":cv.boundingRect(contours[7]),
             "relations":[
                 {
                     "contour":contours[4],
                     "bounding_box":cv.boundingRect(contours[4]),
                 },
                 {
-                    "contour":contours[6],
-                    "bounding_box":cv.boundingRect(contours[6]),
+                    "contour":contours[5],
+                    "bounding_box":cv.boundingRect(contours[5]),
                 }
             ]
         },
@@ -51,8 +56,8 @@ def prepare_data(contours):
             "bounding_box":cv.boundingRect(contours[10]),
             "relations":[
                 {
-                    "contour":contours[6],
-                    "bounding_box":cv.boundingRect(contours[6]),
+                    "contour":contours[5],
+                    "bounding_box":cv.boundingRect(contours[5]),
                 }
             ]
         },
@@ -206,7 +211,7 @@ def get_contour(img):
 def filter_points(contour,binarizedImg):
     contour_points = []
     #draw contours
-   
+    print("contour",contour)
     empty = np.zeros(binarizedImg.shape,np.uint8)
     cv.drawContours(empty, [contour], -1, (255,255,255), 1)
     empty = dilation(empty,np.ones((10,10),np.uint8))
@@ -232,8 +237,12 @@ def detect_participation(relations,binarizedImg):
     binarized_img = 255-binarizedImg
     binarized_img = binarized_img.astype(np.uint8)
     binarized_img = dilation(binarized_img,np.ones((3,3)))
-    edges = cv.Canny(binarized_img, 0, 150, apertureSize=7)
-    edges = edges//255
+    edges = skeletonize(binarized_img//255)**1
+    print(edges)
+    #edges = cv.Canny(binarized_img, 0, 150, apertureSize=7)
+    #edges = edges//255
+    #sobelxy = cv.Sobel(src=binarized_img, ddepth=cv.CV_64F, dx=1, dy=0, ksize=5) # Combined X and Y Sobel Edge Detection
+    #edges = sobelxy//255
     #edges  = closing(edges,np.ones((1,1)))
     cv.imwrite("edges.jpg",edges*255)
     r=0
@@ -277,7 +286,7 @@ def detect_participation(relations,binarizedImg):
         r+=1
             
 def get_relations(binarizedImg,contours,labels):
-    entities = prepare_data(contours)
+    entities = prepare_data(contours,labels)
     relations = {}
     # get unique relations
     # loop on each relation and get an array of its entities
@@ -294,6 +303,6 @@ def get_relations(binarizedImg,contours,labels):
                 "bounding_box":relation["bounding_box"]
             })
     detect_participation(relations,binarizedImg)
-    print(relations)
+    #print(relations)
 
 

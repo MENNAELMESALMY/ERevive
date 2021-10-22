@@ -184,8 +184,8 @@ def connectEntities(hulls,binarizedImg,shapes):
             y,x  = findPixel(boxes[i],skeleton,colored_contours,i)
             colored_contours_labelled[y,x]=(0,0,255)
             deadEnds,foundShapes = BFS(y,x,colored_contours,skeleton,i,colored_contours_labelled,foundVis)
-            # print(f"shape {i} found {foundShapes}")
-            # print(f"shape {i} deadends {deadEnds}")
+            print(f"shape {i} found {foundShapes}")
+            print(f"shape {i} deadends {deadEnds}")
             allDeadEnds += deadEnds
 
     cv2.imwrite("sk2.png",skeleton)
@@ -196,8 +196,8 @@ def connectEntities(hulls,binarizedImg,shapes):
         y,x  = findPixel(boxes[i],skeleton,colored_contours,i)
         colored_contours_labelled[y,x]=(0,0,255)
         deadEnds,foundShapes = BFS(y,x,colored_contours,skeleton,i,colored_contours_labelled,foundVis)
-        # print(f"shape {i} found {foundShapes}")
-        # print(f"shape {i} deadends {deadEnds}")
+        print(f"shape {i} found {foundShapes}")
+        print(f"shape {i} deadends {deadEnds}")
         allDeadEnds += deadEnds
 
 

@@ -10,7 +10,7 @@ import os
 
 
 
-img_dir ="32.jpeg"
+img_dir ="33.jpeg"
 
 dirs = os.listdir('input')
 print(dirs)

@@ -112,7 +112,7 @@ def detect_shapes(shapes_no):
         #gray_img = cv.copyMakeBorder(gray_img, 5, 5, 5, 5, cv.BORDER_CONSTANT, None, value = 255)
         #show(gray_img)
         features,shape = get_features(gray_img)
-        print(features)
+        #print(features)
         #print(shape)
         shapes.append(shape)
             

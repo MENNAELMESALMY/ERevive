@@ -3,6 +3,7 @@ from preprocessing import *
 from removeLines import *
 from ContourDetection import *
 from detection.shapes_detection import detect_shapes
+from detect_rel_prop import *
 import cv2
 
 def detectWeakHelper(img):
@@ -47,8 +48,8 @@ def detectWeak(img,contours,shapes):
     return isWeak
 
 
-img_dir ="input/16.jpeg"
-adjustPrespective,approxContour,grayImg = GetMaxContour(img_dir)
+img_dir ="input/21.jpeg"
+adjustPrespective,approxContour,grayImg = GetMaxContour(img_dir,debug=True)
 warpedImg = grayImg
 if(adjustPrespective):
     warpedImg = warpedPrespective(grayImg,approxContour)
@@ -81,5 +82,5 @@ cv2.imwrite("allContoursImg.png",allContoursImg)
 shapes_no = seperateShapes( hulls,allContoursImg, binarizedImg)
 shapes = detect_shapes(shapes_no)
 weak = detectWeak(shadowFreeImg,hulls,shapes)
-print(shapes)
-print(weak)
+
+get_relations(binarizedImg,hulls,shapes)

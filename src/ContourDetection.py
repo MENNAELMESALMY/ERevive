@@ -84,19 +84,40 @@ def removeOverlappedContoursAndDrawThem(filtered_contours,centers,bounding_boxes
             count+=1
     return img_c , shapes_img
 
-
+def testContour(text_img,c):
+    h,w = text_img.shape
+    
+    proj_img = 255* np.ones((h,w))
+    text_img = text_img/255
+    proj = np.sum(text_img,1)
+    for row in range(h):
+        cv2.line(proj_img, (0,row), (int(proj[row]),row), 0, 1)
+    
+    x = w//8
+    counter =0
+    found=0
+    for y in range(h):
+        if proj_img[y][x] == 255:
+            counter += 1
+        else:
+            if counter >= (h)//8:
+                cv2.imwrite("proj/"+str(c)+"t.png",text_img*255)
+                cv2.imwrite("proj/"+str(c)+".png",proj_img)
+                return True
+            counter =0
+    return True
 
 def seperateShapes(contours ,cnt_img ,binary_img):
    
-    text_img = 255 - 255 * np.ones((cnt_img.shape[0],cnt_img.shape[1],3), np.uint8)
+    text_img = 255 - 255*np.ones((cnt_img.shape[0],cnt_img.shape[1],3), np.uint8)
     cv2.imwrite('text_img_test.png',text_img)
     binary_img = 255 - binary_img
     binary_img = np.uint8(binary_img)
     img = cv2.cvtColor(binary_img,cv2.COLOR_GRAY2RGB)
     cv2.imwrite('text_img_2_test.png',img)
-    #text_img = text_img &
     
     count = 0
+    finalContours = []
     for cnt in contours:
         x,y,w,h = cv2.boundingRect(cnt)
         xl = max(0,x-10)
@@ -106,13 +127,16 @@ def seperateShapes(contours ,cnt_img ,binary_img):
         #seperate shape
         shape_img = 255 * np.ones((cnt_img.shape[0],cnt_img.shape[1],3), np.uint8)
         cv2.drawContours(shape_img,[cnt],-1,(0,0,0),2)
-        cv2.imwrite("output/shape"+str(count)+'.png',shape_img[yup:yd,xl:xr ,:]) #write output shapes image
-        #seperate text
-        
         cv2.drawContours(text_img,[cnt], -1, (255,255,255), -1)
+      
         text_img[ yup:yd,xl:xr ,:] = cv2.bitwise_and(text_img[yup:yd ,xl:xr,:] , img[yup:yd, xl:xr ,:])
-        cv2.imwrite("output/text"+str(count)+'.png',text_img[y:y+h, x:x+w ,:]) #write output text image
-        count+=1
+        if testContour(text_img[y:y+h, x:x+w ,0],count):
+            finalContours.append(cnt)
+            #seperate text
+            cv2.imwrite("output/text"+str(count)+'.png',text_img[y:y+h, x:x+w ,:]) #write output text image
+            cv2.imwrite("output/shape"+str(count)+'.png',shape_img[yup:yd,xl:xr ,:]) #write output shapes image
+            count+=1
+
     cv2.imwrite("text_img.png",text_img)
-    return len(contours)
+    return count,finalContours
     

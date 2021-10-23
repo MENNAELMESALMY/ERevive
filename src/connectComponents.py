@@ -121,13 +121,11 @@ def connectDeadEndsToDeadEnds(deadEnds,skelton):
         for y2,x2,_,_ in deadEnds:
             dist = sqrt((y2-y1)**2 + (x2-x1)**2)
             print(x1,y1,x2,y2)
-            print('dist',dist)
+            #print('dist',dist)
             if (dist <= 5):
                 
                 cv2.line(skelton,(x2,y2),(x1,y1),1)
     
-
-
 def connectEntities(hulls,binarizedImg,shapes):
     bin_copy = binarizedImg.astype(np.uint8).copy()
     boxes = [cv2.boundingRect(cnt) for cnt in hulls]

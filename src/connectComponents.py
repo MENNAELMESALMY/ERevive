@@ -52,24 +52,24 @@ def getDirection(x1,y1,x2,y2):
         return 7 if x2>x1 else 5
 
 
-def BFS(y,x,colored_contours,skeleton,idx,colored_contours_labelled,foundVis):
+def BFS(y,x,colored_contours,skb,idx,colored_contours_labelled,foundVis):
     q = []
     found =[]
     startX,startY = x,y
-    hImg,wImg = skeleton.shape
+    hImg,wImg = skb.shape
     q.append((y,x))
     deadend =[]
 
     while len(q):
         y,x = q.pop(0)
-        skeleton[y,x]=254
+        skb[y,x]=254
         hasFound = False
         countVis,countWhite=0,0
         for nY,nX in neighbors:
             coorX,coorY = x+nX,y+nY
             if coorX >= wImg or coorX<0 or coorY>=hImg or coorY <0:
                 continue
-            if(skeleton[coorY,coorX] == 254):
+            if(skb[coorY,coorX] == 254):
                 countVis +=1
                 continue
             cur = sum(colored_contours[coorY,coorX])
@@ -78,17 +78,18 @@ def BFS(y,x,colored_contours,skeleton,idx,colored_contours_labelled,foundVis):
                 found.append(cur)
                 hasFound = True
                 break
-            if(skeleton[coorY,coorX]==0):
+            if(skb[coorY,coorX]==0):
                 q.append((coorY,coorX))
             else:
                 countWhite +=1
+
         if(not hasFound and countVis == 1 and countWhite == 7 and sum(colored_contours[y,x]) == 255*3.0 ):
             #print(sum(colored_contours[y,x]))
             deadend.append((y,x,getDirection(startX,startY,x,y),idx))
             colored_contours_labelled[y,x]=(0,255,0)
     return list(set(deadend)),list(set(found))
 
-def connectDeadEndsToShapes(deadEnds,colored_im,skelton):
+def connectDeadEndsToShapes(deadEnds,colored_im,skx):
     for y,x,direction,idx in deadEnds:
         hImg,wImg,_ = colored_im.shape
         m = 5
@@ -109,22 +110,21 @@ def connectDeadEndsToShapes(deadEnds,colored_im,skelton):
                         direction == dirs[direction-1] or
                         direction == dirs[(direction+1)%8]
                     ):
-                        print(j+x,i+y,x,y)
-                        cv2.line(skelton,(j+xL,i+yUp),(x,y),1)
+                        #print(j+x,i+y,x,y)
+                        cv2.line(skx,(j+xL,i+yUp),(x,y),0,1)
                         breaked = True
                         break
             if breaked:
                 break
 
-def connectDeadEndsToDeadEnds(deadEnds,skelton):
+def connectDeadEndsToDeadEnds(deadEnds,skc):
     for y1,x1,_,_ in deadEnds:
         for y2,x2,_,_ in deadEnds:
             dist = sqrt((y2-y1)**2 + (x2-x1)**2)
-            print(x1,y1,x2,y2)
+            #print(x1,y1,x2,y2)
             #print('dist',dist)
             if (dist <= 5):
-                
-                cv2.line(skelton,(x2,y2),(x1,y1),1)
+                cv2.line(skc,(x2,y2),(x1,y1),0,1)
     
 def connectEntities(hulls,binarizedImg,shapes):
     bin_copy = binarizedImg.astype(np.uint8).copy()
@@ -198,8 +198,8 @@ def connectEntities(hulls,binarizedImg,shapes):
             y,x  = findPixel(boxes[i],skeleton,colored_contours,i)
             colored_contours_labelled[y,x]=(0,0,255)
             deadEnds,foundShapes = BFS(y,x,colored_contours,skeleton,i,colored_contours_labelled,foundVis)
-            print(f"shape {i} found {foundShapes}")
-            print(f"shape {i} deadends {deadEnds}")
+            # print(f"shape {i} found {foundShapes}")
+            # print(f"shape {i} deadends {deadEnds}")
             allDeadEnds += deadEnds
 
     cv2.imwrite("sk2.png",skeleton)
@@ -210,8 +210,8 @@ def connectEntities(hulls,binarizedImg,shapes):
         y,x  = findPixel(boxes[i],skeleton,colored_contours,i)
         colored_contours_labelled[y,x]=(0,0,255)
         deadEnds,foundShapes = BFS(y,x,colored_contours,skeleton,i,colored_contours_labelled,foundVis)
-        print(f"shape {i} found {foundShapes}")
-        print(f"shape {i} deadends {deadEnds}")
+        # print(f"shape {i} found {foundShapes}")
+        # print(f"shape {i} deadends {deadEnds}")
         allDeadEnds += deadEnds
 
     cv2.imwrite("sk3.png",skeleton)
@@ -240,7 +240,9 @@ def connectEntities(hulls,binarizedImg,shapes):
             print(f"shape {i} {s} found {foundShapes}")
             print(f"shape {i} {s} deadends {deadEnds}")
             allDeadEnds += deadEnds
-   
+
+    cv2.imwrite("sk5.png",sk_copy)
+
     cv2.imwrite("colored_contours_labelled.png",colored_contours_labelled)
 
 

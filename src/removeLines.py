@@ -48,7 +48,7 @@ def removeOutliers(ContourList,Area,hImg,wImg):
         
         accepedArea = h <= hImg/2.5 and w <= wImg/2.5 and h>7 and w>=20 #and h*w > normalArea
         #accepedRatio = w/h >= 0.5 and w/h <= 4
-        if(z[i]<=4):
+        if(z[i]<=3):
             print(wImg,w)
             # if(not Area):
             #     print(w/h)

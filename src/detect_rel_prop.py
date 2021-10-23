@@ -37,27 +37,27 @@ def prepare_data(contours,labels):
     entities=[
         {   
             "name":"Menna",
-            "contour":contours[7],
-            "bounding_box":cv.boundingRect(contours[7]),
+            "contour":contours[8],
+            "bounding_box":cv.boundingRect(contours[8]),
             "relations":[
-                {
-                    "contour":contours[4],
-                    "bounding_box":cv.boundingRect(contours[4]),
-                },
                 {
                     "contour":contours[5],
                     "bounding_box":cv.boundingRect(contours[5]),
+                },
+                {
+                    "contour":contours[6],
+                    "bounding_box":cv.boundingRect(contours[6]),
                 }
             ]
         },
         {   
             "name":"Nihal",
-            "contour":contours[10],
-            "bounding_box":cv.boundingRect(contours[10]),
+            "contour":contours[11],
+            "bounding_box":cv.boundingRect(contours[11]),
             "relations":[
                 {
-                    "contour":contours[5],
-                    "bounding_box":cv.boundingRect(contours[5]),
+                    "contour":contours[6],
+                    "bounding_box":cv.boundingRect(contours[6]),
                 }
             ]
         },
@@ -67,8 +67,8 @@ def prepare_data(contours,labels):
             "bounding_box":cv.boundingRect(contours[2]),
             "relations":[
                 {
-                    "contour":contours[4],
-                    "bounding_box":cv.boundingRect(contours[4]),
+                    "contour":contours[5],
+                    "bounding_box":cv.boundingRect(contours[5]),
                 }
             ]
         }
@@ -188,36 +188,51 @@ def fillHole(img):
     #show(smoothed_img)
     return smoothed_img
 def get_contour(img):
+    cv.imwrite("chull_input.jpg",img)
     chull = fillHole(img)
     cv.imwrite("chull.jpg",chull)
+    cv.imwrite("empty_in"+str(A)+".jpeg",img)
     contours = cv.findContours(chull, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)[0]
     contour = contours[0]
     for c in contours:
         if cv.contourArea(c) > cv.contourArea(contour):
             contour = c
-    contour_points=[]
-    edged = cv.Canny(chull, 0, 84, apertureSize=5)
+    #contour_points=[]
+    #edged = cv.Canny(chull, 0, 84, apertureSize=5)
 
-    for points in contour:
-        point = points[0]
-        if edged[point[1]][point[0]] == 0:
-            continue
-        contour_points.append(list(point))
-    contour_points = np.array([contour_points])
-    empty = np.zeros(chull.shape,np.uint8)
-    cv.drawContours(empty, [contour_points], -1, (255,255,255), 1)
+    #for points in contour:
+    #    point = points[0]
+    #    if edged[point[1]][point[0]] == 0:
+    #        continue
+    #    contour_points.append(list(point))
+    #contour_points = np.array([contour_points])
+    empty = np.zeros(img.shape,np.uint8)
+    cv.drawContours(empty, [contour], -1, 255,  cv.FILLED)
     cv.imwrite("contour_ttest.jpg",empty)
-    return  contour_points
-def filter_points(contour,binarizedImg):
+    ii = np.where(empty==255)
+    ii = list(ii)
+    ii.reverse()
+    contour = list(zip(*ii))
+    return  np.array([contour])
+A=0
+def filter_points(contourOrig,binarizedImgOrig):
     contour_points = []
     #draw contours
-    print("contour",contour)
+    binarizedImg = binarizedImgOrig.copy()
+    contour = contourOrig.copy()
+
+    global A
     empty = np.zeros(binarizedImg.shape,np.uint8)
     cv.drawContours(empty, [contour], -1, (255,255,255), 1)
+    cv.imwrite("empty_bef"+str(A)+".jpeg",empty)
     empty = dilation(empty,np.ones((10,10),np.uint8))
-    cv.imwrite("empty.jpg",empty)
+    A+=1
+    #print("contour_bef",contour)
     contour = get_contour(empty)
-  
+    #print("contour_aft",contour)
+    empty = np.zeros(binarizedImg.shape,np.uint8)
+    cv.drawContours(empty, contour, -1, (255,255,255), 1)
+    cv.imwrite("empty_Aft"+str(A)+".jpeg",empty)
     binarizedImg = binarizedImg*255
     for points in contour:
         for point in points:
@@ -226,7 +241,7 @@ def filter_points(contour,binarizedImg):
             binarizedImg[point[1]][point[0]] = 150
             contour_points.append(list(point))
     cv.imwrite("binarizedddd_img.jpg",binarizedImg)
-  
+    
     return np.array([contour_points])
 def detect_participation(relations,binarizedImg):
     #loop on each relation
@@ -238,7 +253,6 @@ def detect_participation(relations,binarizedImg):
     binarized_img = binarized_img.astype(np.uint8)
     binarized_img = dilation(binarized_img,np.ones((3,3)))
     edges = skeletonize(binarized_img//255)**1
-    print(edges)
     #edges = cv.Canny(binarized_img, 0, 150, apertureSize=7)
     #edges = edges//255
     #sobelxy = cv.Sobel(src=binarized_img, ddepth=cv.CV_64F, dx=1, dy=0, ksize=5) # Combined X and Y Sobel Edge Detection
@@ -248,29 +262,26 @@ def detect_participation(relations,binarizedImg):
     r=0
     e=0
     for relation in relations.values():
-        is_visited={}
         for entity in relation["entities"]:
             #get type of participation between the current entitiy and relation
             #define 2 points one on for the relation and the other on the entity
             #get all paths between the 2 points
-            if ( not is_visited.get(relation["bounding_box"])):
-                relation["contour"] = filter_points(relation["contour"].copy(),edges.copy())
-            else:
-                is_visited[relation["bounding_box"]] = True
-            if ( not is_visited.get(entity["bounding_box"])):
-                entity["contour"] = filter_points(entity["contour"].copy(),edges.copy())
-            else:
-                is_visited[entity["bounding_box"]] = True
+            relation["contour"] = filter_points(relation["contour"].copy(),edges.copy())
+            #if ( not is_visited.get(entity["bounding_box"])):
+            entity["contour"] = filter_points(entity["contour"].copy(),edges.copy())
+            #else:
+            #    is_visited[entity["bounding_box"]] = True
             relation_point = np.random.randint(0,len(relation["contour"]))
             relation_point = relation["contour"][relation_point]
             entity_point = np.random.randint(0,len(entity["contour"]))
             entity_point = entity["contour"][entity_point]
             #get all paths between the 2 points
+            print("get paths contour: ",relation["contour"])
             full_partial,paths = get_paths(relation_point,entity_point,edges,relation["bounding_box"],relation["contour"])
             paths = filtet_paths(paths)
-            if(len(paths)==2):
+            if(len(paths)==1):
                 entity["participation"]="partial"
-            elif(len(paths)==4):
+            elif(len(paths)==2):
                 entity["participation"]="full"
 
             entity.pop("relations",None)
@@ -302,7 +313,15 @@ def get_relations(binarizedImg,contours,labels):
                 "contour":relation["contour"],
                 "bounding_box":relation["bounding_box"]
             })
+    k=0
+    for relation in relations.values():
+        #print("HELLO",relation["contour"])
+        empty = np.zeros(binarizedImg.shape,np.uint8)
+        cv.drawContours(empty, [relation["contour"]], -1, (255,255,255), 1)
+        cv.imwrite("relation"+str(k)+".png",empty)
+        k+=1
+    #print(labels)
     detect_participation(relations,binarizedImg)
-    #print(relations)
+    print(relations)
 
 

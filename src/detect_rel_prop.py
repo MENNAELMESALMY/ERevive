@@ -25,57 +25,57 @@ from path_points import *
 # loop on each relation and get an array of its entities
 # path from the relation to the entities
 
-def show(img):
-    cv.imshow('image',img)
-    cv.waitKey(0)
-    cv.destroyAllWindows()
+# def show(img):
+#     cv.imshow('image',img)
+#     cv.waitKey(0)
+#     cv.destroyAllWindows()
 
-def prepare_data(contours,labels):
-    print("Preparing data")
-    k=0
-    #for contour in contours:
-    #    print("shape : ",k," label ",labels[k]," bounding box: ",cv.boundingRect(contour))
-    #    k+=1
-    entities=[
-        {   
-            "name":"Menna",
-            "contour":contours[8],
-            "bounding_box":cv.boundingRect(contours[8]),
-            "relations":[
-                {
-                    "contour":contours[5],
-                    "bounding_box":cv.boundingRect(contours[5]),
-                },
-                {
-                    "contour":contours[6],
-                    "bounding_box":cv.boundingRect(contours[6]),
-                }
-            ]
-        },
-        {   
-            "name":"Nihal",
-            "contour":contours[11],
-            "bounding_box":cv.boundingRect(contours[11]),
-            "relations":[
-                {
-                    "contour":contours[6],
-                    "bounding_box":cv.boundingRect(contours[6]),
-                }
-            ]
-        },
-        {   
-            "name":"Nada",
-            "contour":contours[2],
-            "bounding_box":cv.boundingRect(contours[2]),
-            "relations":[
-                {
-                    "contour":contours[5],
-                    "bounding_box":cv.boundingRect(contours[5]),
-                }
-            ]
-        }
-    ]
-    return entities
+# def prepare_data(contours,labels):
+#     print("Preparing data")
+#     k=0
+#     #for contour in contours:
+#     #    print("shape : ",k," label ",labels[k]," bounding box: ",cv.boundingRect(contour))
+#     #    k+=1
+#     entities=[
+#         {   
+#             "name":"Menna",
+#             "contour":contours[8],
+#             "bounding_box":cv.boundingRect(contours[8]),
+#             "relations":[
+#                 {
+#                     "contour":contours[5],
+#                     "bounding_box":cv.boundingRect(contours[5]),
+#                 },
+#                 {
+#                     "contour":contours[6],
+#                     "bounding_box":cv.boundingRect(contours[6]),
+#                 }
+#             ]
+#         },
+#         {   
+#             "name":"Nihal",
+#             "contour":contours[11],
+#             "bounding_box":cv.boundingRect(contours[11]),
+#             "relations":[
+#                 {
+#                     "contour":contours[6],
+#                     "bounding_box":cv.boundingRect(contours[6]),
+#                 }
+#             ]
+#         },
+#         {   
+#             "name":"Nada",
+#             "contour":contours[2],
+#             "bounding_box":cv.boundingRect(contours[2]),
+#             "relations":[
+#                 {
+#                     "contour":contours[5],
+#                     "bounding_box":cv.boundingRect(contours[5]),
+#                 }
+#             ]
+#         }
+#     ]
+#     return entities
 def match(path1,path2):
     len_match=0
     for point in path1:
@@ -171,23 +171,14 @@ def show(img):
 
 
 def fillHole(img):
-    #thresholded image
-    #show(img)
     im_th = img
     im_floodfill = im_th.copy()
     h, w = im_th.shape[:2]
-    #print(h,w)
-    #print(im_th.shape)
     mask = np.zeros((h+2, w+2), np.uint8)
-    #show(mask)
-    #show(im_floodfill)
     cv.floodFill(im_floodfill, mask, (0, 0), 255)
-    #show(im_floodfill)
     im_floodfill_inv = cv.bitwise_not(im_floodfill)
-    #show(im_floodfill_inv)
     im_out = im_th | im_floodfill_inv
     smoothed_img = cv.medianBlur(im_out,7)
-    #show(smoothed_img)
     return smoothed_img
 def get_contour(img):
     cv.imwrite("chull_input.jpg",img)
@@ -199,15 +190,6 @@ def get_contour(img):
     for c in contours:
         if cv.contourArea(c) > cv.contourArea(contour):
             contour = c
-    #contour_points=[]
-    #edged = cv.Canny(chull, 0, 84, apertureSize=5)
-
-    #for points in contour:
-    #    point = points[0]
-    #    if edged[point[1]][point[0]] == 0:
-    #        continue
-    #    contour_points.append(list(point))
-    #contour_points = np.array([contour_points])
     empty = np.zeros(img.shape,np.uint8)
     cv.drawContours(empty, [contour], -1, 255,  cv.FILLED)
     cv.imwrite("contour_ttest.jpg",empty)
@@ -219,7 +201,6 @@ def get_contour(img):
 A=0
 def filter_points(contourOrig,binarizedImgOrig,relation=None):
     contour_points = []
-    #draw contours
     binarizedImg = binarizedImgOrig.copy()
     contour = contourOrig.copy()
 
@@ -247,16 +228,16 @@ def filter_points(contourOrig,binarizedImgOrig,relation=None):
     cv.imwrite("binarizedddd_img.jpg",binarizedImg)
     
     return np.array([contour_points])
-def detect_participation(relations,binarizedImg):
+def detect_participation(relations,edges):
     #loop on each relation
     #loop on each entity
     #get type of participation between the current entitiy and relation
     #define 2 points one on for the relation and the other on the entity
     #get all paths between the 2 points
-    binarized_img = 255-binarizedImg
-    binarized_img = binarized_img.astype(np.uint8)
-    binarized_img = dilation(binarized_img,np.ones((3,3)))
-    edges = skeletonize(binarized_img//255)**1
+    #binarized_img = 255-binarizedImg
+    #binarized_img = binarized_img.astype(np.uint8)
+    #binarized_img = dilation(binarized_img,np.ones((3,3)))
+    #edges = skeletonize(binarized_img//255)**1
     #edges = cv.Canny(binarized_img, 0, 150, apertureSize=7)
     #edges = edges//255
     #sobelxy = cv.Sobel(src=binarized_img, ddepth=cv.CV_64F, dx=1, dy=0, ksize=5) # Combined X and Y Sobel Edge Detection
@@ -303,8 +284,7 @@ def detect_participation(relations,binarizedImg):
         relation["paths"] = rel_paths.copy()
         r+=1
             
-def get_relations(binarizedImg,contours,labels):
-    entities = prepare_data(contours,labels)
+def get_relations(binarizedImg,entities):
     relations = {}
     # get unique relations
     # loop on each relation and get an array of its entities
@@ -320,14 +300,7 @@ def get_relations(binarizedImg,contours,labels):
                 "contour":relation["contour"],
                 "bounding_box":relation["bounding_box"]
             })
-    k=0
-    for relation in relations.values():
-        #print("HELLO",relation["contour"])
-        empty = np.zeros(binarizedImg.shape,np.uint8)
-        cv.drawContours(empty, [relation["contour"]], -1, (255,255,255), 1)
-        cv.imwrite("relation"+str(k)+".png",empty)
-        k+=1
-    #print(labels)
+
     detect_participation(relations,binarizedImg)
     return relations
 

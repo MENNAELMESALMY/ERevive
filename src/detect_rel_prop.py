@@ -76,38 +76,64 @@ from path_points import *
 #         }
 #     ]
 #     return entities
-def match(path1,path2):
-    len_match=0
-    for point in path1:
-        for point2 in path2:
-            if point[0]==point2[0] and point[1]==point2[1]:
-                len_match+=1
-    return len_match
-def filtet_paths(paths):
+
+def check_direct_path(path,entities,orig_entity,img,relations,orig_relation):
+    set_path =set(tuple(x) for x in path)
+    for entity in entities:
+        if entity["idx"]==orig_entity["idx"]:
+            continue
+        contour = entity["contour"][0]
+        contour = [[point[0],point[1]] for point in contour]
+        #print("len of contour: ",len(contour))
+        set_contour = set(tuple(x) for x in list(contour))
+        #print("len intersection: ",len(set_path.intersection(set_contour)))
+        if len(set_path.intersection(set_contour))!=0:
+            return False
+    for relation in relations:
+        if relation["idx"]==orig_relation["idx"]:
+            continue
+        contour = relation["contour"][0]
+        print("length:",len(contour))
+        contour = [[point[0],point[1]] for point in contour]
+        #print("len of contour: ",len(contour))
+        set_contour = set(tuple(x) for x in contour)
+        if orig_relation["idx"]==7:
+            print("len relation intersection: ",len(set_path.intersection(set_contour)))
+        if len(set_path.intersection(set_contour))!=0:
+            return False
+    return True
+
+def filter_paths(paths,entities,entity,img,relations,relation):
     ret_paths=[]
+    paths = sorted(paths, key=lambda x: len(x))
+    print("len1: ",len(paths))
     for i in range(0,len(paths)):
-        if(paths[i] is None):
+        if i>=len(paths):
             continue
         ret_paths.append(paths[i])
         for j in range(i+1,len(paths)):
-            #if(len(paths)==3):
-                #print("path1",path)
-                #print("path2",path2)
-            matches = match(paths[i],paths[j])
-            print("matches",matches)
-            print("match , len",matches,len(paths[i]),len(paths[j]))
-            if (len(paths[i])>len(paths[j])):
-                shortest = paths[j]
-            else:
-                shortest = paths[i]
-            if(matches/len(shortest)>0.5):
-                if shortest == paths[j]:
-                    ret_paths.remove(paths[i])
-                    ret_paths.append(shortest)
-                print("len before",len(paths))
-                paths[j]=None
-                
-                print("len after",len(paths))
+            if j>=len(paths):
+                continue
+            path1 = set(tuple(x) for x in paths[i])
+            path2 = set(tuple(x) for x in paths[j])
+            intersection = path1.intersection(path2)
+            shortest = list(path1)
+            if len(intersection)/len(shortest)>=0.2:
+                paths.remove(paths[j])
+    print("len2: ",len(ret_paths))
+    for path in ret_paths:
+        if(not check_direct_path(path,entities,entity,img,relations,relation)):
+            ret_paths.remove(path)
+    print("len3: ",len(ret_paths))
+    binarized_img_test = img.copy()
+    #this loop is just for test
+    k=0
+    for path in ret_paths:
+        k+=1
+        for point in path:    
+            l,j  = point
+            binarized_img_test[l][j]=150
+        cv.imwrite("final_path_"+str(entity["idx"])+"_"+str(relation["idx"])+"_"+str(k)+".png",binarized_img_test)
     return ret_paths
 
     
@@ -140,28 +166,24 @@ def get_paths(p1,p2,binarized_img,center,contour):
    
     #if p1[0] < center[0]:
     #    p1s = [p1,p1,p1,p1]
-    binarized_img = binarized_img*255
+    #binarized_img = binarized_img*255
     paths=[]
     for i in range(4):
-
-        Bfs_res = run_bfs(pathed_img.copy(),p1s[i],p2[0])
-        print("Bfs_res",Bfs_res)
-        if Bfs_res:
-            pathed_img,path = get_real_path(pathed_img.copy(),p1s[i],p2[0])
-            if len(path) > 0:
-                path_ret=[]
-                binarized_img_test = binarized_img.copy()
-                for point in path:    
-                    l,j  = point // binarized_img_test.shape[1], point % binarized_img_test.shape[1]
-                    binarized_img_test[l][j]=150
-                    path_ret.append([l,j])
-                paths.append(path_ret)
-                global G
-                cv.imwrite("pathed"+str(i)+str(G)+".png",binarized_img_test)
-                count+=1
+        global G
+        pathed_img,path,is_found = BFS(p1s[i],p2[0],pathed_img.copy(),i,G)
+        print("Bfs_res",is_found)
+        if not is_found:
+            break
+        binarized_img_test = binarized_img.copy()
+        #this loop is just for test
+        for point in path:    
+            l,j  = point
+            binarized_img_test[l][j]=150
+        paths.append(path)
+        cv.imwrite("pathed"+str(i)+str(G)+".png",binarized_img_test)
+        count+=1
     G+=1
-    print("p1s",p1s)
-    print("paths",count)
+   
     return count==4,paths
 def show(img):
     cv.imshow('image',img)
@@ -184,7 +206,7 @@ def get_contour(img):
     cv.imwrite("chull_input.jpg",img)
     chull = fillHole(img)
     cv.imwrite("chull.jpg",chull)
-    cv.imwrite("empty_in"+str(A)+".jpeg",img)
+    #cv.imwrite("empty_in"+str(A)+".jpeg",img)
     contours = cv.findContours(chull, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)[0]
     contour = contours[0]
     for c in contours:
@@ -199,7 +221,7 @@ def get_contour(img):
     contour = list(zip(*ii))
     return  np.array([contour])
 A=0
-def filter_points(contourOrig,binarizedImgOrig,relation=None):
+def filter_points(contourOrig,binarizedImgOrig,relation=None,entity=None):
     contour_points = []
     binarizedImg = binarizedImgOrig.copy()
     contour = contourOrig.copy()
@@ -207,7 +229,7 @@ def filter_points(contourOrig,binarizedImgOrig,relation=None):
     global A
     empty = np.zeros(binarizedImg.shape,np.uint8)
     cv.drawContours(empty, [contour], -1, (255,255,255), 1)
-    cv.imwrite("empty_bef"+str(A)+".jpeg",empty)
+    #cv.imwrite("empty_bef"+str(A)+".jpeg",empty)
     empty = dilation(empty,np.ones((10,10),np.uint8))
     A+=1
     #print("contour_bef",contour)
@@ -217,7 +239,7 @@ def filter_points(contourOrig,binarizedImgOrig,relation=None):
     #print("contour_aft",contour)
     empty = np.zeros(binarizedImg.shape,np.uint8)
     cv.drawContours(empty, contour, -1, (255,255,255), 1)
-    cv.imwrite("empty_Aft"+str(A)+".jpeg",empty)
+    #cv.imwrite("empty_Aft"+str(A)+".jpeg",empty)
     binarizedImg = binarizedImg*255
     for points in contour:
         for point in points:
@@ -225,7 +247,8 @@ def filter_points(contourOrig,binarizedImgOrig,relation=None):
                 continue
             binarizedImg[point[1]][point[0]] = 150
             contour_points.append(list(point))
-    cv.imwrite("binarizedddd_img.jpg",binarizedImg)
+    if relation and relation["idx"]==7:
+        cv.imwrite("binarizedddd_img.jpg",binarizedImg)
     
     return np.array([contour_points])
 def detect_participation(relations,edges):
@@ -247,31 +270,42 @@ def detect_participation(relations,edges):
     r=0
     e=0
     for relation in relations.values():
-        rel_paths=[]
         for entity in relation["entities"]:
             #get type of participation between the current entitiy and relation
             #define 2 points one on for the relation and the other on the entity
             #get all paths between the 2 points
             relation["contour"] = filter_points(relation["contour"].copy(),edges.copy(),relation)
             #if ( not is_visited.get(entity["bounding_box"])):
-            entity["contour"] = filter_points(entity["contour"].copy(),edges.copy())
+            entity["contour"] = filter_points(entity["contour"].copy(),edges.copy(),entity=entity)
             #else:
+    for relation in relations.values():
+        rel_paths=[]
+        for entity in relation["entities"]:
+            #get type of participation between the current entitiy and relation
+            #define 2 points one on for the relation and the other on the entity
+            #get all paths between the 2 points
+            #relation["contour"] = filter_points(relation["contour"].copy(),edges.copy(),relation)
+            #if ( not is_visited.get(entity["bounding_box"])):
+            #entity["contour"] = filter_points(entity["contour"].copy(),edges.copy(),entity=entity)
+            #else:
+        
             #    is_visited[entity["bounding_box"]] = True
             relation_point = np.random.randint(0,len(relation["contour"]))
             relation_point = relation["contour"][relation_point]
             entity_point = np.random.randint(0,len(entity["contour"]))
             entity_point = entity["contour"][entity_point]
             #get all paths between the 2 points
-            print("get paths contour: ",relation["contour"])
+            #print("get paths contour: ",relation["contour"])
             full_partial,paths = get_paths(relation_point,entity_point,edges,relation["bounding_box"],relation["contour"])
-            paths = filtet_paths(paths)
+            print("relation contour: ",len(relation["contour"][0]))
+            paths = filter_paths(paths,relation["entities"],entity,edges,relations.values(),relation)
             if(len(paths)==1):
                 entity["participation"]="partial"
             elif(len(paths)==2):
                 entity["participation"]="full"
 
             entity.pop("relations",None)
-
+            print("Entity: ",entity.get("idx",None)," Relation: ",relation.get("idx",None)," Participation: ",entity["participation"])
             p=0
             for path in paths:
                 rel_paths.append(path)
@@ -289,6 +323,7 @@ def get_relations(binarizedImg,entities):
     # get unique relations
     # loop on each relation and get an array of its entities
     for entity in entities:
+        print("entity",entity)
         for relation in entity["relations"]:
             bounding_box_str = str(relation["bounding_box"])
             if relations.get(bounding_box_str) is None:
@@ -297,6 +332,7 @@ def get_relations(binarizedImg,entities):
                 }
             relations[bounding_box_str]["entities"].append(entity)
             relations[bounding_box_str].update({
+                "idx":relation["idx"],
                 "contour":relation["contour"],
                 "bounding_box":relation["bounding_box"]
             })

@@ -3,6 +3,8 @@ import cv2 as cv
 from numpy.lib.function_base import delete
 from skimage.morphology import dilation,closing,opening
 from skimage.morphology import skeletonize
+from skimage import io
+import math
 G=0
 from path_points import *
 # entities=[
@@ -215,7 +217,7 @@ def get_contour(img):
     contour = list(zip(*ii))
     return  np.array([contour])
 A=0
-def filter_points(contourOrig,binarizedImgOrig):
+def filter_points(contourOrig,binarizedImgOrig,relation=None):
     contour_points = []
     #draw contours
     binarizedImg = binarizedImgOrig.copy()
@@ -229,6 +231,8 @@ def filter_points(contourOrig,binarizedImgOrig):
     A+=1
     #print("contour_bef",contour)
     contour = get_contour(empty)
+    if relation:
+        relation["contour_cardinality"] = contour
     #print("contour_aft",contour)
     empty = np.zeros(binarizedImg.shape,np.uint8)
     cv.drawContours(empty, contour, -1, (255,255,255), 1)
@@ -262,11 +266,12 @@ def detect_participation(relations,binarizedImg):
     r=0
     e=0
     for relation in relations.values():
+        rel_paths=[]
         for entity in relation["entities"]:
             #get type of participation between the current entitiy and relation
             #define 2 points one on for the relation and the other on the entity
             #get all paths between the 2 points
-            relation["contour"] = filter_points(relation["contour"].copy(),edges.copy())
+            relation["contour"] = filter_points(relation["contour"].copy(),edges.copy(),relation)
             #if ( not is_visited.get(entity["bounding_box"])):
             entity["contour"] = filter_points(entity["contour"].copy(),edges.copy())
             #else:
@@ -288,12 +293,14 @@ def detect_participation(relations,binarizedImg):
 
             p=0
             for path in paths:
+                rel_paths.append(path)
                 edges_test = (edges.copy())*255
                 for point in path:   
                     edges_test[point[0]][point[1]]=150
                 cv.imwrite("pathed_final"+str(r)+str(e)+str(p)+".png",edges_test)
                 p+=1
             e+=1
+        relation["paths"] = rel_paths.copy()
         r+=1
             
 def get_relations(binarizedImg,contours,labels):
@@ -322,6 +329,136 @@ def get_relations(binarizedImg,contours,labels):
         k+=1
     #print(labels)
     detect_participation(relations,binarizedImg)
-    print(relations)
+    return relations
+
+
+def cardinality(relations,img):
+    #erase relation contour
+    #getting the rect bounding the relation
+    #erase relation
+    #create window with 3*w , 3*h of relation then erase the paths
+    for relation in relations.values():
+        x,y,w,h = relation["bounding_box"]
+        rows = [p[0] for p in relation["contour_cardinality"][0]]
+        cols = [p[1] for p in relation["contour_cardinality"][0]]
+        img[cols,rows]=255
+        all_points=[]
+        for path in relation["paths"]:
+            rows = [p[0] for p in path]
+            cols = [p[1] for p in path]
+            all_points.extend(path)
+            img[rows,cols]=255 
+        width = 3*w
+        height = 3*h
+        x = x-w
+        y = y-h
+        if x<0:
+            x=0
+        if y<0:
+            y=0
+        if x+width>img.shape[1]:
+            width = img.shape[1]-x
+        if y+height>img.shape[0]:
+            height = img.shape[0]-y
+        erased_points=[]
+        black_before = False
+        black_after = False
+        white = False
+        pattern = []
+        for i in range(y,y+height):
+            for j in range(x,x+width-1):
+        
+                if img[j][i]==0 and black_after==False:
+                    black_before = True
+                    pattern.append([j,i])
+                if img[j][i]==255 and img[j][i+1]==0 and black_before :
+                    white = True
+                if img[j][i]==0 and white and black_before :
+                    black_after = True
+                    pattern.append([j,i])
+                if black_before and white and black_after:
+                    erased_points.extend(pattern)
+                    pattern=[]
+                    black_before = False
+                    black_after = False
+                    white = False
+        black_before = False
+        black_after = False
+        white = False
+        pattern = []
+        for i in range(x,x+width):
+            for j in range(y,y+height-1):
+        
+                if img[j][i]==0 and black_after==False:
+                    black_before = True
+                    pattern.append([j,i])
+                if img[j][i]==255 and img[j+1][i]==0 and black_before :
+                    white = True
+                if img[j][i]==0 and white and black_before :
+                    black_after = True
+                    pattern.append([j,i])
+                if black_before and white and black_after:
+                    erased_points.extend(pattern)
+                    pattern=[]
+                    black_before = False
+                    black_after = False
+                    white = False
+        erased_rows = [p[0] for p in erased_points]
+        erased_cols = [p[1] for p in erased_points]
+        img[erased_rows,erased_cols]=255 
+        cardinality_img = img[y:y+height,x:x+width].copy()
+        relation["cardinality"] = get_relation_cardinality(cardinality_img,relation)
+    cv.imwrite("card_rel_path.png",img)
+
+def distance(p1,p2):
+    return math.sqrt((p1.x-p2.x)**2+(p1.y-p2.y)**2)
+
+def between(p1,p2,p3):
+    #p1 is entity , p2 is relation , p3 is cardinality
+    #if distance between entity+cardinality , relation+cardinality is close to entity+relation then the cardinality falls between them
+    return math.isclose(distance(p1,p3)+distance(p2,p3),distance(p1,p2),rel_tol=0.5)
+
+def get_relation_cardinality(cardinality_img,relation):
+    # Get contours of cardinality_img
+    # If 2 then these are the 2 cardinalities else get the biggest 2 contours
+    # Classify each cardinality
+    # get center of each entity and center of each cardinality then compare the rows and cols ranges
+    # assign the correct cardinality for each entity
+    contours = cv.findContours(cardinality_img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)[0]
+    cardinalities=[]
+    cardinalities_text=[]
+    number_of_cards = len(relation["entities"])
+    if len(contours<number_of_cards):
+        print("Error in detecting cardinalities")
+        return
+    elif len(contours==number_of_cards):
+        cardinalities.extend(contours)
+    else:
+        contours = sorted(contours, key=lambda x: cv.contourArea(x))
+        cardinalities.extend(contours[0:number_of_cards])
+    x,y,w,h = relation["bounding_box"]
+    center_relation = (x+w//2,y+h//2)
+    cardinalities_text = classify_cardinalities(cardinalities)
+    for i in range(number_of_cards):
+        x1,y1,w1,h1= cv.boundingRect(cardinalities[i])
+        center_cardinality = (x1+w1//2,y1+h1//2)
+        for entity in relation["entities"]:
+            x2,y2,w2,h2= cv.boundingRect(entity)
+            center_entity = (x2+w2//2,y2+h2//2)
+            if between(center_relation,center_entity,center_cardinality):
+                entity["cardinality"]=cardinalities_text[i]
+                break
+
+            
+def classify_cardinalities(cardinalities):
+    return ["N","1"]
+
+
+
+
+
+
+
+
 
 

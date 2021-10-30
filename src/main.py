@@ -53,10 +53,11 @@ cv2.imwrite("final_out_shapes/im_final"+pre+".png",im)
 print(shapes_no)
 shapes = detect_shapes(shapes_no)
 weak = detectWeak(shadowFreeImg,hulls,shapes)
-connectedComponents = connectEntities(scale_contours(finalContours,1.17),binarizedImg,shapes)
+connectedComponents,skeleton = connectEntities(scale_contours(finalContours,1.17),finalContours,binarizedImg,shapes)
 print("connectedComponents",connectedComponents)
-#relations = get_relations(binarizedImg,connectedComponents)
+relations = get_relations(skeleton,connectedComponents)
 #cardinality(relations,binarizedImg)
+
 #connectEntities(finalContours,binarizedImg,shapes)
 
 

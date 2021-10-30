@@ -223,6 +223,7 @@ def connectEntities(hulls,binarizedImg,shapes):
     connectDeadEndsToShapes(allDeadEnds,colored_contours,sk_copy)
     connectDeadEndsToDeadEnds(allDeadEnds,sk_copy)
     cv2.imwrite("sk4.png",sk_copy)
+    skeleton_ret = sk_copy.copy()
 
     # sk_copy = (255 - sk_copy)/255
     # cv2.imwrite("sk4.png",sk_copy*255)
@@ -285,6 +286,6 @@ def connectEntities(hulls,binarizedImg,shapes):
             print(f"shape {i} not found")
     cv2.imwrite("colored_contours_labelled.png",colored_contours_labelled)
 
-    return foundShapesEntities
+    return foundShapesEntities ,skeleton_ret
     
 

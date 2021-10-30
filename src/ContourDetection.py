@@ -96,14 +96,14 @@ def testContour(text_img,c):
     x = w//18
     counter = 0
     found=0
+    cv2.imwrite("proj/"+str(c)+"t.png",text_img*255)
+    cv2.imwrite("proj/"+str(c)+".png",proj_img)
     for y in range(h):
         if proj_img[y][x] == 0:
             counter += 1
         else:
             if counter >= (h)//10:
                 print('counter',counter,h)
-                cv2.imwrite("proj/"+str(c)+"t.png",text_img*255)
-                cv2.imwrite("proj/"+str(c)+".png",proj_img)
                 return True
             counter =0
     return False
@@ -138,6 +138,7 @@ def seperateShapes(contours ,cnt_img ,binary_img):
             cv2.imwrite("output/shape"+str(count)+'.png',shape_img[yup:yd,xl:xr ,:]) #write output shapes image
             count+=1
 
+   
     cv2.imwrite("text_img.png",text_img)
     return count,finalContours
     

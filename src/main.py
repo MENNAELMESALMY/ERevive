@@ -10,7 +10,7 @@ import os
 
 
 
-img_dir ="22.png"
+img_dir ="24.png"
 
 dirs = os.listdir('input')
 print(dirs)
@@ -53,7 +53,7 @@ cv2.imwrite("final_out_shapes/im_final"+pre+".png",im)
 print(shapes_no)
 shapes = detect_shapes(shapes_no)
 weak = detectWeak(shadowFreeImg,hulls,shapes)
-connectEntities(scale_contours(finalContours,1.17),binarizedImg,shapes)
+connectedComponents = connectEntities(scale_contours(finalContours,1.17),binarizedImg,shapes)
 #connectEntities(finalContours,binarizedImg,shapes)
 
 

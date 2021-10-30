@@ -17,7 +17,7 @@ neighbors =[
 
 def removeText():
     pass
-    
+   
 def findPixel(box,img,colored_im,idx):
     x,y,w,h=box
     for i in range(y+2,y+h):
@@ -75,7 +75,7 @@ def BFS(y,x,colored_contours,skb,idx,colored_contours_labelled,foundVis):
             cur = sum(colored_contours[coorY,coorX])
             if(cur != 255*3 and cur != idx):
                 foundVis[int(cur)] = 1
-                found.append(cur)
+                found.append(int(cur))
                 hasFound = True
                 break
             if(skb[coorY,coorX]==0):
@@ -210,8 +210,10 @@ def connectEntities(hulls,binarizedImg,shapes):
         y,x  = findPixel(boxes[i],skeleton,colored_contours,i)
         colored_contours_labelled[y,x]=(0,0,255)
         deadEnds,foundShapes = BFS(y,x,colored_contours,skeleton,i,colored_contours_labelled,foundVis)
-        # print(f"shape {i} found {foundShapes}")
-        # print(f"shape {i} deadends {deadEnds}")
+        print(f"shape {i} found {foundShapes}")
+        print(f"shape {i} deadends {deadEnds}")
+        if len(foundShapes):
+            foundVis[i]=1
         allDeadEnds += deadEnds
 
     cv2.imwrite("sk3.png",skeleton)
@@ -227,23 +229,62 @@ def connectEntities(hulls,binarizedImg,shapes):
 
     # sk_copy = skeletonize(sk_copy)
     # cv2.imwrite("sk5.png",sk_copy*255)
-
     # sk_copy = (255 - sk_copy*255).astype(np.uint8).copy()
-
     # cv2.imwrite("sk6.png",sk_copy)
 
+    foundVis = np.zeros(len(shapes))
+    foundShapesEntities = []
     for i,s in enumerate(shapes):
         if s == 'rectangle':
+            foundVis[i]=1
             y,x  = findPixel(boxes[i],sk_copy,colored_contours,i)
             colored_contours_labelled[y,x]=(0,0,255)
             deadEnds,foundShapes = BFS(y,x,colored_contours,sk_copy,i,colored_contours_labelled,foundVis)
             print(f"shape {i} {s} found {foundShapes}")
             print(f"shape {i} {s} deadends {deadEnds}")
-            allDeadEnds += deadEnds
+            foundShapesEntities.append(  
+                {
+                    "idx":i,
+                    "name":'x',
+                    "contour":len(hulls[i]),
+                    "bounding_box": boxes[i],
+                    "relations":[{"idx":r,"contour":len(hulls[r]),"bounding_box":boxes[r],"attributes":[]} for r in foundShapes if shapes[r]=='diamond'],
+                    "attributes":[{"idx":a,"contour":len(hulls[a]),"bounding_box":boxes[a],"children":[]} for a in foundShapes if shapes[a]=='oval']
+                })
 
+    ######################format parent atrributes
+
+
+
+    ##################### run from children atrribute
+    # stack = []
     cv2.imwrite("sk5.png",sk_copy)
+    for idxf,f in enumerate(foundShapesEntities):
+        for idxr,r in enumerate(f['relations']):
+            i = r['idx']
+            y,x  = findPixel(boxes[i],sk_copy,colored_contours,i)
+            colored_contours_labelled[y,x]=(0,0,255)
+            deadEnds,foundShapes = BFS(y,x,colored_contours,sk_copy,i,colored_contours_labelled,foundVis)
+           # print(f"relation {i} found {foundShapes}")
+            foundShapesEntities[idxf]['relations'][idxr]['attributes'] += [{"idx":a,"contour":len(hulls[a]),"bounding_box":boxes[a],"children":[]} for a in foundShapes if shapes[a]=='oval']
+        for idxa,a in enumerate(f['attributes']):
+            i = a['idx']
+            y,x  = findPixel(boxes[i],sk_copy,colored_contours,i)
+            colored_contours_labelled[y,x]=(0,0,255)
+            deadEnds,foundShapes = BFS(y,x,colored_contours,sk_copy,i,colored_contours_labelled,foundVis)
+           # print(f"att {i} found {foundShapes}")
+            foundShapesEntities[idxf]['attributes'][idxa]['children'] += [{"idx":a,"contour":len(hulls[a]),"bounding_box":boxes[a],"children":[]} for a in foundShapes if shapes[a]=='oval']
 
+    #################### format children attribute
+
+    print(foundShapesEntities)
+
+    cv2.imwrite("sk6.png",sk_copy)
+    for i,f in enumerate(foundVis):
+        if not f:
+            print(f"shape {i} not found")
     cv2.imwrite("colored_contours_labelled.png",colored_contours_labelled)
 
-
+    return foundShapesEntities
+    
 

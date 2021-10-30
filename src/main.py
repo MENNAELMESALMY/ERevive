@@ -54,8 +54,9 @@ print(shapes_no)
 shapes = detect_shapes(shapes_no)
 weak = detectWeak(shadowFreeImg,hulls,shapes)
 connectedComponents = connectEntities(scale_contours(finalContours,1.17),binarizedImg,shapes)
-relations = get_relations(binarizedImg,connectedComponents)
-cardinality(relations,binarizedImg)
+print("connectedComponents",connectedComponents)
+#relations = get_relations(binarizedImg,connectedComponents)
+#cardinality(relations,binarizedImg)
 #connectEntities(finalContours,binarizedImg,shapes)
 
 

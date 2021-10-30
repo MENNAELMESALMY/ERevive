@@ -11,7 +11,7 @@ import os
 
 
 
-img_dir ="21.jpeg"
+img_dir ="24.png"
 
 dirs = os.listdir('input')
 #for idx,img_dir in enumerate(dirs):
@@ -53,9 +53,9 @@ cv2.imwrite("final_out_shapes/im_final"+pre+".png",im)
 print(shapes_no)
 shapes = detect_shapes(shapes_no)
 weak = detectWeak(shadowFreeImg,hulls,shapes)
-relations = get_relations(binarizedImg,hulls,shapes)
+connectedComponents = connectEntities(scale_contours(finalContours,1.17),binarizedImg,shapes)
+relations = get_relations(binarizedImg,connectedComponents)
 cardinality(relations,binarizedImg)
-#connectEntities(scale_contours(finalContours,1.17),binarizedImg,shapes)
 #connectEntities(finalContours,binarizedImg,shapes)
 
 

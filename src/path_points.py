@@ -1,12 +1,13 @@
 from collections import deque
 import cv2 as cv
 directions=[[1,0],[0,1],[0,-1],[-1,0],[-1,-1],[1,1],[-1,1],[1,-1]]
-def BFS(start,end,img,index1,index2):
+def BFS(start,end,img,index1,index2,relation,entity):
     src = [start[1],start[0]]
     dst=[end[1],end[0]]
     q = deque()
     q.append([src])
     path=[]
+    points_inbetween = []
     visited={}
     visited[str(src)]=True
     is_found = False
@@ -28,11 +29,18 @@ def BFS(start,end,img,index1,index2):
     k=0
     if not is_found:
         path=[]
+        points_inbetween=[]
     else:
-        k=len(path)//2
-        i,j = path[k]
+        r =set(tuple(x) for x in list(relation))
+        e =set(tuple(x) for x in list(entity))
+        points_in_contours = r.union(e)
+        actual_path = set(tuple(x) for x in list(path))
+        points_inbetween = actual_path.difference(points_in_contours)
+        points_inbetween = list(points_inbetween)
+        k=len(points_inbetween)//2
+        i,j = points_inbetween[k]
         img[int(i)][int(j)] = 0
         cv.imwrite("cutted"+str(index1)+"_"+str(index2)+".png",img)
-    return img,path,is_found
+    return img,points_inbetween,is_found
 
 

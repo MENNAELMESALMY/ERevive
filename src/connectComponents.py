@@ -151,11 +151,11 @@ def connectEntities(hulls,hulls_orig,binarizedImg,shapes):
     #cv2.drawContours(bin_copy,hulls,-1,0,1)
     cv2.imwrite("colored_contours.png",colored_contours)
     cv2.imwrite("inner_outer_borders.png",bin_copy)
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(3,3))
-    closing = cv2.morphologyEx(bin_copy, cv2.MORPH_OPEN, kernel ,iterations=1) 
+    #kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(3,3))
+    #closing = cv2.morphologyEx(bin_copy, cv2.MORPH_OPEN, kernel ,iterations=1) 
     #cv2.erode(bin_copy,kernel,iterations=2) #
-    cv2.imwrite("inner_outer_borders_closed.png",closing)
-    bin_copy = (255 - closing)/255
+    #cv2.imwrite("inner_outer_borders_closed.png",closing)
+    bin_copy = (255 - bin_copy)/255
     skeleton = skeletonize(bin_copy)
     skeleton = (255 - skeleton*255).astype(np.uint8).copy()
     sk_copy = skeleton.astype(np.uint8).copy()

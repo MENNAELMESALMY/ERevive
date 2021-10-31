@@ -104,6 +104,17 @@ def check_direct_path(path,entities,orig_entity,img,relations,orig_relation):
     return True
 
 def filter_paths(paths,entities,entity,img,relations,relation):
+    
+    #this loop is just for test
+    k=0
+    for path in paths:
+        k+=1
+        binarized_img_test = img.copy()
+        for point in path:    
+            l,j  = point
+            binarized_img_test[l][j]=150
+        cv.imwrite("before_path_"+str(entity["idx"])+"_"+str(relation["idx"])+"_"+str(k)+".png",binarized_img_test)
+   
     ret_paths=[]
     paths = sorted(paths, key=lambda x: len(x))
     print("len1: ",len(paths))
@@ -111,6 +122,7 @@ def filter_paths(paths,entities,entity,img,relations,relation):
         if i>=len(paths):
             continue
         ret_paths.append(paths[i])
+        
         for j in range(i+1,len(paths)):
             if j>=len(paths):
                 continue
@@ -118,9 +130,19 @@ def filter_paths(paths,entities,entity,img,relations,relation):
             path2 = set(tuple(x) for x in paths[j])
             intersection = path1.intersection(path2)
             shortest = list(path1)
+        
             if len(intersection)/len(shortest)>=0.2:
                 paths.remove(paths[j])
     print("len2: ",len(ret_paths))
+    k=0
+    for path in ret_paths:
+        k+=1
+        binarized_img_test = img.copy()
+        for point in path:    
+            l,j  = point
+            binarized_img_test[l][j]=150
+        cv.imwrite("between_path_"+str(entity["idx"])+"_"+str(relation["idx"])+"_"+str(k)+".png",binarized_img_test)
+   
     for path in ret_paths:
         if(not check_direct_path(path,entities,entity,img,relations,relation)):
             ret_paths.remove(path)
@@ -130,6 +152,7 @@ def filter_paths(paths,entities,entity,img,relations,relation):
     k=0
     for path in ret_paths:
         k+=1
+        binarized_img_test = img.copy()
         for point in path:    
             l,j  = point
             binarized_img_test[l][j]=150
@@ -138,7 +161,7 @@ def filter_paths(paths,entities,entity,img,relations,relation):
 
     
         
-def get_paths(p1,p2,binarized_img,center,contour):
+def get_paths(p1,p2,binarized_img,center,contour,entity):
     #get all paths between the 2 points
     pathed_img = binarized_img.copy()
 
@@ -154,23 +177,31 @@ def get_paths(p1,p2,binarized_img,center,contour):
     rights = points[rights]
     lefts = np.where(points[:,0]<center[0])
     lefts = points[lefts]
+    tops = np.where(points[:,1]<center[1])
+    tops = points[tops]
+    bottoms = np.where(points[:,1]>center[1])
+    bottoms = points[bottoms]
+
     #binarized_img = binarized_img*255
     #binarized_img[center[1]][center[0]] = 150   
     #for point in rights:
     #    binarized_img[point[1]][point[0]] = 150
     max_right = rights[np.argmax(rights[:,0])]
     max_left = lefts[np.argmin(lefts[:,0])]
-    
-    p1s = [max_right,max_left,max_right,max_left]
+    max_top = tops[np.argmax(tops[0,:])]
+    max_bottom = bottoms[np.argmin(bottoms[0,:])]
+
+
+    p1s = [max_right,max_left,max_right,max_left,max_top,max_bottom]
     cv.imwrite("binarized_img_right.jpg",binarized_img)
    
     #if p1[0] < center[0]:
     #    p1s = [p1,p1,p1,p1]
     #binarized_img = binarized_img*255
     paths=[]
-    for i in range(4):
+    for i in range(6):
         global G
-        pathed_img,path,is_found = BFS(p1s[i],p2[0],pathed_img.copy(),i,G)
+        pathed_img,path,is_found = BFS(p1s[i],p2[0],pathed_img.copy(),i,G,contour[0],entity[0])
         print("Bfs_res",is_found)
         if not is_found:
             break
@@ -296,7 +327,7 @@ def detect_participation(relations,edges):
             entity_point = entity["contour"][entity_point]
             #get all paths between the 2 points
             #print("get paths contour: ",relation["contour"])
-            full_partial,paths = get_paths(relation_point,entity_point,edges,relation["bounding_box"],relation["contour"])
+            full_partial,paths = get_paths(relation_point,entity_point,edges,relation["bounding_box"],relation["contour"],entity["contour"])
             print("relation contour: ",len(relation["contour"][0]))
             paths = filter_paths(paths,relation["entities"],entity,edges,relations.values(),relation)
             if(len(paths)==1):

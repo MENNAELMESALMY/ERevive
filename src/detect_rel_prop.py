@@ -127,26 +127,6 @@ def filter_points(contourOrig,binarizedImgOrig,relation=None,entity=None):
     
     return np.array([contour_points])
 
-""" def check_full(paths,relation,img):
-    edges_test = (img.copy())
-    path_1 = paths[0]
-    path_2 = paths[1]
-    index_1 = len(path_1)//2
-    index_2 = len(path_2)//2
-    point_1 = path_1[index_1]
-    point_2 = path_2[index_2]
-    print("P1:",point_1," P2: ",point_2)
-    edges_test[point_1[0]][point_1[1]]=150
-    edges_test[point_2[0]][point_2[1]]=150
-    cv.imwrite("full_test.png",edges_test)
-    dist = math.sqrt((point_1[1]-point_2[1])**2+(point_1[0]-point_2[0])**2)
-    x,y,w,h = relation["bounding_box"] 
-    avg_dist = (w+h)/2
-    print("dist:",dist)
-    print("avg_dist: ",avg_dist)
-    if dist >0.*avg_dist:
-        return False
-    return True """
 
 def detect_participation(relations,edges):
     for relation in relations.values():
@@ -165,7 +145,7 @@ def detect_participation(relations,edges):
             paths = filter_paths(paths,relation["entities"],entity,relations.values(),relation)
             if(len(paths)==1):
                 entity["participation"]="partial"
-            elif(len(paths)==2 and entity.get("participation")!="self"):
+            elif(len(paths)==2):
                 entity["participation"]="full"
 
             entity.pop("relations",None)
@@ -200,13 +180,8 @@ def get_relations(binarizedImg,entities):
 
 
 def cardinality(relations,img):
-    #erase relation contour
-    #getting the rect bounding the relation
-    #erase relation
-    #create window with 3*w , 3*h of relation then erase the paths
     for relation in relations.values():
         x,y,w,h = relation["bounding_box"]
-        print("box: ",x,y,w,h)
         rows = [p[0] for p in relation["contour_cardinality"][0]]
         cols = [p[1] for p in relation["contour_cardinality"][0]]
         img[cols,rows]=255
@@ -233,7 +208,6 @@ def cardinality(relations,img):
         black_after = False
         white = False
         pattern = []
-        print("height:",y+height-1)
         for i in range(y,y+height-1):
             for j in range(x,x+width):
         
@@ -276,7 +250,6 @@ def cardinality(relations,img):
         erased_cols = [p[1] for p in erased_points]
         img[erased_rows,erased_cols]=255 
         cardinality_img = img[y:y+height,x:x+width].copy()
-        #cv.imwrite("card_rel_path_1.png",img)
         relation["cardinality"] = get_relation_cardinality(cardinality_img,relation)
     cv.imwrite("card_rel_path.png",img)
 
@@ -284,16 +257,9 @@ def distance(p1,p2):
     return math.sqrt((p1.x-p2.x)**2+(p1.y-p2.y)**2)
 
 def between(p1,p2,p3):
-    #p1 is entity , p2 is relation , p3 is cardinality
-    #if distance between entity+cardinality , relation+cardinality is close to entity+relation then the cardinality falls between them
     return math.isclose(distance(p1,p3)+distance(p2,p3),distance(p1,p2),rel_tol=0.5)
 
 def get_relation_cardinality(cardinality_img,relation):
-    # Get contours of cardinality_img
-    # If 2 then these are the 2 cardinalities else get the biggest 2 contours
-    # Classify each cardinality
-    # get center of each entity and center of each cardinality then compare the rows and cols ranges
-    # assign the correct cardinality for each entity
     contours = cv.findContours(cardinality_img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)[0]
     cardinalities=[]
     cardinalities_text=[]

@@ -85,8 +85,13 @@ def check_direct_path(path,entities,orig_entity,img,relations,orig_relation):
         contour = entity["contour"][0]
         contour = [[point[0],point[1]] for point in contour]
         #print("len of contour: ",len(contour))
-        set_contour = set(tuple(x) for x in list(contour))
-        #print("len intersection: ",len(set_path.intersection(set_contour)))
+        set_contour = set(tuple([x[1],x[0]]) for x in list(contour))
+        In_Bet_Img = img.copy()
+        for point in set_path:
+            i,j = point
+            In_Bet_Img[int(i)][int(j)] = 150
+        cv.imwrite("direct_entity"+str(entity["idx"])+"_"+".png",In_Bet_Img)
+        print("entity len intersection: ",len(set_path.intersection(set_contour)))
         if len(set_path.intersection(set_contour))!=0:
             return False
     for relation in relations:
@@ -96,9 +101,13 @@ def check_direct_path(path,entities,orig_entity,img,relations,orig_relation):
         print("length:",len(contour))
         contour = [[point[0],point[1]] for point in contour]
         #print("len of contour: ",len(contour))
-        set_contour = set(tuple(x) for x in contour)
-        if orig_relation["idx"]==7:
-            print("len relation intersection: ",len(set_path.intersection(set_contour)))
+        set_contour = set(tuple([x[1],x[0]]) for x in contour)
+        In_Bet_Img = img.copy()
+        for point in set_path:
+            i,j = point
+            In_Bet_Img[int(i)][int(j)] = 150
+        cv.imwrite("direct_relation"+str(relation["idx"])+"_"+".png",In_Bet_Img)
+        print(str(relation["idx"])+"_relation len intersection: ",len(set_path.intersection(set_contour)))
         if len(set_path.intersection(set_contour))!=0:
             return False
     return True
@@ -142,22 +151,22 @@ def filter_paths(paths,entities,entity,img,relations,relation):
             l,j  = point
             binarized_img_test[l][j]=150
         cv.imwrite("between_path_"+str(entity["idx"])+"_"+str(relation["idx"])+"_"+str(k)+".png",binarized_img_test)
-   
+    final_paths=[]
     for path in ret_paths:
-        if(not check_direct_path(path,entities,entity,img,relations,relation)):
-            ret_paths.remove(path)
+        if(check_direct_path(path,entities,entity,img,relations,relation)):
+            final_paths.append(path)
     print("len3: ",len(ret_paths))
     binarized_img_test = img.copy()
     #this loop is just for test
     k=0
-    for path in ret_paths:
+    for path in final_paths:
         k+=1
         binarized_img_test = img.copy()
         for point in path:    
             l,j  = point
             binarized_img_test[l][j]=150
         cv.imwrite("final_path_"+str(entity["idx"])+"_"+str(relation["idx"])+"_"+str(k)+".png",binarized_img_test)
-    return ret_paths
+    return final_paths
 
     
         

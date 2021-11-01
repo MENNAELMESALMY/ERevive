@@ -2,6 +2,7 @@ import numpy as np
 import cv2
 from math import sqrt
 from scipy import stats
+from ContourDetection import *
 
 #remove lines function
 def FloodFromCorners(im_th,debug=False):
@@ -46,38 +47,51 @@ def removeOutliers(ContourList,Area,hImg,wImg):
     for i,c in  enumerate(ContourList):
         x,y,w,h = cv2.boundingRect(c)
         
-        accepedArea = h <= hImg/2.5 and w <= wImg/2.5 and h>7 and w>=20 #and h*w > normalArea
+        accepedArea = h <= hImg/3 and w <= wImg/3 and h>7 and w>=24 #and h*w > normalArea
         #accepedRatio = w/h >= 0.5 and w/h <= 4
+        if not accepedArea:
+            print(w,accepedArea)
+            continue
         if(z[i]<=3):
-            print(wImg,w)
             # if(not Area):
             #     print(w/h)
-            if((Area and accepedArea and zH[i] <= 4 and zW[i] <= 4)or (not Area)):
+            if((Area and zH[i] <= 4 and zW[i] <= 4)or (not Area)):
                 filtered.append(c)
     return filtered
     
-    
+def removeNoWords(contours,cnt_img):
+    cnt_filtered = []
+    for i,c in enumerate(contours):
+        x,y,w,h = cv2.boundingRect(c)
+        xl = max(0,x-10)
+        xr = min(x+w+10,cnt_img.shape[1])
+        yup = max(0,y-10)
+        yd = min(y+h+10,cnt_img.shape[0])
+
+
 
 
 ######################cv contours#########
-def getClosedShapes(im_filled,debug=False):
+def getClosedShapes(im_filled,binary_img,debug=False):
     hImg, wImg = im_filled.shape
     contours_cv, hierarchy = cv2.findContours(im_filled, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    im_empty2 = np.ones((hImg, wImg), np.uint8) * 255
+    cv2.drawContours(im_empty2, contours_cv, -1,0, 1)
     hierarchy = hierarchy[0]
+    #_,contours_cv = seperateShapes(contours_cv ,im_empty2 ,binary_img)
     #[Next, Previous, First_Child, Parent]
     cnt_hull = [cv2.convexHull(cnt,False) for cnt in contours_cv]
 
-    print('0:',len(cnt_hull))
+    # print('0:',len(cnt_hull))
+    #cnt_hull = [cnt for cnt,heir in zip(cnt_hull,hierarchy) if heir[3] == -1]
+
     cnt_hull = [cnt for cnt,heir in zip(cnt_hull,hierarchy) if heir[3] == -1]
 
-    im_empty2 = np.ones((hImg, wImg), np.uint8) * 255
-    cv2.drawContours(im_empty2, contours_cv, -1,0, 1)
-
-    print('1:',len(cnt_hull))
+    # print('1:',len(cnt_hull))
     cnt_hull = removeOutliers(cnt_hull,True,hImg,wImg) #outliers by area
-    print('2:',len(cnt_hull))
+    # print('2:',len(cnt_hull))
     cnt_hull = removeOutliers(cnt_hull,False,hImg,wImg) #outliers by aspect ratio
-    print('3:',len(cnt_hull))
+    # print('3:',len(cnt_hull))
 
 
     im_empty = np.ones((hImg, wImg), np.uint8) * 255
@@ -93,9 +107,10 @@ def getClosedShapes(im_filled,debug=False):
 #handling opened contours
 
 # find center of gravity from the moments:
-def scale_contours(contours, scale):
+def scale_contours(contours_copy, scale):
     """Shrinks or grows an array of contours by the given factor (float). 
     Returns the resized array of contours"""
+    contours = contours_copy.copy()
     for idx,contour in enumerate(contours):
         moments = cv2.moments(contour)
         midX = int(round(moments["m10"] / moments["m00"]))

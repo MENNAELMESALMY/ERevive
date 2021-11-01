@@ -1,7 +1,7 @@
 from collections import deque
 import cv2 as cv
 directions=[[1,0],[0,1],[0,-1],[-1,0],[-1,-1],[1,1],[-1,1],[1,-1]]
-def BFS(start,end,img,index1,index2,relation,entity):
+def BFS(start,end,img,relation,entity):
     src = [start[1],start[0]]
     dst=[end[1],end[0]]
     q = deque()
@@ -26,17 +26,12 @@ def BFS(start,end,img,index1,index2,relation,entity):
                 npath.append(neighbour)
                 q.append(npath)
                 visited[str(neighbour)]=True
-    k=0
     if not is_found:
         path=[]
         points_inbetween=[]
     else:
-        #In_Bet_Img = img.copy()
-   
         r =set(tuple([x[1],x[0]]) for x in list(relation))
         e =set(tuple([x[1],x[0]]) for x in list(entity))
-        #for point in relation:
-        #    In_Bet_Img[point[1]][point[0]]=0
         points_in_contours = r.union(e)
         actual_path = set(tuple(x) for x in list(path))
         points_inbetween = actual_path.difference(points_in_contours)
@@ -44,11 +39,6 @@ def BFS(start,end,img,index1,index2,relation,entity):
         k=len(points_inbetween)//2
         i,j = points_inbetween[k]
         img[int(i)][int(j)] = 0
-        #for point in points_inbetween:
-        #    i,j = point
-        #    In_Bet_Img[int(i)][int(j)] = 150
-        #cv.imwrite("in_cutted"+str(index1)+"_"+str(index2)+".png",In_Bet_Img)
-        cv.imwrite("cutted"+str(index1)+"_"+str(index2)+".png",img)
     return img,points_inbetween,is_found
 
 

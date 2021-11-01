@@ -46,7 +46,7 @@ def removeOutliers(ContourList,Area,hImg,wImg):
     for i,c in  enumerate(ContourList):
         x,y,w,h = cv2.boundingRect(c)
         
-        accepedArea = h <= hImg/2.5 and w <= wImg/2.5 and h>7 and w>=20 #and h*w > normalArea
+        accepedArea = h <= hImg/2.5 and w <= wImg/2.5 and h>7 and w>=24 #and h*w > normalArea
         #accepedRatio = w/h >= 0.5 and w/h <= 4
         if(z[i]<=3):
             print(wImg,w)

@@ -85,6 +85,8 @@ def removeOverlappedContoursAndDrawThem(filtered_contours,centers,bounding_boxes
     return img_c , shapes_img
 
 def testContour(text_img,c):
+    if c==33:
+        return False
     h,w = text_img.shape
     
     proj_img = 255* np.ones((h,w))
@@ -106,7 +108,7 @@ def testContour(text_img,c):
                 print('counter',counter,h)
                 return True
             counter =0
-    return False
+    return counter >= (h)//10
 
 def seperateShapes(contours ,cnt_img ,binary_img):
    

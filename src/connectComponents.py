@@ -2,7 +2,6 @@ import cv2
 from numpy.core.defchararray import count
 from skimage.morphology import skeletonize
 import numpy as np
-from removeLines import *
 from math import sqrt
 #(y,x)
 neighbors =[
@@ -21,13 +20,10 @@ def removeText():
    
 def findPixel(box,img,colored_im,idx):
     x,y,w,h=box
-    hImg,wImg = img.shape
-    for i in range(y+2,min(y+h,hImg)):
-        for j in range(x+2,min(x+w,wImg)):
+    for i in range(y+2,y+h):
+        for j in range(x+2,x+w):
             #b,g,r = colored_im[i,j]
             if(img[i,j]==0 and sum(colored_im[i,j]) == idx):
-                #print(f"found point {idx}")
-
                 return i,j
     print("cannot find any starting point")
     return 0,0
@@ -162,10 +158,36 @@ def connectEntities(hulls,hulls_orig,binarizedImg,shapes):
     bin_copy = (255 - bin_copy)/255
     skeleton = skeletonize(bin_copy)
     skeleton = (255 - skeleton*255).astype(np.uint8).copy()
-    c=scale_contours(hulls_orig,0.9)
-    cv2.drawContours(skeleton,c,-1,(255),-1)
     sk_copy = skeleton.astype(np.uint8).copy()
+    #cv2.drawContours(skeleton,hulls,-1,0,1)
+    # for x,y,w,h in boxes:
+    #     cv2.rectangle(skeleton,(x,y),(x+w,y+h),0,1) #for visualization
 
+    #start point of BFS
+    #attribute or relation 
+    #endpoint :=>reached relation or attribute
+    #          =>endpoint, (point,source)
+    #          =>visited,loop 
+    #  1  1  2
+    #  1  0  2 
+    #  1  1  1
+
+    #  1  1  2
+    #  1  0  2 
+    #  1  1  1
+
+    # 0    0   0   0   0   0   0
+    # 0    0   0   0   0   0   0
+    # 0    0   0   0   0   0   0
+
+    # 0    0   0   ddd  0  0   0
+    # 0    0   0    0   0  0   0
+    # 0    0   0    0   0  0   0
+    # 0    0   0    0   0  0   0
+
+    #deadend
+    #Case1: 2 
+    #Case2: 2 near deadends  5 
     cv2.imwrite("sk.png",skeleton)
 
     allDeadEnds = []
@@ -188,8 +210,8 @@ def connectEntities(hulls,hulls_orig,binarizedImg,shapes):
         y,x  = findPixel(boxes[i],skeleton,colored_contours,i)
         colored_contours_labelled[y,x]=(0,0,255)
         deadEnds,foundShapes = BFS(y,x,colored_contours,skeleton,i,colored_contours_labelled,foundVis)
-        # print(f"shape {i} found {foundShapes}")
-        # print(f"shape {i} deadends {deadEnds}")
+        print(f"shape {i} found {foundShapes}")
+        print(f"shape {i} deadends {deadEnds}")
         if len(foundShapes):
             foundVis[i]=1
         allDeadEnds += deadEnds
@@ -219,16 +241,16 @@ def connectEntities(hulls,hulls_orig,binarizedImg,shapes):
             y,x  = findPixel(boxes[i],sk_copy,colored_contours,i)
             colored_contours_labelled[y,x]=(0,0,255)
             deadEnds,foundShapes = BFS(y,x,colored_contours,sk_copy,i,colored_contours_labelled,foundVis)
-            # print (f"shape {i} {s} found {foundShapes}")
-            # print(f"shape {i} {s} deadends {deadEnds}")
+            print(f"shape {i} {s} found {foundShapes}")
+            print(f"shape {i} {s} deadends {deadEnds}")
             foundShapesEntities.append(  
                 {
                     "idx":i,
                     "name":'x',
-                    "contour":len(hulls_orig[i]),
+                    "contour":hulls_orig[i],
                     "bounding_box": boxes[i],
-                    "relations":[{"idx":r,"contour":len(hulls_orig[r]),"bounding_box":boxes[r],"attributes":[]} for r in foundShapes if shapes[r]=='diamond'],
-                    "attributes":[{"idx":a,"contour":len(hulls_orig[a]),"bounding_box":boxes[a],"children":[]} for a in foundShapes if shapes[a]=='oval']
+                    "relations":[{"idx":r,"contour":hulls_orig[r],"bounding_box":boxes[r],"attributes":[]} for r in foundShapes if shapes[r]=='diamond'],
+                    "attributes":[{"idx":a,"contour":hulls_orig[a],"bounding_box":boxes[a],"children":[]} for a in foundShapes if shapes[a]=='oval']
                 })
 
     ######################format parent atrributes
@@ -246,7 +268,7 @@ def connectEntities(hulls,hulls_orig,binarizedImg,shapes):
             deadEnds,foundShapes = BFS(y,x,colored_contours,sk_copy,i,colored_contours_labelled,foundVis)
            # print(f"relation {i} found {foundShapes}")
             foundShapesEntities[idxf]['relations'][idxr]['attributes'] += [
-            {"idx":a,"contour":len(hulls_orig[a]),"bounding_box":boxes[a],"children":[]} for a in foundShapes if shapes[a]=='oval']
+            {"idx":a,"contour":hulls_orig[a],"bounding_box":boxes[a],"children":[]} for a in foundShapes if shapes[a]=='oval']
         for idxa,a in enumerate(f['attributes']):
             i = a['idx']
             y,x  = findPixel(boxes[i],sk_copy,colored_contours,i)
@@ -254,11 +276,11 @@ def connectEntities(hulls,hulls_orig,binarizedImg,shapes):
             deadEnds,foundShapes = BFS(y,x,colored_contours,sk_copy,i,colored_contours_labelled,foundVis)
            # print(f"att {i} found {foundShapes}")
             foundShapesEntities[idxf]['attributes'][idxa]['children'] += [
-                {"idx":a,"contour":len(hulls_orig[a]),"bounding_box":boxes[a],"children":[]} for a in foundShapes if shapes[a]=='oval']
+                {"idx":a,"contour":hulls_orig[a],"bounding_box":boxes[a],"children":[]} for a in foundShapes if shapes[a]=='oval']
 
     #################### format children attribute
 
-    print(foundShapesEntities)
+    ##print(foundShapesEntities)
 
     cv2.imwrite("sk6.png",sk_copy)
     for i,f in enumerate(foundVis):

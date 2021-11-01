@@ -92,8 +92,10 @@ def testContour(text_img,c):
     proj = np.sum(text_img,1)
     for row in range(h):
         cv2.line(proj_img, (0,row), (int(proj[row]),row), 0, 1)
+    
     x = w//18
     counter = 0
+    found=0
     cv2.imwrite("proj/"+str(c)+"t.png",text_img*255)
     cv2.imwrite("proj/"+str(c)+".png",proj_img)
     for y in range(h):
@@ -101,13 +103,13 @@ def testContour(text_img,c):
             counter += 1
         else:
             if counter >= (h)//10:
-                if c==33:
-                    print("33",counter,h,x,w)
+                print('counter',counter,h)
                 return True
             counter =0
-    return counter>= (h//10)
+    return False
 
 def seperateShapes(contours ,cnt_img ,binary_img):
+   
     text_img = 255 - 255*np.ones((cnt_img.shape[0],cnt_img.shape[1],3), np.uint8)
     cv2.imwrite('text_img_test.png',text_img)
     binary_img = 255 - binary_img

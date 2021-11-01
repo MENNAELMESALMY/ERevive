@@ -1,0 +1,87 @@
+{
+    "(425, 670, 115, 115)":{
+       "entities":[
+          {
+             "idx":11,
+             "name":"x",
+             "participation":"partial"
+          },
+          {
+             "idx":12,
+             "name":"x",
+             "participation":"full"
+          }
+       ],
+       "idx":7
+    },
+    "(432, 446, 115, 115)":{
+       "entities":[
+          {
+             "idx":11,
+             "name":"x",
+             "participation":"partial"
+          },
+          {
+             "idx":12,
+             "name":"x",
+             "participation":"full"
+          }
+       ],
+       "idx":16
+    },
+    "(636, 303, 115, 115)":{
+       "entities":[
+          {
+             "idx":11,
+             "name":"x",
+             "participation":"partial"
+          },
+          {
+             "idx":24,
+             "name":"x",
+             "participation":"full"
+          }
+       ],
+       "idx":19
+    },
+    "(221, 771, 143, 144)":{
+       "entities":[
+          {
+             "idx":12,
+             "name":"x",
+             "participation":"full"
+          }
+       ],
+       "idx":2
+    },
+    "(131, 274, 159, 153)":{
+       "entities":[
+          {
+             "idx":12,
+             "name":"x",
+             "participation":"full"
+          },
+          {
+             "idx":25,
+             "name":"x",
+             "participation":"full"
+          }
+       ],
+       "idx":20
+    },
+    "(392, 208, 114, 114)":{
+       "entities":[
+          {
+             "idx":12,
+             "name":"x",
+             "participation":"full"
+          },
+          {
+             "idx":24,
+             "name":"x",
+             "participation":"full"
+          }
+       ],
+       "idx":21
+    }
+ }

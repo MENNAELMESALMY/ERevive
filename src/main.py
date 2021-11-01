@@ -55,7 +55,15 @@ shapes = detect_shapes(shapes_no)
 weak = detectWeak(shadowFreeImg,hulls,shapes)
 connectedComponents,skeleton = connectEntities(scale_contours(finalContours,1.17),finalContours,binarizedImg,shapes)
 relations = get_relations(skeleton,connectedComponents)
+for relation in relations.values():
+    relation.pop("contour",None)
+    relation.pop("contour_cardinality",None)
+    relation.pop("paths",None)
+    for entity in relation["entities"]:
+        entity.pop("contour",None)
+        entity.pop("attributes",None)
 
+print(relations)
 #connectEntities(finalContours,binarizedImg,shapes)
 
 

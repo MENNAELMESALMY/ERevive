@@ -176,6 +176,7 @@ def get_relations(binarizedImg,entities):
             relations[bounding_box_str]["entities"].append(entity)
             relations[bounding_box_str].update({
                 "idx":relation["idx"],
+                "name":relation["name"],
                 "contour":relation["contour"],
                 "bounding_box":relation["bounding_box"]
             })

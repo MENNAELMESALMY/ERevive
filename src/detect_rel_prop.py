@@ -186,6 +186,7 @@ def get_relations(binarizedImg,entities):
 
 
 def cardinality(relations,img):
+    count = 0
     for relation in relations.values():
         x,y,w,h = relation["bounding_box"]
         rows = [p[0] for p in relation["contour_cardinality"][0]]
@@ -205,59 +206,15 @@ def cardinality(relations,img):
             x=0
         if y<0:
             y=0
-        if x+width>img.shape[0]:
-            width = img.shape[0]-x
-        if y+height>img.shape[1]:
-            height = img.shape[1]-y
-        erased_points=[]
-        black_before = False
-        black_after = False
-        white = False
-        pattern = []
-        for i in range(y,y+height-1):
-            for j in range(x,x+width):
-        
-                if img[j][i]==0 and black_after==False:
-                    black_before = True
-                    pattern.append([j,i])
-                if img[j][i]==255 and img[j][i+1]==0 and black_before :
-                    white = True
-                if img[j][i]==0 and white and black_before :
-                    black_after = True
-                    pattern.append([j,i])
-                if black_before and white and black_after:
-                    erased_points.extend(pattern)
-                    pattern=[]
-                    black_before = False
-                    black_after = False
-                    white = False
-        black_before = False
-        black_after = False
-        white = False
-        pattern = []
-        for i in range(x,x+width):
-            for j in range(y,y+height-1):
-        
-                if img[j][i]==0 and black_after==False:
-                    black_before = True
-                    pattern.append([j,i])
-                if img[j][i]==255 and img[j+1][i]==0 and black_before :
-                    white = True
-                if img[j][i]==0 and white and black_before :
-                    black_after = True
-                    pattern.append([j,i])
-                if black_before and white and black_after:
-                    erased_points.extend(pattern)
-                    pattern=[]
-                    black_before = False
-                    black_after = False
-                    white = False
-        erased_rows = [p[0] for p in erased_points]
-        erased_cols = [p[1] for p in erased_points]
-        img[erased_rows,erased_cols]=255 
-        cardinality_img = img[y:y+height,x:x+width].copy()
-        relation["cardinality"] = get_relation_cardinality(cardinality_img,relation)
-    cv.imwrite("card_rel_path.png",img)
+        if x+width>img.shape[1]:
+            width = img.shape[1]-x
+        if y+height>img.shape[0]:
+            height = img.shape[0]-y
+        cardinality_img = img.copy()
+        #cardinality_img = img[y:y+height,x:x+width].copy()
+        #relation["cardinality"] = get_relation_cardinality(cardinality_img,relation)
+        cv.imwrite("card_rel_path"+ str(count) + ".png",cardinality_img)
+        count+=1
 
 def distance(p1,p2):
     return math.sqrt((p1.x-p2.x)**2+(p1.y-p2.y)**2)
@@ -266,14 +223,16 @@ def between(p1,p2,p3):
     return math.isclose(distance(p1,p3)+distance(p2,p3),distance(p1,p2),rel_tol=0.5)
 
 def get_relation_cardinality(cardinality_img,relation):
+    cv.imwrite("card_rel_path.png",cardinality_img)
     contours = cv.findContours(cardinality_img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)[0]
     cardinalities=[]
     cardinalities_text=[]
     number_of_cards = len(relation["entities"])
-    if len(contours<number_of_cards):
+    
+    if len(contours) < number_of_cards:
         print("Error in detecting cardinalities")
         return
-    elif len(contours==number_of_cards):
+    elif len(contours)==number_of_cards:
         cardinalities.extend(contours)
     else:
         contours = sorted(contours, key=lambda x: cv.contourArea(x))
@@ -290,15 +249,59 @@ def get_relation_cardinality(cardinality_img,relation):
             if between(center_relation,center_entity,center_cardinality):
                 entity["cardinality"]=cardinalities_text[i]
                 break
-
+    
             
 def classify_cardinalities(cardinalities):
     return ["N","1"]
 
 
 
-
-
+#   erased_points=[]
+#         black_before = False
+#         black_after = False
+#         white = False
+#         pattern = []
+#         erased_rows = [p[0] for p in erased_points]
+#         erased_cols = [p[1] for p in erased_points]
+#         img[erased_rows,erased_cols]=255 
+# for j in range(y,y+height):
+        #     for i in range(x,x+width-1):
+        
+        #         if img[j][i]==0 and black_after==False:
+        #             black_before = True
+        #             pattern.append([j,i])
+        #         if img[j][i]==255 and img[j][i+1]==0 and black_before :
+        #             white = True
+        #         if img[j][i]==0 and white and black_before :
+        #             black_after = True
+        #             pattern.append([j,i])
+        #         if black_before and white and black_after:
+        #             erased_points.extend(pattern)
+        #             pattern=[]
+        #             black_before = False
+        #             black_after = False
+        #             white = False
+        # black_before = False
+        # black_after = False
+        # white = False
+        # pattern = []
+        # for i in range(x,x+width):
+        #     for j in range(y,y+height-1):
+        
+        #         if img[j][i]==0 and black_after==False:
+        #             black_before = True
+        #             pattern.append([j,i])
+        #         if img[j][i]==255 and img[j+1][i]==0 and black_before :
+        #             white = True
+        #         if img[j][i]==0 and white and black_before :
+        #             black_after = True
+        #             pattern.append([j,i])
+        #         if black_before and white and black_after:
+        #             erased_points.extend(pattern)
+        #             pattern=[]
+        #             black_before = False
+        #             black_after = False
+        #             white = False
 
 
 

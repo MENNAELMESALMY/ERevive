@@ -66,15 +66,7 @@ print(textArr)
 print(isKey)
 connectedComponents,skeleton = connectEntities(scale_contours(finalContours[:],1.17),finalContours,binarizedImg,shapes,textArr)
 relations = get_relations(skeleton,connectedComponents)
-for relation in relations.values():
-    relation.pop("contour",None)
-    relation.pop("contour_cardinality",None)
-    relation.pop("paths",None)
-    for entity in relation["entities"]:
-        entity.pop("contour",None)
-        entity.pop("attributes",None)
-
-print(relations)
+cardinality(relations,binarizedImg)
 
 #connectEntities(finalContours,binarizedImg,shapes)
 

@@ -11,10 +11,11 @@ import os
 
 
 
-img_dir ="24.png"
+img_dir ="31.png"
 
 dirs = os.listdir('input')
 #for idx,img_dir in enumerate(dirs):
+print("starting..................",img_dir)
 pre = img_dir.split('.')[0]
 img_dir = 'input/'+ img_dir
 
@@ -35,25 +36,31 @@ opendContourdImg,opened_contours = getOpenedContours(image_result.copy(),filtere
 allContoursImg = 255 - ((255 - opendContourdImg ) + (255 - contourdImg))
 allContours = filtered_contoures + opened_contours
 im = np.ones(binarizedImg.shape, np.uint8) * 255
-hulls=[cv2.convexHull(c, False) for c in allContours]
-hulls = removeOutliers(hulls,True,hImg,wImg) #outliers by area
-hulls = removeOutliers(hulls,False,hImg,wImg) #outliers by aspect ratio
 
-hulls = scale_contours(hulls,0.95)
-hulls = [h for h in hulls if not isOverlapped(h,hulls)]
-getDerived(image_result.copy(),hulls.copy())
 
-cv2.drawContours(im,hulls,-1, 0, 1 )
+allContours,_ = removeOutliers(allContours,True,hImg,wImg,allContours) #outliers by area
+allContours,_ = removeOutliers(allContours,False,hImg,wImg,allContours) #outliers by aspect ratio
+
+allContours = scale_contours(allContours,0.95)
+allContours = [h for h in allContours if not isOverlapped(h,allContours)]
+getDerived(image_result.copy(),allContours.copy())
+
+cv2.drawContours(im,allContours,-1, 0, 1 )
 cv2.imwrite("final_out_shapes/im_hull"+pre+".png",im)
 ##############################################################
-shapes_no,finalContours = seperateShapes(hulls,allContoursImg, binarizedImg)
+
+finalContours = checkInside(allContours,binarizedImg)
+finalContours =[ cv2.convexHull(c,False) for c in finalContours]
+
+
+shapes_no = seperateShapes(finalContours,allContoursImg, binarizedImg)
 im = np.ones(binarizedImg.shape, np.uint8) * 255
 cv2.drawContours(im,finalContours,-1, 0, 1 )
 cv2.imwrite("final_out_shapes/im_final"+pre+".png",im)
 print(shapes_no)
 shapes = detect_shapes(shapes_no)
-weak = detectWeak(shadowFreeImg,hulls,shapes)
-connectedComponents,skeleton = connectEntities(scale_contours(finalContours,1.17),finalContours,binarizedImg,shapes)
+#weak = detectWeak(shadowFreeImg,hulls,shapes)
+connectedComponents,skeleton = connectEntities(scale_contours(finalContours[:],1.17),finalContours,binarizedImg,shapes)
 relations = get_relations(skeleton,connectedComponents)
 for relation in relations.values():
     relation.pop("contour",None)

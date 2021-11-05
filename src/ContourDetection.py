@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+from numpy.core.fromnumeric import partition
 
 
 
@@ -85,27 +86,27 @@ def removeOverlappedContoursAndDrawThem(filtered_contours,centers,bounding_boxes
     return img_c , shapes_img
 
 def testContour(text_img,c):
-    if c==33:
-        return False
     h,w = text_img.shape
     
+    if h<=9 or w<=24:
+        return False
+    #print(c,w,h)
     proj_img = 255* np.ones((h,w))
     text_img = text_img/255
     proj = np.sum(text_img,1)
     for row in range(h):
         cv2.line(proj_img, (0,row), (int(proj[row]),row), 0, 1)
     
-    x = w//18
+    x = w//19
     counter = 0
-    found=0
     cv2.imwrite("proj/"+str(c)+"t.png",text_img*255)
     cv2.imwrite("proj/"+str(c)+".png",proj_img)
     for y in range(h):
         if proj_img[y][x] == 0:
             counter += 1
         else:
-            if counter >= (h)//10:
-                print('counter',counter,h)
+            if counter >= (h)//12:
+                #print('counter',counter,h)
                 return True
             counter =0
     return counter >= (h)//10
@@ -120,7 +121,6 @@ def seperateShapes(contours ,cnt_img ,binary_img):
     cv2.imwrite('text_img_2_test.png',img)
     
     count = 0
-    finalContours = []
     for cnt in contours:
         x,y,w,h = cv2.boundingRect(cnt)
         xl = max(0,x-10)
@@ -129,18 +129,41 @@ def seperateShapes(contours ,cnt_img ,binary_img):
         yd = min(y+h+10,cnt_img.shape[0])
         #seperate shape
         shape_img = 255 * np.ones((cnt_img.shape[0],cnt_img.shape[1],3), np.uint8)
+
         cv2.drawContours(shape_img,[cnt],-1,(0,0,0),2)
         cv2.drawContours(text_img,[cnt], -1, (255,255,255), -1)
       
         text_img[ yup:yd,xl:xr ,:] = cv2.bitwise_and(text_img[yup:yd ,xl:xr,:] , img[yup:yd, xl:xr ,:])
-        if testContour(text_img[y:y+h, x:x+w ,0],count):
-            finalContours.append(cnt)
-            #seperate text
-            cv2.imwrite("output/text"+str(count)+'.png',text_img[y:y+h, x:x+w ,:]) #write output text image
-            cv2.imwrite("output/shape"+str(count)+'.png',shape_img[yup:yd,xl:xr ,:]) #write output shapes image
-            count+=1
+        cv2.imwrite("output/text"+str(count)+'.png',text_img[y:y+h, x:x+w ,:]) #write output text image
+        cv2.imwrite("output/shape"+str(count)+'.png',shape_img[yup:yd,xl:xr ,:]) #write output shapes image
+        count+=1
 
    
     cv2.imwrite("text_img.png",text_img)
-    return count,finalContours
+    return count
+
+def checkInside(contours ,binary_img):
+    binary_img = np.uint8(binary_img)
+    
+    count = 0
+    finalContours = []
+    for cnt in contours:
+        x,y,w,h = cv2.boundingRect(cnt)
+        #seperate shape
+        inside_cnt = np.zeros(binary_img.shape, np.uint8)
+        cv2.drawContours(inside_cnt,[cnt], -1, 255, -1)
+        inside_cnt_inv = 255 - inside_cnt
+
+        inside_cnt = cv2.bitwise_and(inside_cnt, binary_img)
+        inside_cnt = cv2.bitwise_or(inside_cnt_inv, inside_cnt)
+
+
+        # cv2.imwrite("proj/demo"+str(count)+'.png',inside_cnt) #write output text image
+        inside_cnt = 255 - inside_cnt
+
+        if testContour(inside_cnt[y:y+h, x:x+w],count):
+            finalContours.append(cnt)
+            #seperate text
+        count+=1
+    return finalContours
     

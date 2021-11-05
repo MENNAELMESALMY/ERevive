@@ -30,8 +30,6 @@ def keyDetection(image):
     if keyFound == True:
         x,y,w,h = cv2.boundingRect(contours[lineIndex])
         image[y:y+h,x:x+w] = 255
-        io.imshow(image)
-        io.show()
     return keyFound,image
 
 

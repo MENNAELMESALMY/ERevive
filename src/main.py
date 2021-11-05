@@ -11,7 +11,7 @@ import os
 
 
 
-img_dir ="31.png"
+img_dir ="24.png"
 
 dirs = os.listdir('input')
 #for idx,img_dir in enumerate(dirs):

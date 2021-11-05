@@ -3,7 +3,7 @@ import cv2 as cv
 import math
 from skimage.morphology import dilation
 from path_points import *
-
+from utility import fillHole
 def check_direct_path(path,entities,orig_entity,relations,orig_relation):
     set_path =set(tuple(x) for x in path)
     for entity in entities:
@@ -82,16 +82,7 @@ def get_paths(p2,binarized_img,center,contour,entity):
     return paths
 
 
-def fillHole(img):
-    im_th = img
-    im_floodfill = im_th.copy()
-    h, w = im_th.shape[:2]
-    mask = np.zeros((h+2, w+2), np.uint8)
-    cv.floodFill(im_floodfill, mask, (0, 0), 255)
-    im_floodfill_inv = cv.bitwise_not(im_floodfill)
-    im_out = im_th | im_floodfill_inv
-    smoothed_img = cv.medianBlur(im_out,7)
-    return smoothed_img
+
 def get_contour(img):
     chull = fillHole(img)
     contours = cv.findContours(chull, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)[0]

@@ -6,6 +6,7 @@ from detection.shapes_detection import detect_shapes
 from detectWeak import *
 from connectComponents import *
 from detect_rel_prop import *
+from OCR import *
 import cv2
 import os
 
@@ -71,6 +72,9 @@ for relation in relations.values():
         entity.pop("attributes",None)
 
 print(relations)
+textArr,isKey = OCR()
+print(textArr)
+print(isKey)
 #connectEntities(finalContours,binarizedImg,shapes)
 
 

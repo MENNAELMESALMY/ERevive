@@ -24,14 +24,22 @@ def check_direct_path(path,entities,orig_entity,relations,orig_relation):
             return False
     return True
 
-def filter_paths(paths,entities,entity,relations,relation):
+def filter_paths(paths,entities,entity,relations,relation,img):
     ret_paths=[]
     paths = sorted(paths, key=lambda x: len(x))
+
+    k=0
+    for path in paths:
+        empty = img.copy()
+        for point in path:
+            empty[point[0]][point[1]]=150
+        cv.imwrite("path_bef_"+str(entity["idx"])+"_"+str(relation["idx"])+"_"+str(k)+".png",empty)
+        k+=1
+    false_indicies=[]
+    ret_paths=[]
     for i in range(0,len(paths)):
-        if i>=len(paths):
-            continue
-        ret_paths.append(paths[i])
-        
+        if not i in false_indicies:
+            ret_paths.append(paths[i])        
         for j in range(i+1,len(paths)):
             if j>=len(paths):
                 continue
@@ -39,10 +47,16 @@ def filter_paths(paths,entities,entity,relations,relation):
             path2 = set(tuple(x) for x in paths[j])
             intersection = path1.intersection(path2)
             shortest = list(path1)
-        
-            if len(intersection)/len(shortest)>=0.2:
-                paths.remove(paths[j])
-  
+            if len(intersection)/len(shortest)>=0.5:
+                false_indicies.append(j)
+
+    k=0
+    for path in ret_paths:
+        empty = img.copy()
+        for point in path:
+            empty[point[0]][point[1]]=150
+        cv.imwrite("path_between_"+str(entity["idx"])+"_"+str(relation["idx"])+"_"+str(k)+".png",empty)
+        k+=1
     final_paths=[]
     for path in ret_paths:
         if(check_direct_path(path,entities,entity,relations,relation)):
@@ -51,7 +65,7 @@ def filter_paths(paths,entities,entity,relations,relation):
 
     
         
-def get_paths(p2,binarized_img,center,contour,entity):
+def get_paths(p2,binarized_img,center,contour,entity,r,e):
     pathed_img = binarized_img.copy()    
     points = contour[0]
     min_x = np.min(points[:,0])
@@ -74,7 +88,7 @@ def get_paths(p2,binarized_img,center,contour,entity):
     p1s = [max_right,max_left,max_right,max_left,max_top,max_bottom]
     paths=[]
     for i in range(6):
-        pathed_img,path,is_found = BFS(p1s[i],p2[0],pathed_img.copy(),contour[0],entity[0])
+        pathed_img,path,is_found = BFS(p1s[i],p2[0],pathed_img.copy(),contour[0],entity[0],r,e,i)
         if not is_found:
             break
         paths.append(path)
@@ -132,8 +146,8 @@ def detect_participation(relations,edges):
             entity_point = np.random.randint(0,len(entity["contour"]))
             entity_point = entity["contour"][entity_point]
 
-            paths = get_paths(entity_point,edges,relation["bounding_box"],relation["contour"],entity["contour"])
-            paths = filter_paths(paths,relation["entities"],entity,relations.values(),relation)
+            paths = get_paths(entity_point,edges,relation["bounding_box"],relation["contour"],entity["contour"],relation["idx"],entity["idx"])
+            paths = filter_paths(paths,relation["entities"],entity,relations.values(),relation,edges)
             if(len(paths)==1):
                 entity["participation"]="partial"
             elif(len(paths)==2):

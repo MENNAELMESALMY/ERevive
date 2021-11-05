@@ -1,5 +1,17 @@
 from collections import deque
 import cv2 as cv
+import numpy as np
+from utility import fillHole
+from skimage.morphology import opening,erosion,dilation
+def enhance_contour(img,contour):
+    empty_img = np.zeros(img.shape,np.uint8)
+    cv.drawContours(empty_img, [contour], -1, 255,  cv.FILLED)
+    empty_img = opening(empty_img,np.ones((3,3),np.uint8))
+    actual_contour = np.where(empty_img==255)
+    actual_contour = list(actual_contour)
+    actual_contour.reverse()
+    contour = list(zip(*actual_contour))
+    return contour
 directions=[[1,0],[0,1],[0,-1],[-1,0],[-1,-1],[1,1],[-1,1],[1,-1]]
 def BFS(start,end,img,relation,entity):
     src = [start[1],start[0]]
@@ -30,6 +42,8 @@ def BFS(start,end,img,relation,entity):
         path=[]
         points_inbetween=[]
     else:
+        relation = enhance_contour(img,relation)
+        entity = enhance_contour(img,entity)
         r =set(tuple([x[1],x[0]]) for x in list(relation))
         e =set(tuple([x[1],x[0]]) for x in list(entity))
         points_in_contours = r.union(e)

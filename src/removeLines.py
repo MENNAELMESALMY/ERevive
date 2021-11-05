@@ -20,7 +20,7 @@ def FloodFromCorners(im_th,debug=False):
         #cv2.imwrite("Floodfilled_Image.png", im_floodfill)
     return im_floodfill_inv
 
-def removeOutliers(ContourList,Area,hImg,wImg):
+def removeOutliers(ContourList,Area,hImg,wImg,contours_orig):
     #remove outliers in list
     #by Area of contours list sent
     #or by aspect ratio
@@ -41,20 +41,21 @@ def removeOutliers(ContourList,Area,hImg,wImg):
         testList.append(w/h)
 
     z = np.abs(stats.zscore(testList))
-    filtered =[]
-    #normalArea = (hImg*wImg)//(len(ContourList)*10)
+    filtered_hulls =[]
+    filtered_contours =[]
+
     for i,c in  enumerate(ContourList):
         x,y,w,h = cv2.boundingRect(c)
         
-        accepedArea = h <= hImg/2.5 and w <= wImg/2.5 and h>7 and w>=24 #and h*w > normalArea
-        #accepedRatio = w/h >= 0.5 and w/h <= 4
+        accepedArea = h <= hImg/2.5 and w <= wImg/2.5 and h>10 and w>=20 #and h*w > normalArea
+        if not accepedArea:
+            continue
         if(z[i]<=3):
-            print(wImg,w)
-            # if(not Area):
-            #     print(w/h)
-            if((Area and accepedArea and zH[i] <= 4 and zW[i] <= 4)or (not Area)):
-                filtered.append(c)
-    return filtered
+          #  print("width",w)
+            if((Area and zH[i] <= 4 and zW[i] <= 4)or (not Area)):
+                filtered_hulls.append(c)
+                filtered_contours.append(contours_orig[i])
+    return filtered_hulls,filtered_contours
     
     
 
@@ -67,27 +68,30 @@ def getClosedShapes(im_filled,debug=False):
     #[Next, Previous, First_Child, Parent]
     cnt_hull = [cv2.convexHull(cnt,False) for cnt in contours_cv]
 
-    print('0:',len(cnt_hull))
+    #print('0:',len(cnt_hull))
     cnt_hull = [cnt for cnt,heir in zip(cnt_hull,hierarchy) if heir[3] == -1]
+    cnt_filtered = [cnt for cnt,heir in zip(contours_cv,hierarchy) if heir[3] == -1]
+
 
     im_empty2 = np.ones((hImg, wImg), np.uint8) * 255
     cv2.drawContours(im_empty2, contours_cv, -1,0, 1)
 
-    print('1:',len(cnt_hull))
-    cnt_hull = removeOutliers(cnt_hull,True,hImg,wImg) #outliers by area
-    print('2:',len(cnt_hull))
-    cnt_hull = removeOutliers(cnt_hull,False,hImg,wImg) #outliers by aspect ratio
-    print('3:',len(cnt_hull))
+    cnt_hull,cnt_filtered = removeOutliers(cnt_hull,True,hImg,wImg,cnt_filtered) #outliers by area
+    cnt_hull,cnt_filtered = removeOutliers(cnt_hull,False,hImg,wImg,cnt_filtered) #outliers by aspect ratio
 
 
     im_empty = np.ones((hImg, wImg), np.uint8) * 255
     cv2.drawContours(im_empty, cnt_hull, -1,0, 1)
 
+    im_empty3 = np.ones((hImg, wImg), np.uint8) * 255
+    cv2.drawContours(im_empty3, cnt_filtered, -1,0, 1)
+
     if(debug):
-        cv2.imwrite("contoured.png", im_empty)
+        cv2.imwrite("hulled.png", im_empty)
+        cv2.imwrite("contoured.png", im_empty3)
         cv2.imwrite("notFiltered.png", im_empty2)
 
-    return im_empty , cnt_hull
+    return im_empty , cnt_filtered
 
 
 #handling opened contours
@@ -96,8 +100,12 @@ def getClosedShapes(im_filled,debug=False):
 def scale_contours(contours, scale):
     """Shrinks or grows an array of contours by the given factor (float). 
     Returns the resized array of contours"""
+    if not len(contours):
+        return []
+    #print(len(contours))
     for idx,contour in enumerate(contours):
         moments = cv2.moments(contour)
+        moments["m00"] = max(1,moments["m00"])
         midX = int(round(moments["m10"] / moments["m00"]))
         midY = int(round(moments["m01"] / moments["m00"]))
         mid = np.array([midX, midY])
@@ -133,36 +141,51 @@ def isOverlapped_middle(c,imgContours):
         Ymid = (Ymin+Ymax)/2
         #overlapped and in middle of a contour
         if(cXmin > Xmin and cXmax < Xmax and cYmin >= Ymin and cYmax <= Ymax
-            and abs(Xmid-cXmid)<= abs(Xmax-Xmin)/8 
-            and abs(Ymid-cYmid)<=10
+            and abs(Xmid-cXmid) <= abs(Xmax-Xmin)/8
+            #and ((Xmax-cXmid) >= 10 or (cXmid-Xmin) >= 10)
+            and abs(Ymid-cYmid) <= 10
             ):
+            #print("hi",abs(cXmid-Xmax), abs(cXmid-Xmin) )
             return True
     return False
 
 
 def getOpenedContours(img,closed_contours=[],debug = False):
-    closed_contours = scale_contours(closed_contours,1.2)
+    #remove closed contours from image by drawing on it with white colour
+    closed_contours = scale_contours(closed_contours[:],1.2)
     cv2.drawContours(img,closed_contours,-1, 255,-1 )
-    contours, hierarchy = cv2.findContours(255 - img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+
+    #remove word by removing contours inside the middle of other contours
+    contours, _ = cv2.findContours(255 - img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    img_all = np.ones(img.shape, np.uint8) * 255
+    cv2.drawContours(img_all,contours,-1, 0,1 )
+
     img_parent = np.ones(img.shape, np.uint8) * 255
-    parentContours =[ cnt for cnt in contours if not isOverlapped(cnt,contours)]
-
+    parentContours =[ cnt for cnt in contours if not isOverlapped_middle(cnt,contours)]
     cv2.drawContours(img_parent,parentContours,-1, 0, -1 )
-    img_parent = 255 - img_parent 
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(3,3))
-    dilated = cv2.dilate(img_parent,kernel,iterations=2)
 
-    edges = cv2.Canny(dilated, 0, 80, apertureSize=3)
+
+    img_parent = 255 - img_parent 
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(1,4))
+    dilated = cv2.dilate(img_parent,kernel,iterations=2)
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(4,1))
+    dilated = cv2.dilate(dilated,kernel,iterations=2)
+
 
     #get child contours and draw hull
     img_inner_contour = np.ones(img.shape, np.uint8) * 255
-    contours,_ = cv2.findContours(dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    contours,heirarchy = cv2.findContours(dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-    #contours = [cv2.convexHull(cnt,False) for cnt in contours]
-    contours = [cnt for cnt in contours if isOverlapped(cnt,contours) ]
-    contours = [cnt for cnt in contours if not isOverlapped_middle(cnt,contours) ]
+    #cv2.drawContours(img_inner_contour,contours,-1, 0, 1 )
+    #contours = [cnt for cnt in contours if isOverlapped(cnt,contours) ]
+    #contours = [cnt for cnt in contours if not isOverlapped_middle(cnt,contours) ]
+    contours = [cnt for cnt,h in zip(contours,heirarchy[0]) if h[3] != -1]
 
     cv2.drawContours(img_inner_contour,contours,-1, 0, 1 )
+
+
     eroded = cv2.erode(img_inner_contour,kernel,iterations=1)
     flooded = FloodFromCorners(eroded)
     flooded = cv2.dilate(flooded,kernel,iterations=3)
@@ -172,14 +195,13 @@ def getOpenedContours(img,closed_contours=[],debug = False):
 
     cv2.drawContours(opened_contours,contours,-1, 0, 1 )
     if(debug):
-        cv2.imwrite("openedContoursDebug/1contoured_img.png",img)
+        cv2.imwrite("openedContoursDebug/1contoured_img.png",img_all)
         cv2.imwrite("openedContoursDebug/2img_parent.png",img_parent)
         cv2.imwrite("openedContoursDebug/3dilated.png",dilated)
-        cv2.imwrite("openedContoursDebug/4edges2.png",edges)
-        cv2.imwrite("openedContoursDebug/5img_inner_contour.png",img_inner_contour)
-        cv2.imwrite("openedContoursDebug/6eroded.png",eroded)
-        cv2.imwrite("openedContoursDebug/7filled.png",flooded)
-        cv2.imwrite("openedContoursDebug/8opened_contours.png",opened_contours)
+        cv2.imwrite("openedContoursDebug/4img_inner_contour.png",img_inner_contour)
+        cv2.imwrite("openedContoursDebug/5eroded.png",eroded)
+        cv2.imwrite("openedContoursDebug/6filled.png",flooded)
+        cv2.imwrite("openedContoursDebug/7opened_contours.png",opened_contours)
     return opened_contours,contours
 
 def getDerived(img,contours):

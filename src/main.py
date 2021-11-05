@@ -7,6 +7,7 @@ from detectWeak import *
 from connectComponents import *
 from detect_rel_prop import *
 from OCR import *
+from dataTypesPrediction.scripts.dataTypePrediction import *
 import cv2
 import os
 
@@ -64,6 +65,10 @@ shapes = detect_shapes(shapes_no)
 textArr,isKey = OCR()
 print(textArr)
 print(isKey)
+
+dataTypesDic , dataTypesArr = predictWordsTypes(textArr)
+print(dataTypesDic)
+
 connectedComponents,skeleton = connectEntities(scale_contours(finalContours[:],1.17),finalContours,binarizedImg,shapes,textArr)
 relations = get_relations(skeleton,connectedComponents)
 for relation in relations.values():

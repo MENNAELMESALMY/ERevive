@@ -187,16 +187,15 @@ def get_relations(binarizedImg,entities):
 
 def cardinality(relations,img):
     count = 0
+    img=255-img
     for relation in relations.values():
         x,y,w,h = relation["bounding_box"]
         rows = [p[0] for p in relation["contour_cardinality"][0]]
         cols = [p[1] for p in relation["contour_cardinality"][0]]
         img[cols,rows]=255
-        all_points=[]
         for path in relation["paths"]:
             rows = [p[0] for p in path]
             cols = [p[1] for p in path]
-            all_points.extend(path)
             img[rows,cols]=255 
         width = 3*w
         height = 3*h

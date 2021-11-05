@@ -88,7 +88,7 @@ def get_paths(p2,binarized_img,center,contour,entity,r,e):
     p1s = [max_right,max_left,max_right,max_left,max_top,max_bottom]
     paths=[]
     for i in range(6):
-        pathed_img,path,is_found = BFS(p1s[i],p2[0],pathed_img.copy(),contour[0],entity[0],r,e,i)
+        pathed_img,path,is_found = BFS(p1s[i],p2[0],pathed_img.copy(),contour[0],entity[0])
         if not is_found:
             break
         paths.append(path)

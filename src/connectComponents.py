@@ -127,7 +127,7 @@ def connectDeadEndsToDeadEnds(deadEnds,skc):
             if (dist <= 5):
                 cv2.line(skc,(x2,y2),(x1,y1),0,1)
     
-def connectEntities(hulls,hulls_orig,binarizedImg,shapes):
+def connectEntities(hulls,hulls_orig,binarizedImg,shapes,text):
     bin_copy = binarizedImg.astype(np.uint8).copy()
     boxes = [cv2.boundingRect(cnt) for cnt in hulls]
     h,w = binarizedImg.shape
@@ -218,11 +218,11 @@ def connectEntities(hulls,hulls_orig,binarizedImg,shapes):
             foundShapesEntities.append(  
                 {
                     "idx":i,
-                    "name":'x',
+                    "name":text[i],
                     "contour":hulls_orig[i],
                     "bounding_box": boxes[i],
-                    "relations":[{"idx":r,"contour":hulls_orig[r],"bounding_box":boxes[r],"attributes":[]} for r in foundShapes if shapes[r]=='diamond'],
-                    "attributes":[{"idx":a,"contour":hulls_orig[a],"bounding_box":boxes[a],"children":[]} for a in foundShapes if shapes[a]=='oval']
+                    "relations":[{"idx":r,"name":text[r],"contour":hulls_orig[r],"bounding_box":boxes[r],"attributes":[]} for r in foundShapes if shapes[r]=='diamond'],
+                    "attributes":[{"idx":a,"name":text[a],"contour":hulls_orig[a],"bounding_box":boxes[a],"children":[]} for a in foundShapes if shapes[a]=='oval']
                 })
 
     ######################format parent atrributes

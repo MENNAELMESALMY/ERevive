@@ -61,7 +61,10 @@ cv2.imwrite("final_out_shapes/im_final"+pre+".png",im)
 print(shapes_no)
 shapes = detect_shapes(shapes_no)
 #weak = detectWeak(shadowFreeImg,hulls,shapes)
-connectedComponents,skeleton = connectEntities(scale_contours(finalContours[:],1.17),finalContours,binarizedImg,shapes)
+textArr,isKey = OCR()
+print(textArr)
+print(isKey)
+connectedComponents,skeleton = connectEntities(scale_contours(finalContours[:],1.17),finalContours,binarizedImg,shapes,textArr)
 relations = get_relations(skeleton,connectedComponents)
 for relation in relations.values():
     relation.pop("contour",None)
@@ -72,9 +75,7 @@ for relation in relations.values():
         entity.pop("attributes",None)
 
 print(relations)
-textArr,isKey = OCR()
-print(textArr)
-print(isKey)
+
 #connectEntities(finalContours,binarizedImg,shapes)
 
 

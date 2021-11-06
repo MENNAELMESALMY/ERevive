@@ -3,10 +3,10 @@ import cv2 as cv
 import numpy as np
 from utility import fillHole
 from skimage.morphology import opening,erosion,dilation
-def enhance_contour(img,contour):
+def enhance_contour(img,contour,kernel=1):
     empty_img = np.zeros(img.shape,np.uint8)
     cv.drawContours(empty_img, [contour], -1, 255,  cv.FILLED)
-    empty_img = opening(empty_img,np.ones((1,1),np.uint8))
+    empty_img = opening(empty_img,np.ones((kernel,kernel),np.uint8))
     actual_contour = np.where(empty_img==255)
     actual_contour = list(actual_contour)
     actual_contour.reverse()

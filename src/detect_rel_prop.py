@@ -4,6 +4,7 @@ import math
 from skimage.morphology import dilation
 from path_points import *
 from utility import fillHole
+import pytesseract
 def check_direct_path(path,entities,orig_entity,relations,orig_relation):
     set_path =set(tuple(x) for x in path)
     for entity in entities:
@@ -63,11 +64,8 @@ def filter_paths(paths,entities,entity,relations,relation,img):
             final_paths.append(path)
     return final_paths
 
-    
-        
-def get_paths(p2,binarized_img,center,contour,entity,r,e):
-    pathed_img = binarized_img.copy()    
-    points = contour[0]
+
+def getMaxBorders(points):
     min_x = np.min(points[:,0])
     max_x = np.max(points[:,0])
     min_y = np.min(points[:,1])
@@ -84,7 +82,13 @@ def get_paths(p2,binarized_img,center,contour,entity,r,e):
     max_right = rights[np.argmax(rights[:,0])]
     max_left = lefts[np.argmin(lefts[:,0])]
     max_top = tops[np.argmax(tops[0,:])]
-    max_bottom = bottoms[np.argmin(bottoms[0,:])]
+    max_bottom = bottoms[np.argmin(bottoms[0,:])] 
+    return max_right,max_left,max_top,max_bottom
+        
+def get_paths(p2,binarized_img,center,contour,entity,r,e):
+    pathed_img = binarized_img.copy()    
+    points = contour[0]
+    max_right,max_left,max_top,max_bottom = getMaxBorders(points)
     p1s = [max_right,max_left,max_right,max_left,max_top,max_bottom]
     paths=[]
     for i in range(6):
@@ -162,6 +166,7 @@ def detect_participation(relations,edges):
                     edges_test[point[0]][point[1]]=150
                 cv.imwrite("pathed_final"+str(entity["idx"])+"_"+str(relation["idx"])+"_"+str(p)+".png",edges_test)
                 p+=1
+            entity["paths"] = paths
         relation["paths"] = rel_paths.copy()
             
 def get_relations(binarizedImg,entities):
@@ -197,22 +202,54 @@ def cardinality(relations,img):
             rows = [p[0] for p in path]
             cols = [p[1] for p in path]
             img[rows,cols]=255 
-        width = 3*w
-        height = 3*h
-        x = x-w
-        y = y-h
-        if x<0:
-            x=0
-        if y<0:
-            y=0
-        if x+width>img.shape[1]:
-            width = img.shape[1]-x
-        if y+height>img.shape[0]:
-            height = img.shape[0]-y
-        cardinality_img = img.copy()
-        #cardinality_img = img[y:y+height,x:x+width].copy()
-        #relation["cardinality"] = get_relation_cardinality(cardinality_img,relation)
-        cv.imwrite("card_rel_path"+ str(count) + ".png",cardinality_img)
+
+        ## get point[0] of path of relation to determine the direction from relation
+        ## get the most left,right,top or bottom of relation according to the
+        ## direction of path detected
+        ## take a proper window to include cardinalities of relation 
+        c2 = 0
+        for entity in relation["entities"]:
+            centerX = x + w//2
+            centerY = y + h//2
+            pathX,pathY = entity["paths"][0][0]
+            borderPoint = detectDirectionPath((pathX,pathY),(centerY,centerX),w,h,relation["contour_cardinality"][0])
+
+            cardinality_img = img.copy()
+            #cardinality_img[borderPoint[1]][borderPoint[0]] = 150
+            black_img = np.zeros(img.shape)
+            cardinality_img[pathX][pathY] = 150
+            black_img[pathX][pathY] = 150
+            cv.imwrite("card_black"+ str(count) + str(c2) + ".png",black_img)
+            cv.imwrite("card"+ str(count) + str(c2) + ".png",cardinality_img)
+            c2 += 1
+     
+
+
+        ######################### old method of detecting cardinalities from expanding window of relation #########
+        # width = 2*w
+        # height = 2*h
+        # x = x-int(0.5*w)
+        # y = y-int(0.5*h)
+        # if x<0:
+        #     x=0
+        # if y<0:
+        #     y=0
+        # if x+width>img.shape[1]:
+        #     width = img.shape[1]-x
+        # if y+height>img.shape[0]:
+        #     height = img.shape[0]-y
+        # cardinality_img = img.copy()
+        # cardinality_img = img[y:y+height,x:x+width].copy()
+
+
+
+        #cv.imwrite("card"+ str(count) + ".png",cardinality_img)
+        #relation["cardinality"] = get_relation_cardinality(cardinality_img,relation,count)
+
+        # if two contours minimum found
+        # img[y:y+height,x:x+width]= 150
+        # cv.imwrite("card_rel_path"+ str(count) + ".png",img)
+        ##############################################################################
         count+=1
 
 def distance(p1,p2):
@@ -221,13 +258,12 @@ def distance(p1,p2):
 def between(p1,p2,p3):
     return math.isclose(distance(p1,p3)+distance(p2,p3),distance(p1,p2),rel_tol=0.5)
 
-def get_relation_cardinality(cardinality_img,relation):
-    cv.imwrite("card_rel_path.png",cardinality_img)
+def get_relation_cardinality(cardinality_img,relation,count):
     contours = cv.findContours(cardinality_img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)[0]
     cardinalities=[]
     cardinalities_text=[]
     number_of_cards = len(relation["entities"])
-    
+
     if len(contours) < number_of_cards:
         print("Error in detecting cardinalities")
         return
@@ -238,71 +274,95 @@ def get_relation_cardinality(cardinality_img,relation):
         cardinalities.extend(contours[0:number_of_cards])
     x,y,w,h = relation["bounding_box"]
     center_relation = (x+w//2,y+h//2)
-    cardinalities_text = classify_cardinalities(cardinalities)
-    for i in range(number_of_cards):
-        x1,y1,w1,h1= cv.boundingRect(cardinalities[i])
-        center_cardinality = (x1+w1//2,y1+h1//2)
-        for entity in relation["entities"]:
-            x2,y2,w2,h2= cv.boundingRect(entity)
-            center_entity = (x2+w2//2,y2+h2//2)
-            if between(center_relation,center_entity,center_cardinality):
-                entity["cardinality"]=cardinalities_text[i]
-                break
-    
+    cardinalities_text = classify_cardinalities(cardinalities,cardinality_img,count)
+
+    ################### donot forget to uncomment this block#####################
+    # for i in range(number_of_cards):
+    #     x1,y1,w1,h1= cv.boundingRect(cardinalities[i])
+    #     center_cardinality = (x1+w1//2,y1+h1//2)
+    #     for entity in relation["entities"]:
+    #         x2,y2,w2,h2= cv.boundingRect(entity)
+    #         center_entity = (x2+w2//2,y2+h2//2)
+    #         if between(center_relation,center_entity,center_cardinality):
+    #             entity["cardinality"]=cardinalities_text[i]
+    #             break
+    ##############################################################################
             
-def classify_cardinalities(cardinalities):
-    return ["N","1"]
+def classify_cardinalities(cardinalities,cardinality_img,count):
+    # iterate for each image send and classify the cardinalities return (array)
+    card_list = []
+    c1 = count
+    c2 = 0
+    print(cardinalities)
+    for img in cardinalities:
+        x,y,w,h= cv.boundingRect(img)
+        cardinality_img[x:x+h,y:y+w] = 150
+        cv.imwrite("test_card" + str(count) + "_" + str(c2) + ".png",cardinality_img)
+        card_image = cardinality_img[x:x+h,y:y+w]
+        cv.imwrite("final_card" + str(count) + "_" + str(c2) + ".png",card_image)
+        c2 += 1
+        custom_config = r'--oem 3 --psm 6'
+        extractedText = pytesseract.image_to_string(card_image,config=custom_config)
+        if extractedText == "\x0c":
+            extractedText = ""
+        else:
+            extractedText = extractedText.split('\n')[0]
+        card_list.append(extractedText)
+
+    print(card_list)
+    return card_list
+
+############## to determine whether there are square or rectangle contours in window ######
+def noCardinalitiesContours (windowImg):
+    contours = cv.findContours(windowImg, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)[0]
+    # return true if cardinalities still not with in image and false otherwise
+    countCard = 0
+    for contour in contours:
+        perimeter = cv.arcLength(contour, True)
+        corners = cv.approxPolyDP(contour, 0.04 * perimeter, True)
+        if len(corners) == 4:
+            x, y, w, h = cv.boundingRect(corners)
+            aspectRatio = w / float(h)
+            print(aspectRatio)
+            if (aspectRatio >= 0.95 or aspectRatio <= 1.05) :
+                countCard += 1
+
+    if countCard < 2:
+        return True
+    else:
+        return False
+
+
+def detectDirectionPath (pathPoint,relCenter,relWidth,relHeight,relationContour):
+    vertical = abs(pathPoint[0] - relCenter[0])
+    horizontal = abs(pathPoint[1] - relCenter[1])
+    max_right,max_left,max_top,max_bottom = getMaxBorders(relationContour)
+    print("horizontal",horizontal)
+    print("vertical",vertical)
+    print("relWidth",relWidth)
+    print("relHeight",relHeight)
+    if horizontal > vertical:
+        if pathPoint[1] > relCenter[1]:
+            ##right
+            return max_right
+        else:
+            ##left
+            return max_left
+    else:
+        if pathPoint[0] > relCenter[0]:
+            ##bottom
+            return max_bottom
+        else:
+            ##top
+            return max_top
 
 
 
-#   erased_points=[]
-#         black_before = False
-#         black_after = False
-#         white = False
-#         pattern = []
-#         erased_rows = [p[0] for p in erased_points]
-#         erased_cols = [p[1] for p in erased_points]
-#         img[erased_rows,erased_cols]=255 
-# for j in range(y,y+height):
-        #     for i in range(x,x+width-1):
-        
-        #         if img[j][i]==0 and black_after==False:
-        #             black_before = True
-        #             pattern.append([j,i])
-        #         if img[j][i]==255 and img[j][i+1]==0 and black_before :
-        #             white = True
-        #         if img[j][i]==0 and white and black_before :
-        #             black_after = True
-        #             pattern.append([j,i])
-        #         if black_before and white and black_after:
-        #             erased_points.extend(pattern)
-        #             pattern=[]
-        #             black_before = False
-        #             black_after = False
-        #             white = False
-        # black_before = False
-        # black_after = False
-        # white = False
-        # pattern = []
-        # for i in range(x,x+width):
-        #     for j in range(y,y+height-1):
-        
-        #         if img[j][i]==0 and black_after==False:
-        #             black_before = True
-        #             pattern.append([j,i])
-        #         if img[j][i]==255 and img[j+1][i]==0 and black_before :
-        #             white = True
-        #         if img[j][i]==0 and white and black_before :
-        #             black_after = True
-        #             pattern.append([j,i])
-        #         if black_before and white and black_after:
-        #             erased_points.extend(pattern)
-        #             pattern=[]
-        #             black_before = False
-        #             black_after = False
-        #             white = False
 
 
-
-
-
+######### problems ##########
+'''
+1- contours send is wrong so it cut cardinalties in wrong way
+2- points on path not correct (we get points on path to detect the direction from
+which we will form the window of cardinalities)
+'''

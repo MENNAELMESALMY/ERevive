@@ -242,6 +242,21 @@ def cardinality(relations,img):
         ## direction of path detected
         ## take a proper window to include cardinalities of relation 
         c2 = 0
+        for point in relation["contour_cardinality"][0]:
+            point=point[::-1]
+        max_right,max_left,max_top,max_bottom = getMaxBorders(relation["contour_cardinality"][0])
+        test = img.copy()
+        test[max_right[0]][max_right[1]] = 150
+        cv.imwrite("test_right"+ str(c2) + ".png",test)
+        test1 = img.copy()
+        test1[max_left[0]][max_left[1]] = 150
+        cv.imwrite("test_left"+ str(c2) + ".png",test1)
+        test2 = img.copy()
+        test2[max_top[0]][max_top[1]] = 150
+        cv.imwrite("test_top"+ str(c2) + ".png",test2)
+        test3 = img.copy()
+        test3[max_bottom[0]][max_bottom[1]] = 150
+        cv.imwrite("test_bottom"+ str(c2) + ".png",test3)
         for entity in relation["entities"]:
             centerX = x + w//2
             centerY = y + h//2
@@ -251,13 +266,13 @@ def cardinality(relations,img):
                 iterations=2
             for i in range(iterations):
                 pathX,pathY = get_correct_path_point(entity["paths"][i],(centerY,centerX))
-                borderPoint = detectDirectionPath((pathX,pathY),(centerY,centerX),w,h,relation["contour_cardinality"][0],count,c2)
+                borderPoint = detectDirectionPath((pathX,pathY),(centerY,centerX),w,h,max_right,max_left,max_top,max_bottom,count,c2)
                 cardinality_img = img.copy()
                 cardinality_img[borderPoint[1]][borderPoint[0]] = 150
                 black_img = np.zeros(img.shape)
                 black_img[borderPoint[1]][borderPoint[0]] = 150
 
-                cardinality_img[pathX][pathY] = 150
+                #cardinality_img[pathX][pathY] = 150
                 #black_img[pathX][pathY] = 150
                 cardinality_img[centerY][centerX] = 150
                 #black_img[centerY][centerX] = 150
@@ -351,12 +366,14 @@ def noCardinalitiesContours (windowImg):
         return False
 
 
-def detectDirectionPath (pathPoint,relCenter,relWidth,relHeight,relationContour,c1,c2):
-    vertical = abs(pathPoint[1] - relCenter[1])
-    horizontal = abs(pathPoint[0] - relCenter[0])
-    for point in relationContour:
-        point=point[::-1]
-    max_right,max_left,max_top,max_bottom = getMaxBorders(relationContour)
+def detectDirectionPath (pathPoint,relCenter,relWidth,relHeight,max_right,max_left,max_top,max_bottom,c1,c2):
+    print("pathPoint",pathPoint)
+    print("relCenter",relCenter)
+    print("relWidth",relWidth,"  relHeight",relHeight)
+
+    horizontal = abs(pathPoint[1] - relCenter[1])
+    vertical = abs(pathPoint[0] - relCenter[0])
+    
     print("c1: ",c1," c2: ",c2)
     print("horizontal",horizontal)
     print("vertical",vertical)

@@ -65,24 +65,33 @@ def filter_paths(paths,entities,entity,relations,relation,img):
     return final_paths
 
 
-def getMaxBorders(points):
-    min_x = np.min(points[:,0])
-    max_x = np.max(points[:,0])
-    min_y = np.min(points[:,1])
-    max_y = np.max(points[:,1])
-    center = (max_x+min_x)//2,(max_y+min_y)//2
-    rights = np.where(points[:,0]>center[0])
+def getMaxBorders(points_cont):
+    points = points_cont.copy()
+    min_x = np.min(points[:,1])
+    max_x = np.max(points[:,1])
+    min_y = np.min(points[:,0])
+    max_y = np.max(points[:,0])
+    print("min_x: ",min_x,"max_x: ",max_x,"min_y: ",min_y,"max_y: ",max_y)
+    center = (max_y+min_y)//2,(max_x+min_x)//2
+    rights = np.where(points[:,1]>center[1])
     rights = points[rights]
-    lefts = np.where(points[:,0]<center[0])
+
+    lefts = np.where(points[:,1]<center[1])
     lefts = points[lefts]
-    tops = np.where(points[:,1]<center[1])
+    tops = np.where(points[:,0]<center[0])
     tops = points[tops]
-    bottoms = np.where(points[:,1]>center[1])
+    bottoms = np.where(points[:,0]>center[0])
     bottoms = points[bottoms]
-    max_right = rights[np.argmax(rights[:,0])]
-    max_left = lefts[np.argmin(lefts[:,0])]
-    max_top = tops[np.argmax(tops[0,:])]
-    max_bottom = bottoms[np.argmin(bottoms[0,:])] 
+    print("center",center)
+    print("rights: ",rights)
+    print("lefts: ",lefts)
+    print("tops: ",tops)
+    print("bottoms: ",bottoms)
+
+    max_right = rights[np.argmax(rights[:,1])]
+    max_left = lefts[np.argmin(lefts[:,1])]
+    max_top = tops[np.argmin(tops[:,0])]
+    max_bottom = bottoms[np.argmax(bottoms[:,0])]  
     return max_right,max_left,max_top,max_bottom
         
 def get_paths(p2,binarized_img,center,contour,entity,r,e):
@@ -91,12 +100,24 @@ def get_paths(p2,binarized_img,center,contour,entity,r,e):
     max_right,max_left,max_top,max_bottom = getMaxBorders(points)
     p1s = [max_right,max_left,max_right,max_left,max_top,max_bottom]
     paths=[]
+    p=0
     for i in range(6):
-        pathed_img,path,is_found = BFS(p1s[i],p2[0],pathed_img.copy(),contour[0],entity[0])
-        if not is_found:
-            break
-        paths.append(path)
-   
+        test_img = pathed_img.copy()
+        test_img[max_right[1]][max_right[0]] = 150
+        test_img[max_left[1]][max_left[0]] = 150
+        test_img[max_top[1]][max_top[0]] = 150
+        test_img[max_bottom[1]][max_bottom[0]] = 150
+        print("r: ",r," max_right: ",max_right[::-1]," max_left: ",max_left[::-1]," max_top: ",max_top[::-1]," max_bottom: ",max_bottom[::-1])
+        cv.imwrite("max_"+str(e)+"_"+str(r)+"_"+str(i)+".png",test_img)
+
+    for i in range(6):
+        bfs_input = pathed_img.copy()
+        bfs_input[p1s[i][1]][p1s[i][0]]=150
+        bfs_input[p2[0][1]][p2[0][0]]=150
+        cv.imwrite("bfs_input_"+str(e)+"_"+str(r)+"_"+str(i)+".png",bfs_input)
+        pathed_img,path,is_found = BFS(p1s[i],p2[0],pathed_img.copy(),contour[0],entity[0],r,e,i)
+        if(is_found):
+            paths.append(path)
     return paths
 
 
@@ -122,12 +143,17 @@ def filter_points(contourOrig,binarizedImgOrig,relation=None,entity=None):
     contour = contourOrig.copy()
 
     empty = np.zeros(binarizedImg.shape,np.uint8)
-    cv.drawContours(empty, [contour], -1, (255,255,255), 1)
+    cv.drawContours(empty, [contour], -1, (255,255,255),  1)
+    if entity and entity["idx"]==12:
+        cv.imwrite("before_dilation.png",empty)
     empty = dilation(empty,np.ones((10,10),np.uint8))
+    if entity and entity["idx"]==12:
+        cv.imwrite("after_dilation.png",empty)
     contour = get_contour(empty)
     if relation:
         relation["contour_cardinality"] = contour
-
+    if entity:
+        entity["contour_cardinality"] = contour
     for points in contour:
         for point in points:
             if binarizedImg[point[1]][point[0]] == 0:
@@ -152,9 +178,12 @@ def detect_participation(relations,edges):
 
             paths = get_paths(entity_point,edges,relation["bounding_box"],relation["contour"],entity["contour"],relation["idx"],entity["idx"])
             paths = filter_paths(paths,relation["entities"],entity,relations.values(),relation,edges)
-            if(len(paths)==1):
+            entity["self"]=False
+            if len(relation["entities"])==1:
+                entity["self"]=True
+            if((len(paths)==1 and not entity["self"]) or (entity["self"] and len(paths)==2)):
                 entity["participation"]="partial"
-            elif(len(paths)==2):
+            elif((len(paths)==2 and not entity["self"]) or (entity["self"] and len(paths)==4)):
                 entity["participation"]="full"
 
             entity.pop("relations",None)
@@ -178,7 +207,7 @@ def get_relations(binarizedImg,entities):
                 relations[bounding_box_str] = {
                     "entities":[]
                 }
-            relations[bounding_box_str]["entities"].append(entity)
+            relations[bounding_box_str]["entities"].append(entity.copy())
             relations[bounding_box_str].update({
                 "idx":relation["idx"],
                 "name":relation["name"],
@@ -188,8 +217,13 @@ def get_relations(binarizedImg,entities):
 
     detect_participation(relations,binarizedImg)
     return relations
+def distance_tuble(p1,p2):
+    return math.sqrt((p1[0]-p2[0])**2+(p1[1]-p2[1])**2)
+def get_correct_path_point(path,center_relation):
+    dist = [distance_tuble(p,center_relation) for p in path]
+    return path[np.argmin(dist)]
 
-
+        
 def cardinality(relations,img):
     count = 0
     img=255-img
@@ -211,45 +245,29 @@ def cardinality(relations,img):
         for entity in relation["entities"]:
             centerX = x + w//2
             centerY = y + h//2
-            pathX,pathY = entity["paths"][0][0]
-            borderPoint = detectDirectionPath((pathX,pathY),(centerY,centerX),w,h,relation["contour_cardinality"][0])
+            iterations=1
+            print("entity name",entity["name"]," participation: ",entity["participation"]," length: ",len(entity["paths"]))
+            if entity["self"]:
+                iterations=2
+            for i in range(iterations):
+                pathX,pathY = get_correct_path_point(entity["paths"][i],(centerY,centerX))
+                borderPoint = detectDirectionPath((pathX,pathY),(centerY,centerX),w,h,relation["contour_cardinality"][0],count,c2)
+                cardinality_img = img.copy()
+                cardinality_img[borderPoint[1]][borderPoint[0]] = 150
+                black_img = np.zeros(img.shape)
+                black_img[borderPoint[1]][borderPoint[0]] = 150
 
-            cardinality_img = img.copy()
-            #cardinality_img[borderPoint[1]][borderPoint[0]] = 150
-            black_img = np.zeros(img.shape)
-            cardinality_img[pathX][pathY] = 150
-            black_img[pathX][pathY] = 150
-            cv.imwrite("card_black"+ str(count) + str(c2) + ".png",black_img)
-            cv.imwrite("card"+ str(count) + str(c2) + ".png",cardinality_img)
-            c2 += 1
+                cardinality_img[pathX][pathY] = 150
+                #black_img[pathX][pathY] = 150
+                cardinality_img[centerY][centerX] = 150
+                #black_img[centerY][centerX] = 150
+                cv.imwrite("card_black"+ str(count) + str(c2) + ".png",black_img)
+                cv.imwrite("card"+ str(count) + str(c2) + ".png",cardinality_img)
+                c2 += 1
      
 
 
-        ######################### old method of detecting cardinalities from expanding window of relation #########
-        # width = 2*w
-        # height = 2*h
-        # x = x-int(0.5*w)
-        # y = y-int(0.5*h)
-        # if x<0:
-        #     x=0
-        # if y<0:
-        #     y=0
-        # if x+width>img.shape[1]:
-        #     width = img.shape[1]-x
-        # if y+height>img.shape[0]:
-        #     height = img.shape[0]-y
-        # cardinality_img = img.copy()
-        # cardinality_img = img[y:y+height,x:x+width].copy()
 
-
-
-        #cv.imwrite("card"+ str(count) + ".png",cardinality_img)
-        #relation["cardinality"] = get_relation_cardinality(cardinality_img,relation,count)
-
-        # if two contours minimum found
-        # img[y:y+height,x:x+width]= 150
-        # cv.imwrite("card_rel_path"+ str(count) + ".png",img)
-        ##############################################################################
         count+=1
 
 def distance(p1,p2):
@@ -333,14 +351,22 @@ def noCardinalitiesContours (windowImg):
         return False
 
 
-def detectDirectionPath (pathPoint,relCenter,relWidth,relHeight,relationContour):
-    vertical = abs(pathPoint[0] - relCenter[0])
-    horizontal = abs(pathPoint[1] - relCenter[1])
+def detectDirectionPath (pathPoint,relCenter,relWidth,relHeight,relationContour,c1,c2):
+    vertical = abs(pathPoint[1] - relCenter[1])
+    horizontal = abs(pathPoint[0] - relCenter[0])
+    for point in relationContour:
+        point=point[::-1]
     max_right,max_left,max_top,max_bottom = getMaxBorders(relationContour)
+    print("c1: ",c1," c2: ",c2)
     print("horizontal",horizontal)
     print("vertical",vertical)
     print("relWidth",relWidth)
     print("relHeight",relHeight)
+    print("max_right",max_right)
+    print("max_left",max_left)
+    print("max_top",max_top)
+    print("max_bottom",max_bottom)
+
     if horizontal > vertical:
         if pathPoint[1] > relCenter[1]:
             ##right
@@ -366,3 +392,24 @@ def detectDirectionPath (pathPoint,relCenter,relWidth,relHeight,relationContour)
 2- points on path not correct (we get points on path to detect the direction from
 which we will form the window of cardinalities)
 '''
+
+
+                # y_wind = border_point[1]
+                # x_wind = border_point[0]
+                # cardinality_img = img.copy()
+                # cardinality_img[y_wind][x_wind]=150
+                # wind_width = w
+                # wind_height = h
+                # x_wind = x_wind-int(0.5*w)
+                # y_wind = y_wind-int(0.5*h)
+                # if x_wind<0:
+                #     x_wind=0
+                # if y_wind<0:
+                #     y_wind=0
+                # if x_wind+wind_width>img.shape[1]:
+                #     wind_width = img.shape[1]-x_wind
+                # if y_wind+wind_height>img.shape[0]:
+                #     wind_height = img.shape[0]-y_wind
+                # card_img = img.copy()
+                # card_img[y_wind:y_wind+wind_height,x_wind:x_wind+wind_width]=150
+                # cv.imwrite("card_img"+ str(count) + str(c2) + ".png",card_img)

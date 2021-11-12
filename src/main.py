@@ -13,11 +13,11 @@ import os
 
 
 
-img_dir ="24.png"
+img_dir ="20.jpg"
 
 dirs = os.listdir('input')
 #for idx,img_dir in enumerate(dirs):
-print("starting..................",img_dir)
+#print("starting..................",img_dir)
 pre = img_dir.split('.')[0]
 img_dir = 'input/'+ img_dir
 
@@ -59,15 +59,17 @@ shapes_no = seperateShapes(finalContours,allContoursImg, binarizedImg)
 im = np.ones(binarizedImg.shape, np.uint8) * 255
 cv2.drawContours(im,finalContours,-1, 0, 1 )
 cv2.imwrite("final_out_shapes/im_final"+pre+".png",im)
-print(shapes_no)
+#print(shapes_no)
 shapes = detect_shapes(shapes_no)
-#weak = detectWeak(shadowFreeImg,hulls,shapes)
+
+weak = detectWeak(shadowFreeImg,finalContours)
+
 textArr,isKey = OCR()
-print(textArr)
-print(isKey)
+#print(textArr)
+#print(isKey)
 
 dataTypesDic , dataTypesArr = predictWordsTypes(textArr)
-print(dataTypesDic)
+#print(dataTypesDic)
 
 connectedComponents,skeleton = connectEntities(scale_contours(finalContours[:],1.17),finalContours,binarizedImg,shapes,textArr)
 relations = get_relations(skeleton,connectedComponents)
@@ -76,8 +78,8 @@ cardinality(relations,skeleton)
 #connectEntities(finalContours,binarizedImg,shapes)
 
 
-# print(shapes)
+# #print(shapes)
 # for i,w in enumerate(weak):
 #     if w:
-#         print(i)
-# print(weak)
+#         #print(i)
+# #print(weak)

@@ -33,7 +33,7 @@ def filter_paths(paths,entities,entity,relations,relation,img):
         empty = img.copy()
         for point in path:
             empty[point[0]][point[1]]=150
-        cv.imwrite("path_bef_"+str(entity["idx"])+"_"+str(relation["idx"])+"_"+str(k)+".png",empty)
+        cv.imwrite("paths/path_bef_"+str(entity["idx"])+"_"+str(relation["idx"])+"_"+str(k)+".png",empty)
         k+=1
     false_indicies=[]
     ret_paths=[]
@@ -55,7 +55,7 @@ def filter_paths(paths,entities,entity,relations,relation,img):
         empty = img.copy()
         for point in path:
             empty[point[0]][point[1]]=150
-        cv.imwrite("path_between_"+str(entity["idx"])+"_"+str(relation["idx"])+"_"+str(k)+".png",empty)
+        cv.imwrite("paths/path_between_"+str(entity["idx"])+"_"+str(relation["idx"])+"_"+str(k)+".png",empty)
         k+=1
     final_paths=[]
     for path in ret_paths:
@@ -229,7 +229,7 @@ def get_relation_cardinality(cardinality_img,relation):
     number_of_cards = len(relation["entities"])
     
     if len(contours) < number_of_cards:
-        print("Error in detecting cardinalities")
+        #print("Error in detecting cardinalities")
         return
     elif len(contours)==number_of_cards:
         cardinalities.extend(contours)

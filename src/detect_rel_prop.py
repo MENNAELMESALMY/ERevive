@@ -71,7 +71,6 @@ def getMaxBorders(points_cont):
     max_x = np.max(points[:,1])
     min_y = np.min(points[:,0])
     max_y = np.max(points[:,0])
-    print("min_x: ",min_x,"max_x: ",max_x,"min_y: ",min_y,"max_y: ",max_y)
     center = (max_y+min_y)//2,(max_x+min_x)//2
     rights = np.where(points[:,1]>center[1])
     rights = points[rights]
@@ -92,6 +91,7 @@ def getMaxBorders(points_cont):
     max_left = lefts[np.argmin(lefts[:,1])]
     max_top = tops[np.argmin(tops[:,0])]
     max_bottom = bottoms[np.argmax(bottoms[:,0])]  
+    print("min_x: ",max_left,"max_x: ",max_right,"min_y: ",max_top,"max_y: ",max_bottom)
     return max_right,max_left,max_top,max_bottom
         
 def get_paths(p2,binarized_img,center,contour,entity,r,e):
@@ -242,21 +242,13 @@ def cardinality(relations,img):
         ## direction of path detected
         ## take a proper window to include cardinalities of relation 
         c2 = 0
+        #contour = np.zeros(relation["contour_cardinality"][0].shape,np.uint8)
+        contour = []
         for point in relation["contour_cardinality"][0]:
-            point=point[::-1]
-        max_right,max_left,max_top,max_bottom = getMaxBorders(relation["contour_cardinality"][0])
-        test = img.copy()
-        test[max_right[0]][max_right[1]] = 150
-        cv.imwrite("test_right"+ str(c2) + ".png",test)
-        test1 = img.copy()
-        test1[max_left[0]][max_left[1]] = 150
-        cv.imwrite("test_left"+ str(c2) + ".png",test1)
-        test2 = img.copy()
-        test2[max_top[0]][max_top[1]] = 150
-        cv.imwrite("test_top"+ str(c2) + ".png",test2)
-        test3 = img.copy()
-        test3[max_bottom[0]][max_bottom[1]] = 150
-        cv.imwrite("test_bottom"+ str(c2) + ".png",test3)
+            contour.append([point[1],point[0]])
+        contour = np.array(contour)
+        max_right,max_left,max_top,max_bottom = getMaxBorders(contour)
+     
         for entity in relation["entities"]:
             centerX = x + w//2
             centerY = y + h//2
@@ -267,17 +259,29 @@ def cardinality(relations,img):
             for i in range(iterations):
                 pathX,pathY = get_correct_path_point(entity["paths"][i],(centerY,centerX))
                 borderPoint = detectDirectionPath((pathX,pathY),(centerY,centerX),w,h,max_right,max_left,max_top,max_bottom,count,c2)
+                y_wind = borderPoint[0]
+                x_wind = borderPoint[1]
                 cardinality_img = img.copy()
-                cardinality_img[borderPoint[1]][borderPoint[0]] = 150
-                black_img = np.zeros(img.shape)
-                black_img[borderPoint[1]][borderPoint[0]] = 150
-
-                #cardinality_img[pathX][pathY] = 150
-                #black_img[pathX][pathY] = 150
-                cardinality_img[centerY][centerX] = 150
-                #black_img[centerY][centerX] = 150
-                cv.imwrite("card_black"+ str(count) + str(c2) + ".png",black_img)
+                cardinality_img[y_wind][x_wind]=150
+                wind_width = w
+                wind_height = h
+                x_wind = x_wind-int(0.5*w)
+                y_wind = y_wind-int(0.5*h)
+                if x_wind<0:
+                    x_wind=0
+                if y_wind<0:
+                    y_wind=0
+                if x_wind+wind_width>img.shape[1]:
+                    wind_width = img.shape[1]-x_wind
+                if y_wind+wind_height>img.shape[0]:
+                    wind_height = img.shape[0]-y_wind
+                
                 cv.imwrite("card"+ str(count) + str(c2) + ".png",cardinality_img)
+                window = img[y_wind:y_wind+wind_height,x_wind:x_wind+wind_width].copy()
+                x_card,y_card,w_card,h_card = cardinalitiesContours(window,count,c2)
+                card_img = img.copy()
+                card_img[y_card:y_card+h_card,x_card:x_card+w_card]=150
+                cv.imwrite("card_img"+ str(count) + str(c2) + ".png",card_img)
                 c2 += 1
      
 
@@ -346,24 +350,27 @@ def classify_cardinalities(cardinalities,cardinality_img,count):
     return card_list
 
 ############## to determine whether there are square or rectangle contours in window ######
-def noCardinalitiesContours (windowImg):
+def cardinalitiesContours (windowImg,count,c2):
     contours = cv.findContours(windowImg, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)[0]
     # return true if cardinalities still not with in image and false otherwise
     countCard = 0
+    c1=0
     for contour in contours:
+        empty = np.zeros(windowImg.shape,np.uint8)
+        cv.drawContours(empty, [contour], -1, (255,255,255), 3)
+        cv.imwrite("contour_" + str(count) + "_" + str(c2) + "_" + str(c1) + ".png",empty)
+        c1 += 1
         perimeter = cv.arcLength(contour, True)
         corners = cv.approxPolyDP(contour, 0.04 * perimeter, True)
         if len(corners) == 4:
             x, y, w, h = cv.boundingRect(corners)
             aspectRatio = w / float(h)
             print(aspectRatio)
-            if (aspectRatio >= 0.95 or aspectRatio <= 1.05) :
+            if (aspectRatio >= 0.95 or aspectRatio <= 1.05)  :
                 countCard += 1
+                return x, y, w, h
 
-    if countCard < 2:
-        return True
-    else:
-        return False
+    return False        
 
 
 def detectDirectionPath (pathPoint,relCenter,relWidth,relHeight,max_right,max_left,max_top,max_bottom,c1,c2):

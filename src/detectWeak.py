@@ -7,14 +7,15 @@ def detectWeakHelper(img):
     countStartZerosVer = []
     img = cv2.copyMakeBorder(img, 5, 5, 5, 5, cv2.BORDER_CONSTANT, None, value = 255)
     #vertical
-    for j in range(w+10):
+    n = 4
+    for j in range(0 , w+10 , n):
         countCol=0
         for i in range(h-1):
             if(img[i,j]==255 and img[i+1,j]==0):
                 countCol+=1
         countStartZerosVer.append(countCol)
 
-    countAllVer = sum([1 for i in countStartZerosVer if i >=3])
+    countAllVer = sum([1 for i in countStartZerosVer if i >=4])
     return countAllVer/len(countStartZerosVer)
 
 def detectWeak(img,contours):
@@ -34,7 +35,10 @@ def detectWeak(img,contours):
         cv2.drawContours(bin_img,c_small,-1,255,-1)
         imgContour = bin_img[y:h,x:w]
 
-        isShapeWeak = detectWeakHelper(imgContour) >= 0.45
+        detection = detectWeakHelper(imgContour)
+        isShapeWeak = detection >= 0.45
+        #print(detection)
+        
         cv2.imwrite('weak_output/bin_img'+str(i)+str(isShapeWeak)+'.png',imgContour)
         # if i==5:
         #     #print("is weak  ",detectWeakHelper(imgContour))

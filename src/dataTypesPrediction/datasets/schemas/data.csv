@@ -1802,7 +1802,7 @@ curve,INTEGER
 free kick accuracy,INTEGER
 long passing,INTEGER
 ball control,INTEGER
-sprint speed,INTEGER
+s#print speed,INTEGER
 agility,INTEGER
 reactions,INTEGER
 balance,INTEGER
@@ -3861,7 +3861,7 @@ langs,STR
 fieldcomputed,STR
 fielddefault,STR
 ishidden,INTEGER
-printable,INTEGER
+#printable,INTEGER
 increment,STR
 datef,TIME
 date closing,TIME
@@ -3979,11 +3979,11 @@ date rejet,TIME
 motif,INTEGER
 fk user creation,INTEGER
 afacturer,INTEGER
-printer name,STR
-printer location,STR
-printer uri,STR
+#printer name,STR
+#printer location,STR
+#printer uri,STR
 copy,INTEGER
-printer id,STR
+#printer id,STR
 driver,STR
 virtual,INTEGER
 customcode,STR
@@ -4987,7 +4987,7 @@ days before due,INTEGER
 day in following month,INTEGER
 sales type id,INTEGER
 report,STR
-printer,INTEGER
+#printer,INTEGER
 port,INTEGER
 timeout,INTEGER
 suppliers uom,STR
@@ -5102,15 +5102,15 @@ show hints,INTEGER
 last visit date,TIME
 query size,INTEGER
 graphic links,INTEGER
-print profile,STR
+#print profile,STR
 rep popup,INTEGER
 sticky doc date,INTEGER
 startup tab,STR
 transaction days,INTEGER
 save report selections,INTEGER
 use date picker,INTEGER
-def print destination,INTEGER
-def print orientation,INTEGER
+def #print destination,INTEGER
+def #print orientation,INTEGER
 workorder id,INTEGER
 cost type,INTEGER
 issue id,INTEGER
@@ -7470,7 +7470,7 @@ showspecial,INTEGER
 showalphabet,INTEGER
 showall,INTEGER
 allowcomments,INTEGER
-allowprintview,INTEGER
+allow#printview,INTEGER
 usedynalink,INTEGER
 defaultapproval,INTEGER
 approvaldisplayformat,STR
@@ -8262,7 +8262,7 @@ veil-type,STR
 veil-color,STR
 ring-number,STR
 ring-type,STR
-spore-print-color,STR
+spore-#print-color,STR
 habitat,STR
 h c id,INTEGER
 h c d id,INTEGER
@@ -10030,7 +10030,7 @@ errortime,STR
 gseq,INTEGER
 qseq,INTEGER
 eqn,STR
-prettyprint,STR
+pretty#print,STR
 number attempts,INTEGER
 group order,INTEGER
 randomization group,STR
@@ -10102,7 +10102,7 @@ allowsave,STR
 autonumber start,INTEGER
 autoredirect,STR
 allowprev,STR
-printanswers,STR
+#printanswers,STR
 ipaddr,STR
 datecreated,TIME
 showsurveypolicynotice,INTEGER
@@ -10167,7 +10167,7 @@ email admin responses,STR
 surveyls numberformat,INTEGER
 files css,STR
 files js,STR
-files print css,STR
+files #print css,STR
 cssframework name,STR
 cssframework css,STR
 cssframework js,STR
@@ -10640,7 +10640,7 @@ email on feedback min severity,INTEGER
 email on assigned min severity,INTEGER
 email on new min severity,INTEGER
 email bugnote limit,INTEGER
-print pref,STR
+#print pref,STR
 lost password request count,INTEGER
 failed login count,INTEGER
 cookie string,STR
@@ -15051,7 +15051,7 @@ payment received id,INTEGER
 payment request id,INTEGER
 perspective id,INTEGER
 pref,STR
-fingerprint,STR
+finger#print,STR
 approval by,STR
 last objecttype,STR
 last objectid,STR

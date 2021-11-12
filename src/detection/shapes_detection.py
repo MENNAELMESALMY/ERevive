@@ -26,8 +26,8 @@ def fillHole(img):
     im_th = img
     im_floodfill = im_th.copy()
     h, w = im_th.shape[:2]
-    #print(h,w)
-    #print(im_th.shape)
+    ##print(h,w)
+    ##print(im_th.shape)
     mask = np.zeros((h+2, w+2), np.uint8)
     #show(mask)
     #show(im_floodfill)
@@ -71,7 +71,7 @@ def convex_hull(image):
     line2 = cv.line(drawing, tuple(p2), tuple(p3), (0, 0, 255), 1)
     line3 = cv.line(drawing, tuple(p3), tuple(p1), (0, 0, 255), 1)
     #show(drawing)
-    #print(Ach,Alq,Aer,Atr)
+    ##print(Ach,Alq,Aer,Atr)
     rect_feature_1 = Ach/Aer
     rect_feature_2 = Alq/Aer
     oval_feature_1 = Alq/Ach
@@ -112,8 +112,8 @@ def detect_shapes(shapes_no):
         #gray_img = cv.copyMakeBorder(gray_img, 5, 5, 5, 5, cv.BORDER_CONSTANT, None, value = 255)
         #show(gray_img)
         features,shape = get_features(gray_img)
-        #print(features)
-        #print(shape)
+        ##print(features)
+        ##print(shape)
         shapes.append(shape)
             
     return shapes

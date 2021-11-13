@@ -72,7 +72,6 @@ print(dataTypesDic)
 connectedComponents,skeleton = connectEntities(scale_contours(finalContours[:],1.17),finalContours,binarizedImg,shapes,textArr)
 relations = get_relations(skeleton,connectedComponents)
 relations = cardinality(relations,skeleton)
-print(relations)
 #connectEntities(finalContours,binarizedImg,shapes)
 
 

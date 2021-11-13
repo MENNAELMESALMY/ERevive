@@ -52,24 +52,24 @@ def parseMultipleFiles(inPath ,outPath):
     stat = {}
     for file in files:  
         if index%100 == 0: 
-            print("parsing file no "+str(index)+" out of "+str(filesnum)+" ........")
+            #print("parsing file no "+str(index)+" out of "+str(filesnum)+" ........")
         if file.split('.')[-1] == 'json':
             cFile = readFile(inPath+'/'+file)
             fileData , stat = extractVariables(cFile,stat) 
             data = data + fileData
         index +=1
 
-    print("finished parsing "+str(index)+" out of "+str(filesnum)+" .........")
+    #print("finished parsing "+str(index)+" out of "+str(filesnum)+" .........")
     writeToCSVFile(data, outPath+'/'+"data.csv")
 
     
     ##########################################
-    #printing dataset statistics
+    ##printing dataset statistics
     sort_orders = sorted(stat.items(), key=lambda x: x[1], reverse=True)
     index=0
     for i in sort_orders:
         if index <=50:
-            print(i[0], i[1])
+            #print(i[0], i[1])
             index+=1
 
     a_file = open(outPath+'/'+"data.json", "w")
@@ -94,7 +94,7 @@ def parseMultipleFiles(inPath ,outPath):
 
 def main():
     if len(sys.argv)==1:
-        print("Enter the directory of the manyTypes4Py dataset and the directory of the output file.")
+        #print("Enter the directory of the manyTypes4Py dataset and the directory of the output file.")
     elif len(sys.argv)==2:
         parseMultipleFiles(str(sys.argv[1]),str(sys.argv[1]))
     else:

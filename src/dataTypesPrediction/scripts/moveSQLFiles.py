@@ -17,7 +17,7 @@ def moveFiles(oldDirectory,newDirectory):
 
 def main():
     if len(sys.argv)<2:
-        print("Enter the directory of the schemas and the directory of the output file.")
+        #print("Enter the directory of the schemas and the directory of the output file.")
     else:  
         moveFiles(str(sys.argv[1]),str(sys.argv[2]))
 

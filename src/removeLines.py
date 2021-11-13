@@ -25,7 +25,7 @@ def removeOutliers(ContourList,Area,hImg,wImg,contours_orig):
     #by Area of contours list sent
     #or by aspect ratio
     if(len(ContourList)==0):
-        print('no contours')
+        #print('no contours')
         return []
 
     if Area:
@@ -51,7 +51,7 @@ def removeOutliers(ContourList,Area,hImg,wImg,contours_orig):
         if not accepedArea:
             continue
         if(z[i]<=3):
-          #  print("width",w)
+          #  #print("width",w)
             if((Area and zH[i] <= 4 and zW[i] <= 4)or (not Area)):
                 filtered_hulls.append(c)
                 filtered_contours.append(contours_orig[i])
@@ -68,7 +68,7 @@ def getClosedShapes(im_filled,debug=False):
     #[Next, Previous, First_Child, Parent]
     cnt_hull = [cv2.convexHull(cnt,False) for cnt in contours_cv]
 
-    #print('0:',len(cnt_hull))
+    ##print('0:',len(cnt_hull))
     cnt_hull = [cnt for cnt,heir in zip(cnt_hull,hierarchy) if heir[3] == -1]
     cnt_filtered = [cnt for cnt,heir in zip(contours_cv,hierarchy) if heir[3] == -1]
 
@@ -102,7 +102,7 @@ def scale_contours(contours, scale):
     Returns the resized array of contours"""
     if not len(contours):
         return []
-    #print(len(contours))
+        
     for idx,contour in enumerate(contours):
         moments = cv2.moments(contour)
         moments["m00"] = max(1,moments["m00"])
@@ -145,7 +145,7 @@ def isOverlapped_middle(c,imgContours):
             #and ((Xmax-cXmid) >= 10 or (cXmid-Xmin) >= 10)
             and abs(Ymid-cYmid) <= 10
             ):
-            #print("hi",abs(cXmid-Xmax), abs(cXmid-Xmin) )
+            ##print("hi",abs(cXmid-Xmax), abs(cXmid-Xmin) )
             return True
     return False
 
@@ -223,9 +223,9 @@ def getDerived(img,contours):
             
     for cnt in scaled_up_contours:
         dashedFound = sum([1 for c in small_contours if isOverlapped(c,[cnt])])
-        #print(dashedFound)
+        ##print(dashedFound)
         if dashedFound > 5:
-            print(dashedFound,"found dashed")
+            #print(dashedFound,"found dashed")
             cv2.drawContours(im_dashes,[cnt],-1, 0, 1 )
     cv2.imwrite("im_scaled_down.png",im_scaled_down)
     cv2.imwrite("im_dashes.png",im_dashes)

@@ -36,7 +36,7 @@ def keyDetection(image):
 #################### Reading text files ###############################
 def OCR():
     os.chdir('./output')
-    print(os.getcwd())
+    #print(os.getcwd())
     textArr = []
     numFiles = 0
     isKey = []

@@ -12,71 +12,86 @@ import cv2
 import os
 
 
+def changeContours(contours, img,idx):
+    empty = np.zeros(img.shape,np.uint8)
+    cv2.drawContours(empty, [contours], -1, 255, 1)
+    #cv2.imwrite("/home/menna/Downloads/GP/src/debug_"+str(idx)+".png", empty)
+    actual_contour = np.where(empty==255)
+    actual_contour = list(actual_contour)
+    contour = list(zip(*actual_contour))
+    return  np.array([contour])
 
-img_dir ="24.png"
 
-dirs = os.listdir('input')
+img_dirs =["24.png"]
+
+#dirs = os.listdir('input')
 #for idx,img_dir in enumerate(dirs):
-print("starting..................",img_dir)
-pre = img_dir.split('.')[0]
-img_dir = 'input/'+ img_dir
+#print("starting..................",img_dir)
+for idx,img_dir in enumerate(img_dirs):
+    print("processing img"+str(idx))
+    pre = img_dir.split('.')[0]
+    img_dir = 'input/'+ img_dir
 
-adjustPrespective,approxContour,grayImg = GetMaxContour(img_dir)
-warpedImg = grayImg
-if(adjustPrespective):
-    warpedImg = warpedPrespective(grayImg,approxContour)
-shadowFreeImg = RemoveShadow(warpedImg,True)
-binarizedImg = Binarize(shadowFreeImg,True)
-kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(3,3))
-image_result = binarizedImg.astype(np.uint8).copy()
-hImg,wImg = image_result.shape
-imgArea = hImg*wImg
-filledImg = FloodFromCorners(image_result.copy(),True)
-contourdImg,filtered_contoures = getClosedShapes(filledImg,True)
-filtered_contoures_copy = filtered_contoures.copy() 
-opendContourdImg,opened_contours = getOpenedContours(image_result.copy(),filtered_contoures_copy,True)
-allContoursImg = 255 - ((255 - opendContourdImg ) + (255 - contourdImg))
-allContours = filtered_contoures + opened_contours
-im = np.ones(binarizedImg.shape, np.uint8) * 255
-
-
-allContours,_ = removeOutliers(allContours,True,hImg,wImg,allContours) #outliers by area
-allContours,_ = removeOutliers(allContours,False,hImg,wImg,allContours) #outliers by aspect ratio
-
-allContours = scale_contours(allContours,0.95)
-allContours = [h for h in allContours if not isOverlapped(h,allContours)]
-getDerived(image_result.copy(),allContours.copy())
-
-cv2.drawContours(im,allContours,-1, 0, 1 )
-cv2.imwrite("final_out_shapes/im_hull"+pre+".png",im)
-##############################################################
-
-finalContours = checkInside(allContours,binarizedImg)
-finalContours =[ cv2.convexHull(c,False) for c in finalContours]
+    adjustPrespective,approxContour,grayImg = GetMaxContour(img_dir)
+    warpedImg = grayImg
+    if(adjustPrespective):
+        warpedImg = warpedPrespective(grayImg,approxContour)
+    shadowFreeImg = RemoveShadow(warpedImg,True)
+    binarizedImg = Binarize(shadowFreeImg,True)
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(3,3))
+    image_result = binarizedImg.astype(np.uint8).copy()
+    hImg,wImg = image_result.shape
+    imgArea = hImg*wImg
+    filledImg = FloodFromCorners(image_result.copy(),True)
+    contourdImg,filtered_contoures = getClosedShapes(filledImg,True)
+    filtered_contoures_copy = filtered_contoures.copy() 
+    opendContourdImg,opened_contours = getOpenedContours(image_result.copy(),filtered_contoures_copy,True)
+    allContoursImg = 255 - ((255 - opendContourdImg ) + (255 - contourdImg))
+    allContours = filtered_contoures + opened_contours
+    im = np.ones(binarizedImg.shape, np.uint8) * 255
 
 
-shapes_no = seperateShapes(finalContours,allContoursImg, binarizedImg)
-im = np.ones(binarizedImg.shape, np.uint8) * 255
-cv2.drawContours(im,finalContours,-1, 0, 1 )
-cv2.imwrite("final_out_shapes/im_final"+pre+".png",im)
-print(shapes_no)
-shapes = detect_shapes(shapes_no)
-#weak = detectWeak(shadowFreeImg,hulls,shapes)
-textArr,isKey = OCR()
-print(textArr)
-print(isKey)
+    allContours,_ = removeOutliers(allContours,True,hImg,wImg,allContours) #outliers by area
+    allContours,_ = removeOutliers(allContours,False,hImg,wImg,allContours) #outliers by aspect ratio
 
-dataTypesDic , dataTypesArr = predictWordsTypes(textArr)
-print(dataTypesDic)
+    allContours = scale_contours(allContours,0.95)
+    allContours = [h for h in allContours if not isOverlapped(h,allContours)]
+    getDerived(image_result.copy(),allContours.copy())
 
-connectedComponents,skeleton = connectEntities(scale_contours(finalContours[:],1.17),finalContours,binarizedImg,shapes,textArr)
-relations = get_relations(skeleton,connectedComponents)
-relations = cardinality(relations,skeleton,binarizedImg)
-#connectEntities(finalContours,binarizedImg,shapes)
+    cv2.drawContours(im,allContours,-1, 0, 1 )
+    cv2.imwrite("final_out_shapes/im_hull"+pre+".png",im)
+    ##############################################################
+
+    finalContours = checkInside(allContours,binarizedImg)
+    finalContours =[ cv2.convexHull(c,False) for c in finalContours]
 
 
-# print(shapes)
-# for i,w in enumerate(weak):
-#     if w:
-#         print(i)
-# print(weak)
+    shapes_no = seperateShapes(finalContours,allContoursImg, binarizedImg)
+    im = np.ones(binarizedImg.shape, np.uint8) * 255
+    cv2.drawContours(im,finalContours,-1, 0, 1 )
+    cv2.imwrite("final_out_shapes/im_final"+pre+".png",im)
+    #print(shapes_no)
+    shapes = detect_shapes(shapes_no)
+
+    weak = detectWeak(shadowFreeImg,finalContours)
+
+    textArr,isKey = OCR()
+    #print(textArr)
+    #print(isKey)
+
+    dataTypesDic , dataTypesArr = predictWordsTypes(textArr)
+    #print(dataTypesDic)
+
+    scaled_contours = scale_contours(finalContours[:],1.17)
+    connectedComponents,skeleton = connectEntities(scaled_contours,finalContours,binarizedImg,shapes,textArr,weak)
+    relations = get_relations(skeleton,connectedComponents)
+    relations = cardinality(relations,skeleton,binarizedImg)
+
+    #connectEntities(finalContours,binarizedImg,shapes)
+
+
+    # #print(shapes)
+    # for i,w in enumerate(weak):
+    #     if w:
+    #         #print(i)
+    # #print(weak)

@@ -102,7 +102,7 @@ def scale_contours(contours, scale):
     Returns the resized array of contours"""
     if not len(contours):
         return []
-    ##print(len(contours))
+        
     for idx,contour in enumerate(contours):
         moments = cv2.moments(contour)
         moments["m00"] = max(1,moments["m00"])

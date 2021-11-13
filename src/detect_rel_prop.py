@@ -179,6 +179,7 @@ def detect_participation(relations,edges):
             paths = get_paths(entity_point,edges,relation["bounding_box"],relation["contour"],entity["contour"],relation["idx"],entity["idx"])
             paths = filter_paths(paths,relation["entities"],entity,relations.values(),relation,edges)
             entity["self"]=False
+            entity["participation"]="partial"
             if len(relation["entities"])==1:
                 entity["self"]=True
             if((len(paths)==1 and not entity["self"]) or (entity["self"] and len(paths)==2)):
@@ -257,7 +258,12 @@ def cardinality(relations,img):
             if entity["self"]:
                 iterations=2
             for i in range(iterations):
-                pathX,pathY = get_correct_path_point(entity["paths"][i],(centerY,centerX))
+                if entity.get("paths") and len(entity["paths"])>i:
+                    pathX,pathY = get_correct_path_point(entity["paths"][i],(centerY,centerX))
+                else:
+                    entity["cardinality"]="N"  
+                    entity["uncertain"]=True
+                    continue  
                 borderPoint = detectDirectionPath((pathX,pathY),(centerY,centerX),w,h,max_right,max_left,max_top,max_bottom,count,c2)
                 y_wind = borderPoint[0]
                 x_wind = borderPoint[1]
@@ -320,7 +326,7 @@ def get_relation_cardinality(cardinality_img,count,c2):
             return "M"
         elif "1" in extractedText:
             return "1"
-    return None
+    return "N"
     ################### donot forget to uncomment this block#####################
     # for i in range(number_of_cards):
     #     x1,y1,w1,h1= cv.boundingRect(cardinalities[i])

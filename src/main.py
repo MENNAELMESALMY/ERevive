@@ -15,7 +15,7 @@ import os
 def changeContours(contours, img,idx):
     empty = np.zeros(img.shape,np.uint8)
     cv2.drawContours(empty, [contours], -1, 255, 1)
-    cv2.imwrite("/home/menna/Downloads/GP/src/debug_"+str(idx)+".png", empty)
+    #cv2.imwrite("/home/menna/Downloads/GP/src/debug_"+str(idx)+".png", empty)
     actual_contour = np.where(empty==255)
     actual_contour = list(actual_contour)
     contour = list(zip(*actual_contour))

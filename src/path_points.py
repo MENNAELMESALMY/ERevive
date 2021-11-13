@@ -3,11 +3,7 @@ import cv2 as cv
 import numpy as np
 from utility import fillHole
 from skimage.morphology import opening,erosion,dilation
-def enhance_contour(img,contour,r,e,i,type,kernel=10):
-    test= img.copy()
-    for point in contour:
-        test[point[1]][point[0]]=150
-    cv.imwrite(type+"_"+str(e)+"_"+str(r)+"_"+str(i)+".png",test)
+def enhance_contour(img,contour,kernel=10):
     empty_img = np.zeros(img.shape,np.uint8)
     cv.drawContours(empty_img, [contour], -1, 255,  cv.FILLED)
     empty_img = dilation(empty_img,np.ones((kernel,kernel),np.uint8))
@@ -26,7 +22,6 @@ def reconstructEntityContour(entity,img):
     padding = 2
     top_left = (min_y-padding,min_x-2*padding)
     bottom_right = (max_y+padding,max_x+2*padding)
-    #draw rectangle
     image = np.zeros(img.shape,np.uint8)
     image = cv.rectangle(image, top_left, bottom_right, (255,255,255), 1)
     actual_contour = np.where(image==255)
@@ -36,7 +31,7 @@ def reconstructEntityContour(entity,img):
 
     
 directions=[[1,0],[0,1],[0,-1],[-1,0],[-1,-1],[1,1],[-1,1],[1,-1]]
-def BFS(start,end,img,relation,entity,r_ind,e_ind,p_ind):
+def BFS(start,end,img,relation,entity):
     src = [start[1],start[0]]
     dst=[end[1],end[0]]
     q = deque()
@@ -61,22 +56,11 @@ def BFS(start,end,img,relation,entity,r_ind,e_ind,p_ind):
                 npath.append(neighbour)
                 q.append(npath)
                 visited[str(neighbour)]=True
-    test_img = np.zeros(img.shape)
-    cv.imwrite("cutted_test_"+str(e_ind)+"_"+str(r_ind)+"_"+str(p_ind)+".png",test_img)
+
     if not is_found:
         path=[]
         points_inbetween=[]
     else:
-        #relation = enhance_contour(img,relation,e_ind,r_ind,p_ind,"relation")
-        #entity = enhance_contour(img,entity,e_ind,r_ind,p_ind,"entity")
-        rel_img = img.copy()
-        for point in relation:
-            rel_img[point[1]][point[0]]=150
-        cv.imwrite("relationn"+str(e_ind)+"_"+str(r_ind)+"_"+str(p_ind)+".png",rel_img)
-        ent_img = img.copy()
-        for point in entity:
-            ent_img[point[1]][point[0]]=150
-        cv.imwrite("entityy"+str(e_ind)+"_"+str(r_ind)+"_"+str(p_ind)+".png",ent_img)
         r =set(tuple([x[1],x[0]]) for x in list(relation))
         e =set(tuple([x[1],x[0]]) for x in list(entity))
         points_in_contours = r.union(e)
@@ -86,8 +70,6 @@ def BFS(start,end,img,relation,entity,r_ind,e_ind,p_ind):
         k=len(points_inbetween)//2
         i,j = points_inbetween[k]
         img[int(i)][int(j)] = 0
-        test_img = img.copy()
-        cv.imwrite("cutted_"+str(e_ind)+"_"+str(r_ind)+"_"+str(p_ind)+".png",test_img)
     return img,points_inbetween,is_found
 
 

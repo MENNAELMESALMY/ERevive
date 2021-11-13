@@ -12,6 +12,15 @@ import cv2
 import os
 
 
+def changeContours(contours, img,idx):
+    empty = np.zeros(img.shape,np.uint8)
+    cv2.drawContours(empty, [contours], -1, 255, 1)
+    cv2.imwrite("/home/menna/Downloads/GP/src/debug_"+str(idx)+".png", empty)
+    actual_contour = np.where(empty==255)
+    actual_contour = list(actual_contour)
+    contour = list(zip(*actual_contour))
+    return  np.array([contour])
+
 
 img_dirs =["21.png"]
 
@@ -73,7 +82,11 @@ for idx,img_dir in enumerate(img_dirs):
     dataTypesDic , dataTypesArr = predictWordsTypes(textArr)
     #print(dataTypesDic)
 
-    connectedComponents,skeleton = connectEntities(scale_contours(finalContours[:],1.17),finalContours,binarizedImg,shapes,textArr,weak)
+    scaled_contours = scale_contours(finalContours[:],1.17)
+    changed_contours = [changeContours(c,binarizedImg,i) for i,c in enumerate(scaled_contours)]
+    print(changed_contours)
+    print("finished")
+    connectedComponents,skeleton = connectEntities(changed_contours,finalContours,binarizedImg,shapes,textArr,weak)
     relations = get_relations(skeleton,connectedComponents)
     cardinality(relations,skeleton)
 

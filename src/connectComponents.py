@@ -232,10 +232,9 @@ def connectEntities(hulls,hulls_orig,binarizedImg,shapes,text,weak):
                     "isWeak":weak[i],
                     "name":text[i],
                     "contour":hulls_orig[i],
-                    "contour_cardinality":hulls[i],
                     "bounding_box": boxes[i],
-                    "relations":[{"idx":r,"isIdentitfying":weak[r],"name":text[r],"contour_cardinality":hulls[r],"contour":hulls_orig[r],"bounding_box":boxes[r],"attributes":[]} for r in foundShapes if shapes[r]=='diamond'],
-                    "attributes":[{"idx":a,"isMultivalued":weak[a],"name":text[a],"contour_cardinality":hulls[a],"contour":hulls_orig[a],"bounding_box":boxes[a],"children":[]} for a in foundShapes if shapes[a]=='oval']
+                    "relations":[{"idx":r,"isIdentitfying":weak[r],"name":text[r],"contour":hulls_orig[r],"bounding_box":boxes[r],"attributes":[]} for r in foundShapes if shapes[r]=='diamond'],
+                    "attributes":[{"idx":a,"isMultivalued":weak[a],"name":text[a],"contour":hulls_orig[a],"bounding_box":boxes[a],"children":[]} for a in foundShapes if shapes[a]=='oval']
                 })
 
     ######################format parent atrributes
@@ -255,7 +254,7 @@ def connectEntities(hulls,hulls_orig,binarizedImg,shapes,text,weak):
             deadEnds,foundShapes = BFS(shapes,y,x,colored_contours,sk_copy,i,colored_contours_labelled,foundVis)
            # #print(f"relation {i} found {foundShapes}")
             foundShapesEntities[idxf]['relations'][idxr]['attributes'] += [
-            {"idx":a,"isIdentitfying":weak[a],"contour_cardinality":hulls[a],"contour":hulls_orig[a],"bounding_box":boxes[a],"children":[]} for a in foundShapes if shapes[a]=='oval']
+            {"idx":a,"isIdentitfying":weak[a],"contour":hulls_orig[a],"bounding_box":boxes[a],"children":[]} for a in foundShapes if shapes[a]=='oval']
         
         #print(foundVis[20] , foundVis[21] , foundVis[23])
         for idxa,a in enumerate(f['attributes']):
@@ -266,7 +265,7 @@ def connectEntities(hulls,hulls_orig,binarizedImg,shapes,text,weak):
 
             #print(f"att {i} found {foundShapes}")
             foundShapesEntities[idxf]['attributes'][idxa]['children'] += [
-                {"idx":a,"isMultivalued":weak[a],"contour_cardinality":hulls[a],"contour":hulls_orig[a],"bounding_box":boxes[a],"children":[]} for a in foundShapes if shapes[a]=='oval']
+                {"idx":a,"isMultivalued":weak[a],"contour":hulls_orig[a],"bounding_box":boxes[a],"children":[]} for a in foundShapes if shapes[a]=='oval']
 
     #################### format children attribute
 

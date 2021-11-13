@@ -22,7 +22,7 @@ def changeContours(contours, img,idx):
     return  np.array([contour])
 
 
-img_dirs =["21.png"]
+img_dirs =["24.png"]
 
 #dirs = os.listdir('input')
 #for idx,img_dir in enumerate(dirs):
@@ -83,12 +83,9 @@ for idx,img_dir in enumerate(img_dirs):
     #print(dataTypesDic)
 
     scaled_contours = scale_contours(finalContours[:],1.17)
-    changed_contours = [changeContours(c,binarizedImg,i) for i,c in enumerate(scaled_contours)]
-    print(changed_contours)
-    print("finished")
-    connectedComponents,skeleton = connectEntities(changed_contours,finalContours,binarizedImg,shapes,textArr,weak)
+    connectedComponents,skeleton = connectEntities(scaled_contours,finalContours,binarizedImg,shapes,textArr,weak)
     relations = get_relations(skeleton,connectedComponents)
-    cardinality(relations,skeleton)
+    relations = cardinality(relations,skeleton,binarizedImg)
 
     #connectEntities(finalContours,binarizedImg,shapes)
 

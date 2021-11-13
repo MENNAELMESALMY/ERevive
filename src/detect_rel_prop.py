@@ -278,16 +278,16 @@ def cardinality(relations,img):
                 
                 cv.imwrite("card"+ str(count) + str(c2) + ".png",cardinality_img)
                 window = img[y_wind:y_wind+wind_height,x_wind:x_wind+wind_width].copy()
-                x_card,y_card,w_card,h_card = cardinalitiesContours(window,count,c2)
-                card_img = img.copy()
-                card_img[y_card:y_card+h_card,x_card:x_card+w_card]=150
-                cv.imwrite("card_img"+ str(count) + str(c2) + ".png",card_img)
+                #x_card,y_card,w_card,h_card = cardinalitiesContours(window,count,c2)
+                #card_img = img.copy()
+                #card_img[y_card:y_card+h_card,x_card:x_card+w_card]=150
+                cv.imwrite("card_img"+ str(count) + str(c2) + ".png",window)
+                
+                entity["cardinality"]=get_relation_cardinality(window,count,c2)
                 c2 += 1
-     
-
-
-
+           
         count+=1
+    return relations
 
 def distance(p1,p2):
     return math.sqrt((p1.x-p2.x)**2+(p1.y-p2.y)**2)
@@ -295,24 +295,32 @@ def distance(p1,p2):
 def between(p1,p2,p3):
     return math.isclose(distance(p1,p3)+distance(p2,p3),distance(p1,p2),rel_tol=0.5)
 
-def get_relation_cardinality(cardinality_img,relation,count):
+def get_relation_cardinality(cardinality_img,count,c2):
+    cardinality_img = 255 - cardinality_img
     contours = cv.findContours(cardinality_img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)[0]
-    cardinalities=[]
     cardinalities_text=[]
-    number_of_cards = len(relation["entities"])
-
-    if len(contours) < number_of_cards:
-        print("Error in detecting cardinalities")
-        return
-    elif len(contours)==number_of_cards:
-        cardinalities.extend(contours)
-    else:
-        contours = sorted(contours, key=lambda x: cv.contourArea(x))
-        cardinalities.extend(contours[0:number_of_cards])
-    x,y,w,h = relation["bounding_box"]
-    center_relation = (x+w//2,y+h//2)
-    cardinalities_text = classify_cardinalities(cardinalities,cardinality_img,count)
-
+    c3 = 0
+    cardinality_img = 255 - cardinality_img
+    for contour in contours:
+        x,y,w,h= cv.boundingRect(contour)
+        textImage = cardinality_img[y:y+h,x:x+w].copy()
+        textImage = cv.copyMakeBorder(textImage, 2, 2, 2, 2,  cv.BORDER_CONSTANT, None, (255,255,255))
+        cv.imwrite("final_card" + str(count) + "_" + str(c2) + "_" + str(c3) + ".png",textImage)
+        c3 += 1
+        custom_config = r'--oem 3 --psm 6'
+        extractedText = pytesseract.image_to_string(textImage,config=custom_config)
+        if extractedText == "\x0c":
+            extractedText = ""
+        else:
+            extractedText = extractedText.split('\n')[0]
+        
+        if "N" in extractedText:
+            return "N"
+        elif "M" in extractedText:
+            return "M"
+        elif "1" in extractedText:
+            return "1"
+    return None
     ################### donot forget to uncomment this block#####################
     # for i in range(number_of_cards):
     #     x1,y1,w1,h1= cv.boundingRect(cardinalities[i])
@@ -324,53 +332,6 @@ def get_relation_cardinality(cardinality_img,relation,count):
     #             entity["cardinality"]=cardinalities_text[i]
     #             break
     ##############################################################################
-            
-def classify_cardinalities(cardinalities,cardinality_img,count):
-    # iterate for each image send and classify the cardinalities return (array)
-    card_list = []
-    c1 = count
-    c2 = 0
-    print(cardinalities)
-    for img in cardinalities:
-        x,y,w,h= cv.boundingRect(img)
-        cardinality_img[x:x+h,y:y+w] = 150
-        cv.imwrite("test_card" + str(count) + "_" + str(c2) + ".png",cardinality_img)
-        card_image = cardinality_img[x:x+h,y:y+w]
-        cv.imwrite("final_card" + str(count) + "_" + str(c2) + ".png",card_image)
-        c2 += 1
-        custom_config = r'--oem 3 --psm 6'
-        extractedText = pytesseract.image_to_string(card_image,config=custom_config)
-        if extractedText == "\x0c":
-            extractedText = ""
-        else:
-            extractedText = extractedText.split('\n')[0]
-        card_list.append(extractedText)
-
-    print(card_list)
-    return card_list
-
-############## to determine whether there are square or rectangle contours in window ######
-def cardinalitiesContours (windowImg,count,c2):
-    contours = cv.findContours(windowImg, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)[0]
-    # return true if cardinalities still not with in image and false otherwise
-    countCard = 0
-    c1=0
-    for contour in contours:
-        empty = np.zeros(windowImg.shape,np.uint8)
-        cv.drawContours(empty, [contour], -1, (255,255,255), 3)
-        cv.imwrite("contour_" + str(count) + "_" + str(c2) + "_" + str(c1) + ".png",empty)
-        c1 += 1
-        perimeter = cv.arcLength(contour, True)
-        corners = cv.approxPolyDP(contour, 0.04 * perimeter, True)
-        if len(corners) == 4:
-            x, y, w, h = cv.boundingRect(corners)
-            aspectRatio = w / float(h)
-            print(aspectRatio)
-            if (aspectRatio >= 0.95 or aspectRatio <= 1.05)  :
-                countCard += 1
-                return x, y, w, h
-
-    return False        
 
 
 def detectDirectionPath (pathPoint,relCenter,relWidth,relHeight,max_right,max_left,max_top,max_bottom,c1,c2):

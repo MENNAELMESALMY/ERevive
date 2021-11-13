@@ -184,14 +184,16 @@ def get_correct_path_point(path,center_relation):
     return path[np.argmin(dist)]
 
         
-def cardinality(relations,img):
+def cardinality(relations,img,binarizedImg):
     count = 0
     img=255-img
+    binarizedImg = binarizedImg.astype(np.uint8)
     for relation in relations.values():
         x,y,w,h = relation["bounding_box"]
         rows = [p[0] for p in relation["contour_cardinality"][0]]
         cols = [p[1] for p in relation["contour_cardinality"][0]]
         img[cols,rows]=255
+        binarizedImg[cols,rows]=255
         for path in relation["paths"]:
             rows = [p[0] for p in path]
             cols = [p[1] for p in path]
@@ -235,7 +237,7 @@ def cardinality(relations,img):
                 if y_wind+wind_height>img.shape[0]:
                     wind_height = img.shape[0]-y_wind
                 
-                window = img[y_wind:y_wind+wind_height,x_wind:x_wind+wind_width].copy()
+                window = binarizedImg[y_wind:y_wind+wind_height,x_wind:x_wind+wind_width].copy()
                 entity["cardinality"]=get_relation_cardinality(window)
                 c2 += 1
            

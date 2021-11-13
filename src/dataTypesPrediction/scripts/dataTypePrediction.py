@@ -9,7 +9,7 @@ def extractNewWordFeatures(word):
     folderPath = path.dirname(scriptPath)
     oldtfidf = pickle.load(open(folderPath+"/modelOutput/TfidfVocabulary.pkl", 'rb'))
     
-    #print(oldtfidf)
+    ##print(oldtfidf)
     tfidf = TfidfVectorizer(encoding='latin-1', 
                             max_df=0.4662381347098422,
                             min_df=2, 
@@ -95,5 +95,5 @@ def predictWordsTypes(words):
 
 
 words = ["name","sex","birth_date","relationship","hours","name","budget","location","locations","ssn","status","salary","address","first_name","middle_initial","last_name","start_date"]
-print(predictWordsTypes(words)[0])
-#print(predictWordsTypes(words)[1])
+#print(predictWordsTypes(words)[0])
+##print(predictWordsTypes(words)[1])

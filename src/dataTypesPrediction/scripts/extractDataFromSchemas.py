@@ -173,29 +173,29 @@ def parseMultipleFiles(inPath ,outPath):
     index = 0
     for file in files:  
         if index%10 == 0: 
-            print("parsing file no "+str(index)+" out of "+str(filesnum)+" ........")
+            #print("parsing file no "+str(index)+" out of "+str(filesnum)+" ........")
         sqlCommands = getCommands(inPath+'/'+file)
         columnName , dataType = extractDataTypes(sqlCommands)
         removeDublicates2(columnName , dataType)
         sortTypes(columnName ,dataType)
         index+=1
-    print("finished parsing "+str(index)+" out of "+str(filesnum)+" .........")
-    print("start extracting unique data .....")
+    #print("finished parsing "+str(index)+" out of "+str(filesnum)+" .........")
+    #print("start extracting unique data .....")
     uniqueData = removeDublicates()
-    print("finished extracting uniue data ......")
+    #print("finished extracting uniue data ......")
     writeToCSVFile(data2, outPath+'/'+"data.csv")
 
     
     ##########################################
-    #printing dataset statistics
+    ##printing dataset statistics
     stat = {}
     for i in range(len(uniqueData)):
         if len(uniqueData[i])-1 > 0 and uniqueData[i][0] not in ['GEOMETRY' ,'SET' ,'BLOB' , 'ENUM']:
             stat[uniqueData[i][0]] = len(uniqueData[i])-1
-        #print(str(uniqueData[i][0]) +": "+str(len(uniqueData[i])))
+        ##print(str(uniqueData[i][0]) +": "+str(len(uniqueData[i])))
     sort_orders = sorted(stat.items(), key=lambda x: x[1], reverse=True)
     for i in sort_orders:
-        print(i[0], i[1])
+        #print(i[0], i[1])
 
     #ploting dataset statistics
     sort_orders_dic = collections.OrderedDict(sort_orders)
@@ -221,7 +221,7 @@ def writeToCSVFile(uniqeData,filename):
         
 def main():
     if len(sys.argv)==1:
-        print("Enter the directory of the schemas and the directory of the output file.")
+        #print("Enter the directory of the schemas and the directory of the output file.")
     elif len(sys.argv)==2:
         parseMultipleFiles(str(sys.argv[1]),str(sys.argv[1]))
     else:

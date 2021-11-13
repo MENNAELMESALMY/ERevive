@@ -90,7 +90,7 @@ def testContour(text_img,c):
     
     if h<=9 or w<=24:
         return False
-    #print(c,w,h)
+    ##print(c,w,h)
     proj_img = 255* np.ones((h,w))
     text_img = text_img/255
     proj = np.sum(text_img,1)
@@ -106,7 +106,7 @@ def testContour(text_img,c):
             counter += 1
         else:
             if counter >= (h)//12:
-                #print('counter',counter,h)
+                ##print('counter',counter,h)
                 return True
             counter =0
     return counter >= (h)//10

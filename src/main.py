@@ -8,6 +8,7 @@ from connectComponents import *
 from detect_rel_prop import *
 from OCR import *
 from dataTypesPrediction.scripts.dataTypePrediction import *
+from schema_generation import *
 import cv2
 import os
 
@@ -83,12 +84,31 @@ for idx,img_dir in enumerate(img_dirs):
     #print(dataTypesDic)
 
     scaled_contours = scale_contours(finalContours[:],1.17)
-    connectedComponents,skeleton = connectEntities(scaled_contours,finalContours,binarizedImg,shapes,textArr,weak)
+    connectedComponents,skeleton = connectEntities(scaled_contours,finalContours,binarizedImg,shapes,textArr,weak,isKey,dataTypesArr)
+
+    print("///////////////////////////////////////////")
+    print(textArr,isKey)
+    
     relations = get_relations(skeleton,connectedComponents)
     relations = cardinality(relations,skeleton,binarizedImg)
-
+    print("///////////////////////////////////////////")
     #connectEntities(finalContours,binarizedImg,shapes)
+    connectedComponents = removeContours(connectedComponents)
 
+    #print(connectedComponents)
+    
+    relations = removeContoursRelations(relations)
+
+    print("///////////////////////////////////////////")
+    #print(relations)
+
+    schema = generateSchema(connectedComponents,relations,shapes_no)
+
+    print("///////////////////////////////////////////")
+    #print(relations)
+
+    print("///////////////////////////////////////////")
+    #print(schema)
 
     # #print(shapes)
     # for i,w in enumerate(weak):

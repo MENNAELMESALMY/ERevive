@@ -138,7 +138,7 @@ def connectDeadEndsToDeadEnds(deadEnds,skc):
             if (dist <= 5):
                 cv2.line(skc,(x2,y2),(x1,y1),0,1)
     
-def connectEntities(hulls,hulls_orig,binarizedImg,shapes,text,weak):
+def connectEntities(hulls,hulls_orig,binarizedImg,shapes,text,weak,isKey,dataTypesArr):
     bin_copy = binarizedImg.astype(np.uint8).copy()
     boxes = [cv2.boundingRect(cnt) for cnt in hulls]
     h,w = binarizedImg.shape
@@ -234,7 +234,7 @@ def connectEntities(hulls,hulls_orig,binarizedImg,shapes,text,weak):
                     "contour":hulls_orig[i],
                     "bounding_box": boxes[i],
                     "relations":[{"idx":r,"isIdentitfying":weak[r],"name":text[r],"contour":hulls_orig[r],"bounding_box":boxes[r],"attributes":[]} for r in foundShapes if shapes[r]=='diamond'],
-                    "attributes":[{"idx":a,"isMultivalued":weak[a],"name":text[a],"contour":hulls_orig[a],"bounding_box":boxes[a],"children":[]} for a in foundShapes if shapes[a]=='oval']
+                    "attributes":[{"idx":a, "dataType":dataTypesArr[a],"isKey":isKey[a],"isMultivalued":weak[a],"name":text[a],"contour":hulls_orig[a],"bounding_box":boxes[a],"children":[]} for a in foundShapes if shapes[a]=='oval']
                 })
 
     ######################format parent atrributes
@@ -254,7 +254,7 @@ def connectEntities(hulls,hulls_orig,binarizedImg,shapes,text,weak):
             deadEnds,foundShapes = BFS(shapes,y,x,colored_contours,sk_copy,i,colored_contours_labelled,foundVis)
            # #print(f"relation {i} found {foundShapes}")
             foundShapesEntities[idxf]['relations'][idxr]['attributes'] += [
-            {"idx":a,"isIdentitfying":weak[a],"contour":hulls_orig[a],"bounding_box":boxes[a],"children":[]} for a in foundShapes if shapes[a]=='oval']
+            {"idx":a,"dataType":dataTypesArr[a],"isKey":isKey[a],"name":text[a],"isIdentitfying":weak[a],"contour":hulls_orig[a],"bounding_box":boxes[a],"children":[]} for a in foundShapes if shapes[a]=='oval']
         
         #print(foundVis[20] , foundVis[21] , foundVis[23])
         for idxa,a in enumerate(f['attributes']):
@@ -265,7 +265,7 @@ def connectEntities(hulls,hulls_orig,binarizedImg,shapes,text,weak):
 
             #print(f"att {i} found {foundShapes}")
             foundShapesEntities[idxf]['attributes'][idxa]['children'] += [
-                {"idx":a,"isMultivalued":weak[a],"contour":hulls_orig[a],"bounding_box":boxes[a],"children":[]} for a in foundShapes if shapes[a]=='oval']
+                {"idx":a,"dataType":dataTypesArr[a] ,"isKey":isKey[i],"name":text[a],"isMultivalued":weak[a],"contour":hulls_orig[a],"bounding_box":boxes[a],"children":[]} for a in foundShapes if shapes[a]=='oval']
 
     #################### format children attribute
 
@@ -281,3 +281,46 @@ def connectEntities(hulls,hulls_orig,binarizedImg,shapes,text,weak):
     return foundShapesEntities ,skeleton_ret
     
 
+def removeContours(entities):
+    for i,c in enumerate(entities):
+        entities[i].pop('contour')
+        entities[i].pop('bounding_box')
+        for r in entities[i]['relations']:
+            r.pop('contour')
+            for c in r['attributes']:
+                c.pop('bounding_box')
+                c.pop('contour')
+                for cn in c['children']:
+                    cn.pop('bounding_box')
+                    cn.pop('contour')
+
+        for a in entities[i]['attributes']:
+            a.pop('bounding_box')
+            a.pop('contour')
+            for c in a['children']:
+                c.pop('bounding_box')
+                c.pop('contour')
+        
+    return entities
+
+def removeContoursRelations(relations):
+    for r in relations:
+        if relations[r].get('contour') is not None:
+            relations[r].pop('contour')
+        if relations[r].get('bounding_box') is not None:
+            relations[r].pop('bounding_box')
+        if relations[r].get('contour_cardinality') is not None:
+            relations[r].pop('contour_cardinality')
+        if relations[r].get('paths') is not None:
+            relations[r].pop('paths')
+        for entity in relations[r]['entities']:
+            if entity.get('contour') is not None:
+                entity.pop('contour')
+            if entity.get('bounding_box') is not None:
+                entity.pop('bounding_box')
+            if entity.get('contour_cardinality') is not None:
+                entity.pop('contour_cardinality')
+            if entity.get('paths') is not None:
+                entity.pop('paths')           
+        
+    return relations

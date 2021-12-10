@@ -108,7 +108,7 @@ for idx,img_dir in enumerate(img_dirs):
     #print(relations)
 
     print("///////////////////////////////////////////")
-    #print(schema)
+    print(schema)
 
     # #print(shapes)
     # for i,w in enumerate(weak):

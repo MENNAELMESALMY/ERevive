@@ -1,10 +1,14 @@
 from searchIndexer import *
 from joiner import *
+import os
+import json
 import pickle
 
 def mapEntities(query,schema,OneHotVocab):
     mappedEntites = []
     for entityKeywords in query['entities']:
+        #print("entityKeywords",entityKeywords)
+        entityKeywords = entityKeywords.split("_")
         MaxMatchScore,MatchedWord,MatchedKey  = 0,None,None
         for key in schema.keys():
             cleanName = cleanEntityName(schema[key]['TableName'])
@@ -31,7 +35,7 @@ def flatten_query_entities(listOfQueries):
     for query in listOfQueries:
         entities = []
         for entity in query['entities']:
-            entities.extend(entity)
+            entities.extend(entity.split("_"))
         flattened_query_entities.append(entities)
     return flattened_query_entities
 
@@ -66,8 +70,8 @@ def mapToSchema(query,schema,OneHotVocab):
     mappedEntitesNames = [schema[idx]["TableName"] for idx,_,_,_ in mappedEntites]
     print("mappedEntitesNames",mappedEntitesNames)
     bestJoin , goals = connectEntities(schema,mappedEntitesNames)
-    print(mappedEntitesNames)
-    print(goals)
+    #print(mappedEntitesNames)
+    #print(goals)
 
     '''
     select s.name , s.age , a.name , a.age , a.address
@@ -90,8 +94,8 @@ def mapToSchema(query,schema,OneHotVocab):
     '''
     
     mappedAttributes = []
-    #print(mappedEntitesDict)
-    for attribute in query['attributes']:
+    print("mappedEntitesDict",mappedEntitesDict)
+    for attribute in query['selectAttrs']:
         
         goals_copy = goals.copy()
         schemaEntities = {schema[idx]["TableName"] for idx in schema.keys()}
@@ -107,7 +111,7 @@ def mapToSchema(query,schema,OneHotVocab):
                 if mapping is not None:
                     mappedAttributes.append(mapping)
                     continue
-            else: print(f"This Alias entity {entity} did not exist")
+            else: print(f"This Alias entity '{entity}' did not exist")
             goals_copy.discard(entity) #discard searched entity
             schemaEntities.discard(entity) #discard searched entity
             
@@ -121,7 +125,7 @@ def mapToSchema(query,schema,OneHotVocab):
         schemaEntities = schemaEntities - entities
 
         #level 3
-        print("goals",goals_copy)
+        #print("goals",goals_copy)
         mapping = mapAttr(goals_copy,attribute,entityDict,schema)
         if mapping is not None:
             mappedAttributes.append(mapping)
@@ -150,63 +154,90 @@ def queryCompactness(mappedEntitiesDict,goals):
     compactness = len(mappedEntitiesDict)/mappedEntites
     return compactness
 
-listOfQueries =[
-                    {
-                        "entities":[ #one query with two entities
-                            ["employee"],
-                            ["department"] 
-                        ],
-                        "attributes":["salary","employee.status","department.name"],
-                    },
-                    {
-                        "entities":[ #one query with two entities 
-                            ["employee"],
-                            ["project"]
-                            #["work","employee","project"],
-                        ],
-                        "attributes":["employee.sex","employee.first_name","EMPLOYEE_Manages"],    
-                    },
-                    {
-                        "entities":[ #one query with two entities
-                            ["student"],
-                            ["instructor"]
-                        ],
-                        "attributes":["student.name","student.age","instructor.name"],
-                    }    
-                ]
+def getListQueries():
+    listOfQueries=[]
+    datapath = "/home/menna/Downloads/GP/notebooks/preparingDatasets/finalOutputs"
+    files = os.listdir(datapath)
+    for queryFile in files:
+        if queryFile.find("synonyms")!=-1:
+            continue
+        with open(datapath+"/"+queryFile)as f:
+            fileObj = json.load(f)
+            for query in fileObj:
+                listOfQueries.extend(query["allQueries"])
+
+    return listOfQueries
 
 
-entities= ['department','department_clocation', \
-'employee',"project","dependent","works_employee_project"\
-"name","sex","first","name","salary","status","age","hour","start_date","EMPLOYEE_Manages"]
+# listOfQueries =[
+#                     {
+#                         "entities":[ #one query with two entities
+#                             ["employee"],
+#                             ["department"] 
+#                         ],
+#                         "selectAttrs":["salary","employee.status","department.name"],
+#                     },
+#                     {
+#                         "entities":[ #one query with two entities 
+#                             ["employee"],
+#                             ["project"]
+#                             #["work","employee","project"],
+#                         ],
+#                         "selectAttrs":["employee.sex","employee.first_name","EMPLOYEE_Manages"],    
+#                     },
+#                     {
+#                         "selectAttrs":[ #one query with two entities
+#                             ["student"],
+#                             ["instructor"]
+#                         ],
+#                         "selectAttrs":["student.name","student.age","instructor.name"],
+#                     }    
+#                 ]
+
+print("loading data")
+
+listOfQueries = getListQueries()
 
 ##########load schema###########
-with open('/home/hager/college/GP/GP/src/SearchEngine/testSchema.pickle', 'rb') as file:
-   testSchema = pickle.load(file)
+with open('/home/menna/Downloads/GP/src/SearchEngine/testSchema.pickle','rb') as file:
+    testSchema = pickle.load(file)
+    #print("testSchema",testSchema)
 
+##########load synanoms###########
+with open('/home/menna/Downloads/GP/notebooks/preparingDatasets/finalOutputs/synonyms.json', 'rb') as file:
+   vocab_words = json.load(file)
+   #print("vocab type",type(vocab_words))
+   
 ##########clean vocab###########
-vocab_words = [["teacher","instructor"],\
-                ["work","ball"],\
-                ["company","department","startup"],\
-                ["employee","project"],["salary"],["status"]]
+# vocab_words = [
+#                 "teacher":["instructor"],\
+#                 ["work","ball"],\
+#                 ["company","department","startup"],\
+#                 "employee":["project"],["salary"],["status"]]
+    
 ###########one hot encoding############
-print("vocab_words",vocab_words)
+#print("vocab_words",vocab_words)
 OneHotVocab = oneHotVocabEncoding(vocab_words)
-for entitySyn in vocab_words:
-    print("----------entity----------")
-    for entity in entitySyn:
-        print(OneHotVocab[entity].T)
+print("one hot encoding test",OneHotVocab["movie"].shape)
+# for entitySyn in vocab_words:
+#     print("----------entity----------")
+#     for entity in entitySyn:
+#         print(OneHotVocab[entity].T)
 flattened_query_entities = flatten_query_entities(listOfQueries)
 queriesMatrix = getQueriesMatrix(flattened_query_entities,OneHotVocab)
-print("queriesMatrix",queriesMatrix)
+#print("queriesMatrix",queriesMatrix)
 
 ################get uery hits#################
-query = ["employee","department","work","project"] #Generated Keywords from shcema or KG //Future work
+query = ["grade"] #Generated Keywords from shcema or KG //Future work
 queryOneHotVector = getKeyWordsVector(query,OneHotVocab).T
 queryHits = getQueryHits(queryOneHotVector,queriesMatrix)
-print("queryHits",queryHits)
-topK = getTopKHitQueries(queryHits,1)
+countNonZero = sum([1 for i in queryHits if i!=0])
+print("nozero",countNonZero,"total",len(queryHits))
+#print("queryHits",queryHits)
+topK = getTopKHitQueries(queryHits,100)
 print("topK",topK)
+for i in topK:
+    print(queryHits[i],listOfQueries[i]["entities"],listOfQueries[i]["selectAttrs"])
 
 ################calculate scores for top queries#################
 for i in topK:

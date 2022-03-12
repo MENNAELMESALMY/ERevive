@@ -47,22 +47,25 @@ def cleanEntityName(entityName):
 def oneHotVocabEncoding(vocab):
     OneHotVocab = {}
     idx = 0
-    vocab = np.array(vocab)
-    print(vocab.shape,"sh")
-    for synList in vocab:
+    # print(vocab.shape,"sh")
+    for key,synList in vocab.items():
+        synList.append(key)
         synList = np.array(synList)
         newWord = True
         for word in synList:
             if word in OneHotVocab.keys(): 
                 newWord = False
                 break
-            OneHotVocab[word] = np.eye(vocab.shape[0])[idx]
+            oneHotVec = np.zeros(len(vocab.keys()))
+            oneHotVec[idx] = 1.0
+            OneHotVocab[word] = oneHotVec
         if newWord: idx+=1
+        
     # Remove leading zeros
     for word,oneHotVector in OneHotVocab.items():
         OneHotVocab[word] = oneHotVector[:idx].reshape(idx,1)
     return OneHotVocab
-
+    
 def getKeyWordsVector(keyWords,OneHotVocab):
     uniqueValues = list(OneHotVocab.values())[0].shape[0]
     keyWordsVector = np.zeros((uniqueValues,1))

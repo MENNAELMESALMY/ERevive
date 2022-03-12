@@ -3,7 +3,7 @@
     {'TableName': 'DEPARTMENT', 
     'TableType':'',
     'attributes': {
-'name': 'str', 
+    'name': 'str', 
     'start_date': 'datetime',
     'EMPLOYEE_Manages': 'str'}, 
     'primaryKey': ['name'], 

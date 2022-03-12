@@ -83,6 +83,7 @@ def connectEntities(schema,mappedEntities):
     graph= constructGraph(schema)
     paths = []
     goals = set()
+    bestJoin = None
     for entity in mappedEntities:
         paths.append(findPathsBFS(entity,mappedEntities,graph))
         bestJoin = bestJoins(paths,mappedEntities)

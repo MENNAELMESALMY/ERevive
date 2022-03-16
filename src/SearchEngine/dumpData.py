@@ -14,7 +14,7 @@ def flatten_query_entities(listOfQueries):
 
 def getListQueries():
     listOfQueries=[]
-    datapath = "/home/menna/Downloads/GP/notebooks/preparingDatasets/finalOutputs"
+    datapath = "/home/hager/college/GP/GP/notebooks/preparingDatasets/finalOutputs"
     files = os.listdir(datapath)
     for queryFile in files:
         if queryFile.find("synonyms")!=-1:
@@ -26,21 +26,25 @@ def getListQueries():
 
     return listOfQueries
 
+
 print("loading data")
 listOfQueries = getListQueries()
 ##########load synanoms###########
-with open('/home/menna/Downloads/GP/notebooks/preparingDatasets/finalOutputs/synonyms.json', 'rb') as file:
-   vocab_words = json.load(file)
+with open('/home/hager/college/GP/GP/notebooks/preparingDatasets/finalOutputs/synonyms.json', 'rb') as file:
+    vocab_words = json.load(file)
 print("loading data done")
 OneHotVocab = oneHotVocabEncoding(vocab_words)
 print("creating one hot encoding done")
 
-with open('/home/menna/Downloads/GP/src/SearchEngine/OneHotVocab.pickle', 'wb') as handle:
+with open('/home/hager/college/GP/GP/src/SearchEngine/OneHotVocab.pickle', 'wb') as handle:
     pickle.dump(OneHotVocab, handle, protocol=pickle.HIGHEST_PROTOCOL)
 print("saving one hot encoding done")
 flattened_query_entities = flatten_query_entities(listOfQueries)
 queriesMatrix = getQueriesMatrix(flattened_query_entities,OneHotVocab)
 print("creating queries matrix done")
-with open('/home/menna/Downloads/GP/src/SearchEngine/queriesMatrix.pickle', 'wb') as handle:
+with open('/home/hager/college/GP/GP/src/SearchEngine/queriesMatrix.pickle', 'wb') as handle:
     pickle.dump(queriesMatrix, handle, protocol=pickle.HIGHEST_PROTOCOL)
 print("saving queries matrix done")
+
+
+ 

@@ -1,11 +1,17 @@
 import re
-import spacy
+#import spacy
 import numpy as np
-nlp = spacy.load('en_core_web_sm')
+import globalVars
+from nltk.stem import 	WordNetLemmatizer
+from nltk import word_tokenize
+
+#nlp = spacy.load('en_core_web_sm')
 
 def get_lemma(text):
-    doc = nlp(text)
-    return doc[0].lemma_
+    wordnet_lemmatizer = WordNetLemmatizer()
+    tokenization = word_tokenize(text)
+    lemma = wordnet_lemmatizer.lemmatize(tokenization[0])
+    return lemma
 
 def camel_case_paskal_split(identifier):
     matches = re.finditer('.+?(?:(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|$)', identifier)
@@ -66,7 +72,8 @@ def oneHotVocabEncoding(vocab):
         OneHotVocab[word] = oneHotVector[:idx].reshape(idx,1)
     return OneHotVocab
     
-def getKeyWordsVector(keyWords,OneHotVocab):
+def getKeyWordsVector(keyWords):
+    OneHotVocab = globalVars.OneHotVocab
     uniqueValues = list(OneHotVocab.values())[0].shape[0]
     keyWordsVector = np.zeros((uniqueValues,1))
     for word in keyWords:
@@ -75,7 +82,8 @@ def getKeyWordsVector(keyWords,OneHotVocab):
         keyWordsVector=  np.logical_or(OneHotVocab[word],keyWordsVector)
     return keyWordsVector*1.0
 
-def getQueriesMatrix(queriesKeywords,OneHotVocab):
+def getQueriesMatrix(queriesKeywords):
+    OneHotVocab = globalVars.OneHotVocab
     VocabSize = list(OneHotVocab.values())[0].shape[0]
     queriesNum = len(queriesKeywords)
     queriesMatrix = np.zeros((queriesNum,VocabSize))

@@ -15,7 +15,7 @@ from functools import lru_cache
 
 def getListQueries():
     listOfQueries=[]
-    datapath = "/home/nada/GP/GP/GP/notebooks/preparingDatasets/finalOutputs"
+    datapath = "/home/hager/college/GP/GP/notebooks/preparingDatasets/finalOutputs"
     files = os.listdir(datapath)
     for queryFile in files:
         if queryFile.find("synonyms")!=-1:
@@ -209,3 +209,4 @@ def flatten_query_entities(listOfQueries):
             entities.extend(entity.split("_"))
         flattened_query_entities.append(entities)
     return flattened_query_entities
+

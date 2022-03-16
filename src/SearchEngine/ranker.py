@@ -30,14 +30,7 @@ def getMatchScore(queryWords,schemaWords,OneHotVocab):
     matchScore = matchCount/max(len(queryWords),len(schemaWords))
     return matchScore
 
-def flatten_query_entities(listOfQueries):
-    flattened_query_entities = []
-    for query in listOfQueries:
-        entities = []
-        for entity in query['entities']:
-            entities.extend(entity.split("_"))
-        flattened_query_entities.append(entities)
-    return flattened_query_entities
+
 
 def constructDictionary(schema):
     entityDict = {}
@@ -60,6 +53,18 @@ def mapAttr(entities , attribute , entityDict, schema):
         return (MatchedEntityName,MatchedWord,MaxMatchScore,attribute)
     return None
 
+def getAllAttributes(query):
+    attrKeys = ['selectAttrs','groupByAttrs','whereAttrs','aggrAttrs']
+    attrKeysAggr = ['orderByAttrs']
+    attributes = set()
+    for key in query.keys():
+        if key in attrKeys:
+            attributes.update(set(query[key]))
+        elif key in attrKeysAggr:
+            attNames = set(list(zip(*query[key]))[0])
+    return attributes
+
+
 def mapToSchema(query,schema,OneHotVocab):
     entityDict = constructDictionary(schema)
 
@@ -80,7 +85,6 @@ def mapToSchema(query,schema,OneHotVocab):
     mapAttr([student],[name,age])
     mapAttr([address],[name,age,address])
 
-    
     check for . if true
     same entity => in search
     if successful => break
@@ -95,7 +99,8 @@ def mapToSchema(query,schema,OneHotVocab):
     
     mappedAttributes = []
     print("mappedEntitesDict",mappedEntitesDict)
-    for attribute in query['selectAttrs']:
+    attributes = getAllAttributes(query)
+    for attribute in attributes:
         
         goals_copy = goals.copy()
         schemaEntities = {schema[idx]["TableName"] for idx in schema.keys()}
@@ -154,87 +159,27 @@ def queryCompactness(mappedEntitiesDict,goals):
     compactness = len(mappedEntitiesDict)/mappedEntites
     return compactness
 
-def getListQueries():
-    listOfQueries=[]
-    datapath = "/home/menna/Downloads/GP/notebooks/preparingDatasets/finalOutputs"
-    files = os.listdir(datapath)
-    for queryFile in files:
-        if queryFile.find("synonyms")!=-1:
-            continue
-        with open(datapath+"/"+queryFile)as f:
-            fileObj = json.load(f)
-            for query in fileObj:
-                listOfQueries.extend(query["allQueries"])
 
-    return listOfQueries
-
-
-# listOfQueries =[
-#                     {
-#                         "entities":[ #one query with two entities
-#                             ["employee"],
-#                             ["department"] 
-#                         ],
-#                         "selectAttrs":["salary","employee.status","department.name"],
-#                     },
-#                     {
-#                         "entities":[ #one query with two entities 
-#                             ["employee"],
-#                             ["project"]
-#                             #["work","employee","project"],
-#                         ],
-#                         "selectAttrs":["employee.sex","employee.first_name","EMPLOYEE_Manages"],    
-#                     },
-#                     {
-#                         "selectAttrs":[ #one query with two entities
-#                             ["student"],
-#                             ["instructor"]
-#                         ],
-#                         "selectAttrs":["student.name","student.age","instructor.name"],
-#                     }    
-#                 ]
-
-print("loading data")
-
-listOfQueries = getListQueries()
 
 ##########load schema###########
-with open('/home/menna/Downloads/GP/src/SearchEngine/testSchema.pickle','rb') as file:
+with open('/home/menna/Downloads/GP/src/TestSchemas/sportsSchema.pickle','rb') as file:
     testSchema = pickle.load(file)
-    #print("testSchema",testSchema)
-
-##########load synanoms###########
-with open('/home/menna/Downloads/GP/notebooks/preparingDatasets/finalOutputs/synonyms.json', 'rb') as file:
-   vocab_words = json.load(file)
-   #print("vocab type",type(vocab_words))
-   
-##########clean vocab###########
-# vocab_words = [
-#                 "teacher":["instructor"],\
-#                 ["work","ball"],\
-#                 ["company","department","startup"],\
-#                 "employee":["project"],["salary"],["status"]]
     
 ###########one hot encoding############
-#print("vocab_words",vocab_words)
-OneHotVocab = oneHotVocabEncoding(vocab_words)
+with open('/home/menna/Downloads/GP/src/SearchEngine/OneHotVocab.pickle','rb') as file:
+    OneHotVocab = pickle.load(file)
 print("one hot encoding test",OneHotVocab["movie"].shape)
-# for entitySyn in vocab_words:
-#     print("----------entity----------")
-#     for entity in entitySyn:
-#         print(OneHotVocab[entity].T)
-flattened_query_entities = flatten_query_entities(listOfQueries)
-queriesMatrix = getQueriesMatrix(flattened_query_entities,OneHotVocab)
-#print("queriesMatrix",queriesMatrix)
+with open('/home/menna/Downloads/GP/src/SearchEngine/queriesMatrix.pickle','rb') as file:
+    queriesMatrix = pickle.load(file)
 
 ################get uery hits#################
-query = ["grade"] #Generated Keywords from shcema or KG //Future work
+query = ["coach","team","player"] #Generated Keywords from shcema or KG //Future work
 queryOneHotVector = getKeyWordsVector(query,OneHotVocab).T
 queryHits = getQueryHits(queryOneHotVector,queriesMatrix)
 countNonZero = sum([1 for i in queryHits if i!=0])
 print("nozero",countNonZero,"total",len(queryHits))
 #print("queryHits",queryHits)
-topK = getTopKHitQueries(queryHits,100)
+topK = getTopKHitQueries(queryHits,50)
 print("topK",topK)
 for i in topK:
     print(queryHits[i],listOfQueries[i]["entities"],listOfQueries[i]["selectAttrs"])
@@ -245,8 +190,9 @@ for i in topK:
     mappedEntites, mappedAttributes, goals =  mapToSchema(listOfQueries[i],testSchema,OneHotVocab)
     coverage = queryCoverage(mappedAttributes)
     compactness = queryCompactness(mappedEntites,goals)
-    
+    print("returnedQuery",listOfQueries[i]["query"])
     print("mappedEntites",mappedEntites)
+    print("goals",goals)
     print("mappedAttributes",mappedAttributes)
     print("coverage: ",coverage)
     print("compactness: ",compactness)

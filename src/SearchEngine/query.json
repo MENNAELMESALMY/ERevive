@@ -1,0 +1,9 @@
+{   "query": "select t2.title , t1.stars , t2.director , min ( t1.stars ) from rating as t1 join movie as t2 on t1.mid = t2.mid group by t2.director", 
+    "entities": ["rating", "movie"], 
+    "selectAttrs": ["movie.title", "rating.stars", "movie.director"], 
+    "joinAttrs": ["rating.mid", "movie.mid"], 
+    "groupByAttrs": ["movie.director"], 
+    "orderByAttrs": [], 
+    "aggrAttrs": ["rating.stars"], 
+    "whereAttrs": []
+}

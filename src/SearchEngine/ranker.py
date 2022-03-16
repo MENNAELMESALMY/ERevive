@@ -1,3 +1,8 @@
+from re import L
+import sys
+import threading
+
+from click import progressbar
 from searchIndexer import *
 from joiner import *
 import os
@@ -27,7 +32,7 @@ def getMatchScore(queryWords,schemaWords,OneHotVocab):
     queryVector = getKeyWordsVector(queryWords,OneHotVocab)
     schemaVector = getKeyWordsVector(schemaWords,OneHotVocab)
     matchCount = np.dot(queryVector.T, schemaVector)
-    matchScore = matchCount/max(len(queryWords),len(schemaWords))
+    matchScore = matchCount[0][0]/max(len(queryWords),len(schemaWords))
     return matchScore
 
 def flatten_query_entities(listOfQueries):
@@ -64,11 +69,11 @@ def mapToSchema(query,schema,OneHotVocab):
     entityDict = constructDictionary(schema)
 
     mappedEntites = mapEntities(query,schema,OneHotVocab)
-    print("mappedEntites",mappedEntites)
+    #print("mappedEntites",mappedEntites)
     mappedEntitesDict = {'_'.join(v):schema[k]["TableName"] for k,_,_,v in mappedEntites}
 
     mappedEntitesNames = [schema[idx]["TableName"] for idx,_,_,_ in mappedEntites]
-    print("mappedEntitesNames",mappedEntitesNames)
+    #print("mappedEntitesNames",mappedEntitesNames)
     bestJoin , goals = connectEntities(schema,mappedEntitesNames)
     #print(mappedEntitesNames)
     #print(goals)
@@ -94,7 +99,7 @@ def mapToSchema(query,schema,OneHotVocab):
     '''
     
     mappedAttributes = []
-    print("mappedEntitesDict",mappedEntitesDict)
+    #print("mappedEntitesDict",mappedEntitesDict)
     for attribute in query['selectAttrs']:
         
         goals_copy = goals.copy()
@@ -111,7 +116,7 @@ def mapToSchema(query,schema,OneHotVocab):
                 if mapping is not None:
                     mappedAttributes.append(mapping)
                     continue
-            else: print(f"This Alias entity '{entity}' did not exist")
+            #else: print(f"This Alias entity '{entity}' did not exist")
             goals_copy.discard(entity) #discard searched entity
             schemaEntities.discard(entity) #discard searched entity
             
@@ -141,7 +146,7 @@ def mapToSchema(query,schema,OneHotVocab):
 
         mappedAttributes.append((None,None,0,attribute))
 
-    return mappedEntites,mappedAttributes,goals
+    return mappedEntites,mappedAttributes,goals,mappedEntitesDict
 
 
 def queryCoverage(mappedAttributes):
@@ -156,7 +161,7 @@ def queryCompactness(mappedEntitiesDict,goals):
 
 def getListQueries():
     listOfQueries=[]
-    datapath = "/home/menna/Downloads/GP/notebooks/preparingDatasets/finalOutputs"
+    datapath = "/home/nada/GP/GP/GP/notebooks/preparingDatasets/finalOutputs"
     files = os.listdir(datapath)
     for queryFile in files:
         if queryFile.find("synonyms")!=-1:
@@ -199,12 +204,12 @@ print("loading data")
 listOfQueries = getListQueries()
 
 ##########load schema###########
-with open('/home/menna/Downloads/GP/src/SearchEngine/testSchema.pickle','rb') as file:
+with open('/home/nada/GP/GP/GP/src/SearchEngine/testSchema.pickle','rb') as file:
     testSchema = pickle.load(file)
     #print("testSchema",testSchema)
 
 ##########load synanoms###########
-with open('/home/menna/Downloads/GP/notebooks/preparingDatasets/finalOutputs/synonyms.json', 'rb') as file:
+with open('/home/nada/GP/GP/GP/notebooks/preparingDatasets/finalOutputs/synonyms.json', 'rb') as file:
    vocab_words = json.load(file)
    #print("vocab type",type(vocab_words))
    
@@ -228,30 +233,151 @@ queriesMatrix = getQueriesMatrix(flattened_query_entities,OneHotVocab)
 #print("queriesMatrix",queriesMatrix)
 
 ################get uery hits#################
-query = ["grade"] #Generated Keywords from shcema or KG //Future work
+query = ["department","employee"] #Generated Keywords from shcema or KG //Future work
 queryOneHotVector = getKeyWordsVector(query,OneHotVocab).T
 queryHits = getQueryHits(queryOneHotVector,queriesMatrix)
 countNonZero = sum([1 for i in queryHits if i!=0])
 print("nozero",countNonZero,"total",len(queryHits))
-#print("queryHits",queryHits)
-topK = getTopKHitQueries(queryHits,100)
-print("topK",topK)
-for i in topK:
-    print(queryHits[i],listOfQueries[i]["entities"],listOfQueries[i]["selectAttrs"])
+print("queryHits",queryHits)
 
-################calculate scores for top queries#################
-for i in topK:
-    print('------------------------------------')
-    mappedEntites, mappedAttributes, goals =  mapToSchema(listOfQueries[i],testSchema,OneHotVocab)
-    coverage = queryCoverage(mappedAttributes)
-    compactness = queryCompactness(mappedEntites,goals)
-    
-    print("mappedEntites",mappedEntites)
-    print("mappedAttributes",mappedAttributes)
-    print("coverage: ",coverage)
-    print("compactness: ",compactness)
+################get final query hits#################
 
 
+
+# clusters=[]
+# for cluster in clusteredQueries:
+#     #create new thread for each cluster
+#     #sort cluster by queryHits
+#     cluster = sorted(cluster,key=lambda x:queryHits[x],reverse=True)
+#     #take top 100 queries
+#     cluster = cluster[:100]
+#     clusters.append(cluster)
+def flattenList(listOfLists):
+    return [item for sublist in listOfLists for item in sublist]
+
+def getNonZeroQueryHits(queryHits):
+    nonZeroQueryHits = [ idx for idx,q in enumerate(queryHits) if q!=0]
+    return nonZeroQueryHits
+
+
+nonZeroQueriesIndexs = getNonZeroQueryHits(queryHits)
+########################query construction####################
+def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes):
+    query = {}
+    query["entities"] = [ent for ent in mappedEntitesDict.values()]
+    query["cleanedEntities"] = [ent[1] for ent in mappedEntites]
+    query["selectAttrs"] = []
+    for attr in mappedAttributes:
+        if attr[1] is not None:
+            query["selectAttrs"].append(attr[0]+"."+attr[1] if attr[0] is not None else attr[1])
+    return query
+
+
+################calculate scores for non zeros queries#################
+
+def getMappedQueries(finalQueries):
+    #clusterThreadName = threading.current_thread().name
+    #print("clusterThreadName",clusterThreadName,len(cluster))
+    #allClustersQueries[clusterThreadName] = []
+    queries = []
+    for i in finalQueries:
+        #print('------------------------------------')
+        mappedEntites, mappedAttributes, goals,mappedEntitesDict =  mapToSchema(listOfQueries[i],testSchema,OneHotVocab)
+        coverage = queryCoverage(mappedAttributes)
+        compactness = queryCompactness(mappedEntites,goals)
+
+        queries.append(constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes))
+        ##print("goals",goals)
+        ##print("mappedEntites",mappedEntites)
+        ##print("mappedAttributes",mappedAttributes)
+        ##print("coverage: ",coverage)
+        ##print("compactness: ",compactness)
+
+        #allClustersQueries[clusterThreadName].append([mapEntities,mappedEntites,mappedAttributes,coverage,compactness])
+    return queries
+queries = getMappedQueries(nonZeroQueriesIndexs)
+########################clustering############################
+
+def getClusteredQueries(queries):
+    clusteredQueries = {}
+    for i,query in enumerate(queries):
+        queryEntityKey = getKeyWordsVector(flattenList(query["cleanedEntities"]),OneHotVocab)
+        if clusteredQueries.get((queryEntityKey.T).tostring()) is None: #if key not exist
+            clusteredQueries[(queryEntityKey.T).tostring()] = [i]
+        else:
+            clusteredQueries[(queryEntityKey.T).tostring()].append(i)
+    return list(clusteredQueries.values())
+
+def getUniqueSelectAttrs(attrs):
+    selectAttrs = []
+    outAttrs=[]
+    attrsCleaned = [re.split(r"[.|_]",attr) for attr in attrs]
+    for i,attr in enumerate(attrsCleaned):
+        attrOneHot = getKeyWordsVector(attr,OneHotVocab)
+        if attrOneHot.tostring() not in selectAttrs:
+            selectAttrs.append(attrOneHot.tostring())
+            outAttrs.append(attrs[i])
+    return outAttrs
+def getMergdClusters(clusteredQueries,queries):
+    mergedClusters = []
+    for cluster in clusteredQueries:
+        mergedQueries = {}
+        newCluster = []
+        for i in cluster:
+            query = queries[i]
+            #Todo : Check if where condition is same for merging , should split on _
+            queryWhereKey = flattenList([re.split(r"[.|_]",q) for q in query["whereAttrs"]])
+            queryGroupKey = flattenList([re.split(r"[.|_]",q) for q in query["groupByAttrs"]])
+            queryOrderKey = flattenList([re.split(r"[.|_]",q[0]) for q in query["orderByAttrs"]])
+            queryKeys = queryWhereKey+queryGroupKey+queryOrderKey
+            queryKeysVector = getKeyWordsVector(queryKeys,OneHotVocab)
+
+            if mergedQueries.get((queryKeysVector.T).tostring()) is None: #if key not exist
+                mergedQueries[(queryKeysVector.T).tostring()] = [i]
+            else:
+                mergedQueries[(queryKeysVector.T).tostring()].append(i)
+
+        mergedQueries = list(mergedQueries.values())
+        for whereCluster in mergedQueries:
+            selectAttrs = []
+            for i in whereCluster:
+                query = queries[i]
+                selectAttrs.extend(query["selectAttrs"])
+            #selectAttrs = getUniqueSelectAttrs(selectAttrs)
+            selectAttrs = list(set(selectAttrs))
+            queries[whereCluster[0]]["selectAttrs"] = selectAttrs
+            newCluster.append(whereCluster[0])  
+        mergedClusters.append(newCluster)
+    return mergedClusters
+
+clusteredQueries = getClusteredQueries(queries)
+#mergedClusters = getMergdClusters(clusteredQueries,queries)
+
+
+
+#def startClusterThreads(clusters):
+    #clustersThreads = []
+    #for cluster in clusters:
+    #    getClusterFeatures(cluster)
+    ##    clusterThread = threading.Thread(target=getClusterFeatures,args=(cluster,))
+    ##    clustersThreads.append(clusterThread)
+    #for clusterThread in clustersThreads:
+    ##clustersThreads[0].start()
+    #for clusterThread in clustersThreads:
+    ##clustersThreads[0].join()
+#startClusterThreads(clusters)
+
+###################################################### ranker should be done after clustering ######################################################
+#topK = getTopKHitQueries(queryHits,100)
+#print("topK",topK)
+#for i in topK:
+#    print(queryHits[i],listOfQueries[i]["entities"],listOfQueries[i]["selectAttrs"])
+
+
+
+
+
+#ranking
 #Mapping to schema
 #entities, attribute
 #Map Entities ==> Joins

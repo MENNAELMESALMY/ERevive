@@ -9,7 +9,7 @@ print("Start Running: ",tracemalloc.get_traced_memory())
 
 print("loading data")
 listOfQueries = getListQueries()
-path = "/home/nada/GP/GP/GP/src"
+path = globalVars.path
 
 ##########load schema###########
 with open(path+'/TestSchemas/sportsSchema.pickle','rb') as file:
@@ -52,14 +52,15 @@ entityDict = constructDictionary(testSchema)
 
 def getMappedQueries(finalQueriesIndexs):
     queries = []
+    print(len(finalQueriesIndexs))
     for idx in finalQueriesIndexs:
         mappedEntites, mappedAttributes, goals,mappedEntitesDict =  mapToSchema(listOfQueries[idx],testSchema,entityDict,schemaEntityNames)
         coverage = queryCoverage(mappedAttributes)
         compactness = queryCompactness(mappedEntites,goals)
-        query = constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,compactness)
-        queries.append(query)
+        #query = constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,compactness)
+        #queries.append(query)
     return queries
 queries = getMappedQueries(nonZeroQueriesIndexs)
-clusteredQueries = getClusteredQueries(queries)
+#clusteredQueries = getClusteredQueries(queries)
 #mergedClusters = getMergdClusters(clusteredQueries,queries)
 #start ranking

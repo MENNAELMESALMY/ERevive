@@ -1,0 +1,11 @@
+medicine_db_names=["Bupa","Carcinogenesis","FNHK","genes","Hepatitis_std","medical","MuskLarge","mutagenesis","Pima","PTE","Pyrimidine","Triazine"]
+government_db_names=["CDESchools","Dallas","legalActs","SFScores"]
+finiancial_db_names=["ccs","cs","financial","Financial_std"]
+geography_db_names=["Countries","Mondial","Mondial_geo","Mondial_Tutorial","nations","world"]
+entertainment_db_names=["CraftBeer","IMDB_1R","imdb_full","imdb_ijs","imdb_MovieLens","imdb_small","Shakespeare"]
+kinship_db_names=["Dunur","Elti","Mooney_Family","Same_gen"]
+social_db_names=["Facebook"]
+sport_db_names = ["Hockey","Basketball_men","Basketball_women","Chess","ErgastF1","lahman_2014","KRK","NBA","NCAA","PremierLeague"]
+education_db_names = ["CiteSeer","CORA","DCG","Grants","PubMed_Diabetes","stats","Student_loan","trains","university","UW_std","VisualGenome","WebKP"]
+retail_db_names = ["AdventureWorks2014","Airline_L","classicmodels","ConsumerExpenditures","Credit","employee","ftp","GOSales_go","pubs","restbase","sakila","SalesDB","SAP","tpcc","tpcd","tpcds","tpch"]
+

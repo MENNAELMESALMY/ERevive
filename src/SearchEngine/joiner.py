@@ -1,6 +1,6 @@
 from collections import deque
 import copy
-import pickle
+# import pickle
 
 class pathEdge():
     def __init__(self,edge,hasGoal):

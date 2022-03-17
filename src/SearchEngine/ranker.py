@@ -1,14 +1,11 @@
 from re import L
 import sys
-import threading
-
-from click import progressbar
+# import threading
 from searchIndexer import *
 from joiner import *
-import globalVars
+# import globalVars
 import os
 import json
-import pickle
 import timeit
 
 from functools import lru_cache
@@ -38,17 +35,20 @@ def mapEntity(entityKeywords,schemaEntityNames):
         if matchScore > MaxMatchScore:
             MaxMatchScore = matchScore
             MappedEntity = entity
+            MatchedWord = cleanName
     if MappedEntity is not None:
-        return MappedEntity
+        return (MappedEntity,MatchedWord,MaxMatchScore,entityKeywordsSplit)
     return None
     
 def mapEntities(queryEntities,schemaEntityNames):
     mappedEntitesDict = {}
+    mappedEntities = []
     for entityKeywords in queryEntities:
-        MappedEntity = mapEntity(entityKeywords,schemaEntityNames)
-        if MappedEntity is not None:
-            mappedEntitesDict[entityKeywords] = MappedEntity
-    return mappedEntitesDict
+        EntityMatchData = mapEntity(entityKeywords,schemaEntityNames)
+        if EntityMatchData is not None:
+            mappedEntitesDict[entityKeywords] = EntityMatchData[0]
+            mappedEntities.append(EntityMatchData)
+    return mappedEntitesDict,mappedEntities
 
 def getMatchScore(queryWords,schemaWords):
     # matchedWords / max(len(queryWords),len(schemaWords))
@@ -64,17 +64,31 @@ def constructDictionary(schema):
         entityDict[schema[key]["TableName"]] = key
     return entityDict
 
-def mapAttr(entities , attribute , entityDict, schema, OneHotVocab):
+@lru_cache(maxsize=None)
+def mapAttrEntity(entityAttributes, attribute):
+    MaxMatchScore,MatchedWord  = 0,None
+    for attr in entityAttributes:
+        matchScore = getMatchScore(attribute,cleanEntityName(attr))
+        if matchScore > MaxMatchScore:
+            MaxMatchScore = matchScore
+            MatchedWord = attr
+    if MatchedWord is not None:
+        return (MatchedWord,MaxMatchScore)
+    return None,0
+        
+def mapAttr(entities , attribute , entityDict, schema):
     attribute = cleanEntityName(attribute)
     MaxMatchScore,MatchedWord,MatchedEntityName  = 0,None,None
     for entityName in entities:
+        ####################################
+        #(tuple of attributes of one one entity,)
         idx = entityDict[entityName]
-        for attr in schema[idx]["attributes"].keys():
-            matchScore = getMatchScore(attribute,cleanEntityName(attr),OneHotVocab)
-            if matchScore > MaxMatchScore:
-                MaxMatchScore = matchScore
-                MatchedWord = attr
-                MatchedEntityName = entityName
+        entityAttributes = tuple(schema[idx]["attributes"].keys())
+        attr,matchScore = mapAttrEntity(entityAttributes,tuple(attribute))
+        if matchScore > MaxMatchScore:
+            MaxMatchScore = matchScore
+            MatchedWord = attr
+            MatchedEntityName = entityName
     if MatchedWord is not None:
         return (MatchedEntityName,MatchedWord,MaxMatchScore,attribute)
     return None
@@ -96,20 +110,14 @@ def getAllAttributes(query):
 
 def mapToSchema(query,schema,entityDict,schemaEntityNames):
     ##################Remember mapped Entities
-    #print("mappedEntites",mappedEntites)
-    mappedEntitesDict = mapEntities(tuple(query['entities']),tuple(schemaEntityNames))
-    #print("mappedEntitesDict",mappedEntitesDict)
+    mappedEntitesDict,mappedEntities = mapEntities(tuple(query['entities']),tuple(schemaEntityNames))
     mappedEntitesNames = [ v for k,v in mappedEntitesDict.items()]
-    #print("mappedEntitesNames",mappedEntitesNames)
     
-    #start = timeit.default_timer()
+    start = timeit.default_timer()
     bestJoin , goals = connectEntities(schema,mappedEntitesNames)
 
-    #end = timeit.default_timer()
-    #print("bestJoin Time: ",end-start)
-    #print(mappedEntitesNames)
-    #print(goals)
-
+    end = timeit.default_timer()
+    
     '''
     select s.name , s.age , a.name , a.age , a.address
     from student s , address a
@@ -130,59 +138,54 @@ def mapToSchema(query,schema,entityDict,schemaEntityNames):
     '''
     
     mappedAttributes = []
-    # print("mappedEntitesDict",mappedEntitesDict)
-    # attributes = getAllAttributes(query)
+    attributes = getAllAttributes(query)
 
-    # start = timeit.default_timer()
-    # for attribute in attributes:
+    for attribute in attributes:
         
-    #     goals_copy = goals.copy()
-    #     schemaEntities = {schema[idx]["TableName"] for idx in schema.keys()}
+        goals_copy = goals.copy()
+        schemaEntities = {schema[idx]["TableName"] for idx in schema.keys()}
 
-    #     #level 1
-    #     if '.' in attribute:
-    #         entity = attribute.split('.')[0]
-    #         if entity in mappedEntitesDict.keys(): 
-    #             entity = mappedEntitesDict[entity]
-    #             attribute = attribute.split('.')[1]
+        #level 1
+        if '.' in attribute:
+            entity = attribute.split('.')[0]
+            if entity in mappedEntitesDict.keys(): 
+                entity = mappedEntitesDict[entity]
+                attributeName = attribute.split('.')[1]
                 
-    #             mapping = mapAttr([entity],attribute,entityDict,schema)
-    #             if mapping is not None:
-    #                 mappedAttributes.append(mapping)
-    #                 continue
-    #         else: print(f"This Alias entity '{entity}' did not exist")
-    #         goals_copy.discard(entity) #discard searched entity
-    #         schemaEntities.discard(entity) #discard searched entity
+                mapping = mapAttr([entity],attributeName,entityDict,schema)
+                if mapping is not None:
+                    mappedAttributes.append(mapping)
+                    continue
+            #else: print(f"This Alias entity '{entity}' did not exist {mappedEntitesDict} xx {query['entities']} xx {attribute}")
+            goals_copy.discard(entity) #discard searched entity
+            schemaEntities.discard(entity) #discard searched entity
             
-    #     #level 2
-    #     entities = {entity for _,entity in mappedEntitesDict.items()}
-    #     mapping = mapAttr(entities,attribute,entityDict,schema)
-    #     if mapping is not None:
-    #         mappedAttributes.append(mapping)
-    #         continue
-    #     goals_copy = goals_copy - entities 
-    #     schemaEntities = schemaEntities - entities
+        #level 2
+        entities = {entity for _,entity in mappedEntitesDict.items()}
+        mapping = mapAttr(entities,attribute,entityDict,schema)
+        if mapping is not None:
+            mappedAttributes.append(mapping)
+            continue
+        goals_copy = goals_copy - entities 
+        schemaEntities = schemaEntities - entities
 
-    #     #level 3
-    #     #print("goals",goals_copy)
-    #     mapping = mapAttr(goals_copy,attribute,entityDict,schema)
-    #     if mapping is not None:
-    #         mappedAttributes.append(mapping)
-    #         continue
-    #     #schemaEntities = schemaEntities - goals_copy
+        #level 3
+        mapping = mapAttr(goals_copy,attribute,entityDict,schema)
+        if mapping is not None:
+            mappedAttributes.append(mapping)
+            continue
+        #schemaEntities = schemaEntities - goals_copy
 
-    #     # #level 4
-    #     # TO BE DISCUSSED
-    #     # mapping = mapAttr(schemaEntities,attribute,entityDict,schema)
-    #     # if mapping is not None:
-    #     #     mappedAttributes.append(mapping)
-    #     #     continue
+        # #level 4
+        # TO BE DISCUSSED
+        # mapping = mapAttr(schemaEntities,attribute,entityDict,schema)
+        # if mapping is not None:
+        #     mappedAttributes.append(mapping)
+        #     continue
 
-    #     mappedAttributes.append((None,None,0,attribute))
+        mappedAttributes.append((None,None,0,attribute))
 
-    # end = timeit.default_timer()
-    # print("mapAttr Time: ",end-start)
-    return mappedEntitesDict,mappedAttributes,goals,mappedEntitesDict
+    return mappedEntities,mappedAttributes,goals,mappedEntitesDict
 
 
 def queryCoverage(mappedAttributes):

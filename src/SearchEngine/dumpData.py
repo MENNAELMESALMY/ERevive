@@ -40,10 +40,10 @@ with open('/home/hager/college/GP/GP/src/SearchEngine/OneHotVocab.pickle', 'wb')
     pickle.dump(OneHotVocab, handle, protocol=pickle.HIGHEST_PROTOCOL)
 print("saving one hot encoding done")
 flattened_query_entities = flatten_query_entities(listOfQueries)
-queriesMatrix = getQueriesMatrix(flattened_query_entities,OneHotVocab)
+queriesMatrix = getQueriesMatrix(flattened_query_entities)
 print("creating queries matrix done")
 with open('/home/hager/college/GP/GP/src/SearchEngine/queriesMatrix.pickle', 'wb') as handle:
-    pickle.dump(queriesMatrix, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    json.dump(queriesMatrix, handle)
 print("saving queries matrix done")
 
 

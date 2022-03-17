@@ -53,14 +53,32 @@ entityDict = constructDictionary(testSchema)
 def getMappedQueries(finalQueriesIndexs):
     queries = []
     print(len(finalQueriesIndexs))
+    start = timeit.default_timer()
     for idx in finalQueriesIndexs:
         mappedEntites, mappedAttributes, goals,mappedEntitesDict =  mapToSchema(listOfQueries[idx],testSchema,entityDict,schemaEntityNames)
         coverage = queryCoverage(mappedAttributes)
         compactness = queryCompactness(mappedEntites,goals)
         #query = constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,compactness)
         #queries.append(query)
+    end = timeit.default_timer()
+    print("mapToSchema Time: ",end-start)
+    # print("mappedAttributes: ",totalMappedAttributes , "totalAttributes: ",totalAttributes)
+    # print("percentage: ",totalMappedAttributes/totalAttributes)
+    # print(mappedEntites)
+    # print(mappedAttributes)
     return queries
 queries = getMappedQueries(nonZeroQueriesIndexs)
+print(mapEntity.cache_info())
+print(mapAttrEntity.cache_info())
+
 #clusteredQueries = getClusteredQueries(queries)
 #mergedClusters = getMergdClusters(clusteredQueries,queries)
 #start ranking
+
+###############################
+#Cache Joins
+#optimize time and space if we can
+#unconnected components handle
+#Query Matrix Json try
+######################################
+#Data---------------------------------------

@@ -22,7 +22,8 @@ def getListQueries():
         with open(datapath+"/"+queryFile)as f:
             fileObj = json.load(f)
             for query in fileObj:
-                listOfQueries.extend(query["allQueries"])
+                if len(query["allQueries"])==1:
+                    listOfQueries.extend(query["allQueries"])
 
     return listOfQueries
 

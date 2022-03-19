@@ -57,7 +57,6 @@ def getMappedQueries(finalQueriesIndexs):
     for idx in finalQueriesIndexs:
         mappedEntites, mappedAttributes, goals,mappedEntitesDict =  mapToSchema(listOfQueries[idx],testSchema,entityDict,schemaEntityNames)
         coverage = queryCoverage(mappedAttributes)
-        compactness = queryCompactness(mappedEntites,goals)
         #query = constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,compactness)
         #queries.append(query)
     end = timeit.default_timer()
@@ -75,10 +74,14 @@ print(mapAttrEntity.cache_info())
 #mergedClusters = getMergdClusters(clusteredQueries,queries)
 #start ranking
 
-###############################
-#Cache Joins
-#optimize time and space if we can
-#unconnected components handle
-#Query Matrix Json try
 ######################################
-#Data---------------------------------------
+# Cache Joins
+# optimize time and space if we can
+# unconnected components handle----- done
+# Query Matrix Json try
+# Self-loop 
+# more than one entity/attr mapping to the same entity/attr
+# level 4 
+######################################
+# Data--------------------------
+# Search for nested 

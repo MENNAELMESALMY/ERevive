@@ -7,17 +7,48 @@ class pathEdge():
         self.edge = edge
         self.hasGoal = hasGoal
 
-def bestJoins(paths,mappedEntities):
-    minJoins = float("inf")
-    Join = None
+class entitiesGroup():
+    def __init__(self,entities,paths):
+        self.entities = entities
+        self.paths = paths
+
+
+def constructGroups(paths,mappedEntities):
+    groups = []
     for path in paths:
-        joinsCount = len(path)
         joins = ' ,'.join(path)
-        if joinsCount < minJoins and all(" "+entity+"." in joins for entity in mappedEntities):
-            minJoins = joinsCount
-            Join = path
-    
-    return Join
+        entities = { entity for entity in mappedEntities if " "+entity+"." in joins}
+        if len(groups) == 0:
+            groups.append(entitiesGroup(entities,[path]))
+            continue
+        hasGroup = False
+        for group in groups:
+            if not group.entities.isdisjoint(entities):
+                hasGroup
+                group.entities.update(entities)
+                group.paths.append(path)
+                hasGroup = True
+                break
+        if not hasGroup: groups.append(entitiesGroup(entities,[path]))   
+    return groups 
+
+
+def bestJoins(paths,mappedEntities):
+    groups = constructGroups(paths,mappedEntities)
+    print("Groups count",len(groups))
+    joins = set()
+    for group in groups:
+        minJoins = float("inf")
+        Join = None
+        for path in group.paths:
+            joinsCount = len(path)
+            if joinsCount < minJoins:
+                minJoins = joinsCount
+                Join = path
+        joins.update(Join)
+        print("NEW JOINS ADDED",Join)
+    print("best join: ",joins)
+    return joins
     
 #TODO:give to this function only a connected component graph
 def findPathsBFS(source,goals,graph):
@@ -78,31 +109,29 @@ def constructGraph(schema):
             
     return graph
 
+
+
 #Best Joins 
 def connectEntities(schema,mappedEntities):
+    if len(set(mappedEntities)) == 1:
+        return [],set(mappedEntities)
     graph= constructGraph(schema)
     paths = []
     goals = set()
     bestJoin = None
+    
     for entity in mappedEntities:
+        ###BFS from entity if entities in mapped entites that can be reached from entity
         paths.append(findPathsBFS(entity,mappedEntities,graph))
-        bestJoin = bestJoins(paths,mappedEntities)
+    print("////////////////////////////////////////////")
+    print(mappedEntities)
+    #print(paths)
+    bestJoin = bestJoins(paths,mappedEntities)
+    
     if bestJoin is None: return [],goals
     for join in bestJoin:
         join = join.split('=')
         goals.update({entity.split('.')[0].strip() for entity in join})
     return bestJoin,goals
-
-# with open('/home/hager/college/GP/GP/src/SearchEngine/testSchema.pickle', 'rb') as file:
-#    schema = pickle.load(file)
-# mappedEntities = ["EMPLOYEE", "DEPENDENT", "PROJECT","DEPARTMENT_Clocation"]
-
-# print("-------------------getting paths-------------------")
-# paths = connectEntities(schema,mappedEntities)
-# # print("----------------graph----------------")
-# # print(graph)
-# print("----------------paths----------------")
-# for path in paths:  
-#     print(path)
 
 

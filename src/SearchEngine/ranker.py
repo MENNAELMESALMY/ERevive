@@ -113,9 +113,12 @@ def mapToSchema(query,schema,entityDict,schemaEntityNames):
     mappedEntitesDict,mappedEntities = mapEntities(tuple(query['entities']),tuple(schemaEntityNames))
     mappedEntitesNames = [ v for k,v in mappedEntitesDict.items()]
     
+    #mappedEntitesNames = ["players","teams","coaches","awards_coaches"]
     start = timeit.default_timer()
     bestJoin , goals = connectEntities(schema,mappedEntitesNames)
 
+    #print(mappedEntitesNames)
+    #print(bestJoin,goals,mappedEntitesNames)
     end = timeit.default_timer()
     
     '''
@@ -176,7 +179,7 @@ def mapToSchema(query,schema,entityDict,schemaEntityNames):
             continue
         #schemaEntities = schemaEntities - goals_copy
 
-        # #level 4
+        # level 4
         # TO BE DISCUSSED
         # mapping = mapAttr(schemaEntities,attribute,entityDict,schema)
         # if mapping is not None:

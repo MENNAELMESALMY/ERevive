@@ -12,7 +12,7 @@ from functools import lru_cache
 
 def getListQueries():
     listOfQueries=[]
-    datapath = "/home/hager/college/GP/GP/notebooks/preparingDatasets/finalOutputs"
+    datapath = "/home/nada/GP/GP/GP/notebooks/preparingDatasets/finalOutputs"
     files = os.listdir(datapath)
     for queryFile in files:
         if queryFile.find("synonyms")!=-1:
@@ -20,7 +20,8 @@ def getListQueries():
         with open(datapath+"/"+queryFile)as f:
             fileObj = json.load(f)
             for query in fileObj:
-                listOfQueries.extend(query["allQueries"])
+                if len(query["allQueries"])==1:
+                    listOfQueries.extend(query["allQueries"])
 
     return listOfQueries
 

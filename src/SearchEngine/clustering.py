@@ -36,22 +36,26 @@ def getMergdClusters(clusteredQueries,queries):
             queryOrderKey = flattenList([re.split(r"[.|_]",q[0]) for q in query["orderByAttrs"]])
             queryKeys = queryWhereKey+queryGroupKey+queryOrderKey
             queryKeysVector = getKeyWordsVector(queryKeys)
-
-            if mergedQueries.get((queryKeysVector.T).tostring()) is None: #if key not exist
-                mergedQueries[(queryKeysVector.T).tostring()] = [i]
+            queryKeysVector = (queryKeysVector.T).tostring()+bytes(len(queryWhereKey))+bytes(len(queryGroupKey))+bytes(len(queryOrderKey))
+            if mergedQueries.get(queryKeysVector) is None: #if key not exist
+                mergedQueries[queryKeysVector] = [i]
             else:
-                mergedQueries[(queryKeysVector.T).tostring()].append(i)
+                mergedQueries[queryKeysVector].append(i)
 
         mergedQueries = list(mergedQueries.values())
         for whereCluster in mergedQueries:
             selectAttrs = []
+            aggrAttrs = []  
             for i in whereCluster:
                 query = queries[i]
                 selectAttrs.extend(query["selectAttrs"])
+                aggrAttrs.extend(query["aggrAttrs"][0:])
             #selectAttrs = getUniqueSelectAttrs(selectAttrs)
             selectAttrs = list(set(selectAttrs))
+            aggrAttrs = list(set(aggrAttrs))
             queries[whereCluster[0]]["selectAttrs"] = selectAttrs
-            newCluster.append(whereCluster[0])  
+            queries[whereCluster[0]]["aggrAttrs"] = aggrAttrs
+            newCluster.append(whereCluster[0])
         mergedClusters.append(newCluster)
     return mergedClusters
 

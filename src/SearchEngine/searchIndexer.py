@@ -10,6 +10,8 @@ from nltk import word_tokenize
 def get_lemma(text):
     wordnet_lemmatizer = WordNetLemmatizer()
     tokenization = word_tokenize(text)
+    if len(tokenization)==0:
+        return text
     lemma = wordnet_lemmatizer.lemmatize(tokenization[0])
     return lemma
 

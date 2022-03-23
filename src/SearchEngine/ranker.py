@@ -1,3 +1,4 @@
+import itertools
 from re import L
 import sys
 # import threading
@@ -7,6 +8,8 @@ from joiner import *
 import os
 import json
 import timeit
+import pickle
+from utilities import *
 
 from functools import lru_cache
 
@@ -78,6 +81,7 @@ def mapAttrEntity(entityAttributes, attribute):
     return None,0
         
 def mapAttr(entities , attribute , entityDict, schema):
+    origAttribute = attribute
     attribute = cleanEntityName(attribute)
     MaxMatchScore,MatchedWord,MatchedEntityName  = 0,None,None
     for entityName in entities:
@@ -91,12 +95,12 @@ def mapAttr(entities , attribute , entityDict, schema):
             MatchedWord = attr
             MatchedEntityName = entityName
     if MatchedWord is not None:
-        return (MatchedEntityName,MatchedWord,MaxMatchScore,attribute)
+        return (MatchedEntityName,MatchedWord,MaxMatchScore,attribute,origAttribute)
     return None
 
 def getAllAttributes(query):
-    attrKeys = ['selectAttrs','groupByAttrs','whereAttrs','aggrAttrs']
-    attrKeysAggr = ['orderByAttrs']
+    attrKeys = ['selectAttrs','groupByAttrs','aggrAttrs']
+    attrKeysAggr = ['orderByAttrs','whereAttrs']
     attributes = set()
     for key in query.keys():
         if query[key] == []:
@@ -158,6 +162,9 @@ def mapToSchema(query,schema,entityDict,schemaEntityNames):
                 
                 mapping = mapAttr([entity],attributeName,entityDict,schema)
                 if mapping is not None:
+                    mapping = list(mapping)
+                    mapping[4] = attribute
+                    mapping = tuple(mapping)
                     mappedAttributes.append(mapping)
                     continue
             #else: print(f"This Alias entity '{entity}' did not exist {mappedEntitesDict} xx {query['entities']} xx {attribute}")
@@ -187,13 +194,13 @@ def mapToSchema(query,schema,entityDict,schemaEntityNames):
         #     mappedAttributes.append(mapping)
         #     continue
 
-        mappedAttributes.append((None,None,0,attribute))
+        mappedAttributes.append((None,None,0,attribute,attribute))
 
     return mappedEntities,mappedAttributes,goals,mappedEntitesDict
 
 
 def queryCoverage(mappedAttributes):
-    found = sum([1 for entity,_,_,_ in mappedAttributes if entity is not None])
+    found = sum([1 for entity,_,_,_,_ in mappedAttributes if entity is not None])
     attributesMapped = max(len(mappedAttributes),1)
     return found/attributesMapped
 
@@ -217,3 +224,74 @@ def flatten_query_entities(listOfQueries):
         flattened_query_entities.append(entities)
     return flattened_query_entities
 
+def loadNgramsPickle():
+    with open('/home/nada/GP/GP/GP/src/SearchEngine/nGrams/ngrams.pickle', 'rb') as handle:
+        ngrams = pickle.load(handle)
+    with open('/home/nada/GP/GP/GP/src/SearchEngine/nGrams/unigram.pickle', 'rb') as handle:
+        unigram = pickle.load(handle)
+    return ngrams,unigram
+def getBestCombination(ngrams,entities):
+    entitiesOneHotVector=[]
+    #2kbr compination mwgoda
+    for entity in list(set(entities)):
+        entity = entity.split("_")
+        entity = [get_lemma(word) for word in entity]
+        entityOneHotVector = (getKeyWordsVector(entity)).tostring()
+        entitiesOneHotVector.append(entityOneHotVector)
+    best_combination = None
+    best_combination_key = None
+    len_best_combination = 0
+    for r in range(len(entitiesOneHotVector)+1):
+        for combination in itertools.combinations(entitiesOneHotVector, r):
+            combination_key = np.array(list(combination)).tostring()
+            if  combination_key in ngrams["whereAtrrsDict"] and len(list(combination)) > len_best_combination:
+                best_combination = combination
+                best_combination_key = combination_key
+                len_best_combination = len(list(combination))
+    return best_combination,best_combination_key
+def getAttrsProps(attributes,type,query,ngrams,unigram):
+    for attr in list(set(attributes)):
+        if attr.find(".") != -1:
+            attr = attr.split(".")[1]
+        attr = attr.split("_")
+        attr = [get_lemma(word) for word in attr]
+        attrOneHotVector = (getKeyWordsVector(attr)).tostring()   
+        if ngrams.get(attrOneHotVector):         
+            query[type] += ngrams[attrOneHotVector]
+        elif unigram.get(attrOneHotVector):
+            query[type] += unigram[attrOneHotVector]
+def rankCluster(cluster,queries,k,ngrams,unigram):
+    cluster_queries=[]
+    for idx in cluster:
+        query = queries[idx]
+        query['rank'] = 0
+        query['whereScore']=0
+        query['selectScore']=0
+        best_combination,best_combination_key = getBestCombination(ngrams,query['entities'])
+        if best_combination==None:
+            best_combination,best_combination_key = getBestCombination(ngrams,list(query['mappedEntitesDict'].keys()))
+        whereAttrsNgrams = ngrams["whereAtrrsDict"][best_combination_key]
+        selectAttrsNgrams = ngrams["selectAttrsDict"][best_combination_key]
+        whereAttrs = [attr[0] for attr in query["whereAttrs"]]
+        getAttrsProps(whereAttrs,"whereScore",query,whereAttrsNgrams,unigram["whereAtrrsDict"]) 
+        getAttrsProps(query["selectAttrs"],"selectScore",query,selectAttrsNgrams,unigram["selectAttrsDict"])
+        cluster_queries.append(query)
+    #sort queries by whereScore
+    sorted_queries = sorted(cluster_queries, key=lambda k: k['selectScore']+k['whereScore'], reverse=True)
+    return list(sorted_queries)    
+def getRankedQueries(clusters,queries):
+    ngrams,unigram = loadNgramsPickle()
+    ranked_queries = []
+    k=10 ## should be changed
+    for cluster in clusters:
+        ranked = rankCluster(cluster,queries,k,ngrams,unigram)
+        ranked_queries.append(ranked)
+    return ranked_queries
+    
+
+##############
+#ngeb 2l ngrams for select attributes , where attributes
+#nsort by sum of the propapility of where attributes
+#nsort by sum of the propapility of select attributes
+############## TO Do
+#validate the output query , where condition , nrun 2l query we n4of lw feh 2y errors

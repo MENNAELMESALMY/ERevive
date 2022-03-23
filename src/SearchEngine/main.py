@@ -12,7 +12,7 @@ listOfQueries = getListQueries()
 path = globalVars.path
 
 ##########load schema###########
-with open(path+'/TestSchemas/sportsSchema.pickle','rb') as file:
+with open(path+'/TestSchemas/movieSchema.pickle','rb') as file:
     testSchema = pickle.load(file)
     
 print("testSchema: ",tracemalloc.get_traced_memory())
@@ -38,7 +38,7 @@ tracemalloc.stop()
 
 tracemalloc.start()
 ################get uery hits#################
-query = ["coach","team","player"] #Generated Keywords from shcema or KG //Future work
+query = ["movie","actor","director","award"] #Generated Keywords from shcema or KG //Future work
 queryOneHotVector = getKeyWordsVector(query).T
 queryHits = getQueryHits(queryOneHotVector,queriesMatrix)
 
@@ -57,11 +57,11 @@ def getMappedQueries(finalQueriesIndexs):
     for idx in finalQueriesIndexs:
         mappedEntites, mappedAttributes, goals,mappedEntitesDict =  mapToSchema(listOfQueries[idx],testSchema,entityDict,schemaEntityNames)
         coverage = queryCoverage(mappedAttributes)
-        #query = constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,compactness)
-        #queries.append(query)
+        query = constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,idx,goals,listOfQueries[idx])
+        queries.append(query)
     end = timeit.default_timer()
     print("mapToSchema Time: ",end-start)
-    # print("mappedAttributes: ",totalMappedAttributes , "totalAttributes: ",totalAttributes)
+    print("mappedAttributes: ",mappedAttributes , "totalAttributes: ",mappedEntites)
     # print("percentage: ",totalMappedAttributes/totalAttributes)
     # print(mappedEntites)
     # print(mappedAttributes)
@@ -69,9 +69,25 @@ def getMappedQueries(finalQueriesIndexs):
 queries = getMappedQueries(nonZeroQueriesIndexs)
 print(mapEntity.cache_info())
 print(mapAttrEntity.cache_info())
+# for q in queries:
+#     print("###################################################")
+#     print("query",q)
+#     print(listOfQueries[q["id"]])
+#     print("###################################################")
+clusteredQueries = getClusteredQueries(queries)
+mergedClusters = getMergdClusters(clusteredQueries,queries)
+#rankedQueries = getRankedQueries(mergedClusters,queries)
+rankedQueries = getRankedQueries(mergedClusters,queries)
+clusters = {}
+outFile = "rankedQueries.txt"
+for i,c in enumerate(rankedQueries):
+    clusters["cluster#"+str(i)]=c
 
-#clusteredQueries = getClusteredQueries(queries)
-#mergedClusters = getMergdClusters(clusteredQueries,queries)
+with open(outFile,'w') as file:
+    jsonObj = json.dumps(clusters)
+    file.write(jsonObj)
+
+
 #start ranking
 
 ######################################

@@ -234,6 +234,10 @@ def loadNgramsPickle():
     with open('/home/nada/GP/GP/GP/src/SearchEngine/nGrams/unigram.pickle', 'rb') as handle:
         unigram = pickle.load(handle)
     return ngrams,unigram
+def loadEntitiesGrams():
+    with open('/home/nada/GP/GP/GP/src/SearchEngine/nGrams/entities.pickle', 'rb') as handle:
+        entitiesGrams = pickle.load(handle)
+    return entitiesGrams
 def getBestCombination(ngrams,entities):
     entitiesOneHotVector=[]
     #2kbr compination mwgoda
@@ -264,7 +268,7 @@ def getAttrsProps(attributes,type,query,ngrams,unigram):
             query[type] += ngrams[attrOneHotVector]
         elif unigram.get(attrOneHotVector):
             query[type] += unigram[attrOneHotVector]
-def rankCluster(cluster,queries,k,ngrams,unigram):
+def rankCluster(cluster,queries,ngrams,unigram):
     cluster_queries=[]
     for idx in cluster:
         query = queries[idx]
@@ -276,19 +280,55 @@ def rankCluster(cluster,queries,k,ngrams,unigram):
             best_combination,best_combination_key = getBestCombination(ngrams,list(query['mappedEntitesDict'].keys()))
         whereAttrsNgrams = ngrams["whereAtrrsDict"][best_combination_key]
         selectAttrsNgrams = ngrams["selectAttrsDict"][best_combination_key]
-        whereAttrs = [attr[0] for attr in query["whereAttrs"]]
+        whereAttrs = [[atr[0],atr[2]] if atr[2]!="value" else [atr[0]]  for atr in query["whereAttrs"]]
+        whereAttrs = flattenList(whereAttrs)
         getAttrsProps(whereAttrs,"whereScore",query,whereAttrsNgrams,unigram["whereAtrrsDict"]) 
         getAttrsProps(query["selectAttrs"],"selectScore",query,selectAttrsNgrams,unigram["selectAttrsDict"])
         cluster_queries.append(query)
     sorted_queries = sorted(cluster_queries, key=lambda k: k['selectScore']+k['whereScore'], reverse=True)
-    return list(sorted_queries)    
+    return list(sorted_queries)
+def rankTopk(ranked_queries,maxNumOfQueries):
+    entitiesGrams = loadEntitiesGrams()
+    maxClusterScore = 0
+    top_ranked_queries = []
+    for ranked_query in ranked_queries:
+        if len(ranked_queries)<10:
+            continue
+        entities = list(set(ranked_query[0]['entities']))
+        cluster_score = 0
+        reversedMappedEntitesDict = {value:key for key,value in ranked_query[0]['mappedEntitesDict'].items()}
+        for entity in entities: 
+            mappedEntity = reversedMappedEntitesDict[entity]
+            entity = entity.split("_")
+            mappedEntity = mappedEntity.split("_")
+            entityOneHotVector = (getKeyWordsVector(entity)).tostring()
+            mappedEntityOneHotVector = (getKeyWordsVector(mappedEntity)).tostring()
+            if entitiesGrams.get(entityOneHotVector):
+                cluster_score += entitiesGrams[entityOneHotVector]
+            elif entitiesGrams.get(mappedEntityOneHotVector):
+                cluster_score += entitiesGrams[mappedEntityOneHotVector]
+        top_ranked_queries.append({'len':len(ranked_query),'score':cluster_score,'queries':ranked_query})
+        if cluster_score > maxClusterScore:
+            maxClusterScore = cluster_score
+    for cluster in top_ranked_queries:
+        if len(cluster["queries"])<10:
+            continue
+        cluster['score'] = float(cluster['score'])/maxClusterScore
+        top_k = int(cluster['score']*maxNumOfQueries)
+        cluster['queries'] = cluster['queries'][:top_k]
+        cluster['len'] = len(cluster['queries']) 
+    return top_ranked_queries
 def getRankedQueries(clusters,queries):
     ngrams,unigram = loadNgramsPickle()
     ranked_queries = []
-    k=10 ## should be changed
+    clustersLength=[]
     for cluster in clusters:
-        ranked = rankCluster(cluster,queries,k,ngrams,unigram)
+        ranked = rankCluster(cluster,queries,ngrams,unigram)
+        clustersLength.append(len(ranked))
         ranked_queries.append(ranked)
+    maxNumOfQueries = max(clustersLength)
+    ngrams,unigram = {},{}
+    ranked_queries = rankTopk(ranked_queries,maxNumOfQueries)
     return ranked_queries
     
 

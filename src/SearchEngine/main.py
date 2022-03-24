@@ -76,7 +76,6 @@ print(mapAttrEntity.cache_info())
 #     print("###################################################")
 clusteredQueries = getClusteredQueries(queries)
 mergedClusters = getMergdClusters(clusteredQueries,queries)
-#rankedQueries = getRankedQueries(mergedClusters,queries)
 rankedQueries = getRankedQueries(mergedClusters,queries)
 clusters = {}
 outFile = "rankedQueries.txt"

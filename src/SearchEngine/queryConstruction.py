@@ -1,4 +1,3 @@
-from tkinter.tix import Tree
 from utilities import flattenList
 import random
 
@@ -14,7 +13,7 @@ def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,id,
     query["mappedAttributes"] = list(mappedAttributes)
     query["mappedAttributesDict"] = mappedAttributesDict
     query["mappedEntitesDict"] = mappedEntitesDict
-    query["bestJoin"] = bestJoin
+    query["bestJoin"] = list(bestJoin)
     query["origQuery"] = origQuery
     attrKeys = ['selectAttrs','groupByAttrs','aggrAttrs','orderByAttrs','whereAttrs','havingAttrs']
     for key in attrKeys:
@@ -62,7 +61,20 @@ def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,id,
     return query
 
 def addJoinAttrs(joins,whereAttrs):
-    pass
+    sep = 'and'
+    for idx,join in enumerate(joins):
+        join = join.strip()
+        join = join.split(" ")
+        if idx == len(joins)-1 and len(whereAttrs)==0:
+            sep = ''
+        joins[idx] =[join[0],join[1],join[2],sep]
+    for attr in whereAttrs:
+        for join in joins:
+            if join[0] == attr[0] and join[1] == attr[1] and join[2] == attr[2]:
+                join[3] = attr[3]
+                whereAttrs.remove(attr)
+    joins.extend(whereAttrs)
+    return joins
 
 def queryStructure(queryDict):
     query = "SELECT "

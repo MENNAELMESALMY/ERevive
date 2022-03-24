@@ -82,23 +82,33 @@ print("ranked queries")
 finalClusters = []
 for cluster in rankedQueries:
     clusterQueries = []
-    for query in cluster:
+    for query in cluster["queries"]:
         clusterQueries.append(queryStructure(query))
         print(query)
         print("##################################")
     finalClusters.append(clusterQueries)
 
 clusters = {}
-outFile = "rankedQueries.txt"
+outFileQueries = "finalQueries.txt"
+outFileClusters = "finalClusters.txt"
 for i,c in enumerate(finalClusters):
     clusters["cluster#"+str(i)]=c
 
-with open(outFile,'w') as file:
+with open(outFileQueries,'w') as file:
+    jsonObj = json.dumps(clusters)
+    file.write(jsonObj)
+    clusters={}
+
+for i,c in enumerate(rankedQueries):
+    clusters["cluster#"+str(i)]=c
+
+with open(outFileClusters,'w') as file:
     jsonObj = json.dumps(clusters)
     file.write(jsonObj)
 
-
-#start ranking
+# handle alias
+# handle final query validation
+# integrate
 
 ######################################
 # Cache Joins

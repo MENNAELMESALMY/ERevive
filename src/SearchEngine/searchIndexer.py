@@ -56,14 +56,14 @@ def oneHotVocabEncoding(vocab):
     OneHotVocab = {}
     idx = 0
     # print(vocab.shape,"sh")
-    for key,synList in vocab.items(): 
+    for key,synList in vocab.items():
         synList.append(key)
         synList = np.array(synList)
         newWord = True
         for word in synList:
             if word in OneHotVocab.keys(): 
                 newWord = False
-                continue
+                break
             oneHotVec = np.zeros(len(vocab.keys()))
             oneHotVec[idx] = 1.0
             OneHotVocab[word] = oneHotVec

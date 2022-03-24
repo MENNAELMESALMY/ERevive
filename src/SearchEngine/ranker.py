@@ -99,8 +99,8 @@ def mapAttr(entities , attribute , entityDict, schema):
     return None
 
 def getAllAttributes(query):
-    attrKeys = ['selectAttrs','groupByAttrs']
-    attrKeysAggr = ['orderByAttrs','aggrAttrs']
+    attrKeys = ['selectAttrs','groupByAttrs','aggrAttrs']
+    attrKeysAggr = ['orderByAttrs','whereAttrs']
     attributes = set()
     for key in query.keys():
         if query[key] == []:
@@ -109,10 +109,6 @@ def getAllAttributes(query):
             attributes.update(set(query[key]))
         elif key in attrKeysAggr:
             attNames = set(list(zip(*query[key]))[0])
-            attributes.update(attNames)
-        elif key == 'whereAttrs':
-            whereAttributes = [[atr[0],atr[2]] if atr[2]!="value" else [atr[0]]  for atr in query[key]]
-            attNames = set(flattenList(whereAttributes))
             attributes.update(attNames)
     return attributes
 
@@ -280,6 +276,7 @@ def rankCluster(cluster,queries,k,ngrams,unigram):
         getAttrsProps(whereAttrs,"whereScore",query,whereAttrsNgrams,unigram["whereAtrrsDict"]) 
         getAttrsProps(query["selectAttrs"],"selectScore",query,selectAttrsNgrams,unigram["selectAttrsDict"])
         cluster_queries.append(query)
+    #sort queries by whereScore
     sorted_queries = sorted(cluster_queries, key=lambda k: k['selectScore']+k['whereScore'], reverse=True)
     return list(sorted_queries)    
 def getRankedQueries(clusters,queries):

@@ -100,7 +100,7 @@ def mapAttr(entities , attribute , entityDict, schema):
 
 def getAllAttributes(query):
     attrKeys = ['selectAttrs','groupByAttrs']
-    attrKeysAggr = ['orderByAttrs','aggrAttrs']
+    attrKeysAggr = ['orderByAttrs','aggrAttrs','havingAttrs']
     attributes = set()
     for key in query.keys():
         if query[key] == []:
@@ -200,7 +200,7 @@ def mapToSchema(query,schema,entityDict,schemaEntityNames):
 
         mappedAttributes.append((None,None,0,attribute,attribute))
 
-    return mappedEntities,mappedAttributes,goals,mappedEntitesDict
+    return mappedEntities,mappedAttributes,goals,mappedEntitesDict,bestJoin
 
 
 def queryCoverage(mappedAttributes):
@@ -282,6 +282,7 @@ def rankCluster(cluster,queries,ngrams,unigram):
         selectAttrsNgrams = ngrams["selectAttrsDict"][best_combination_key]
         whereAttrs = [[atr[0],atr[2]] if atr[2]!="value" else [atr[0]]  for atr in query["whereAttrs"]]
         whereAttrs = flattenList(whereAttrs)
+
         getAttrsProps(whereAttrs,"whereScore",query,whereAttrsNgrams,unigram["whereAtrrsDict"]) 
         getAttrsProps(query["selectAttrs"],"selectScore",query,selectAttrsNgrams,unigram["selectAttrsDict"])
         cluster_queries.append(query)

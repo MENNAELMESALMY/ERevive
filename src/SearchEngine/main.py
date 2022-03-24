@@ -1,5 +1,5 @@
 import tracemalloc
-from queryConstruction import constructQuery
+from queryConstruction import constructQuery,queryStructure
 import globalVars
 import timeit
 from ranker import *
@@ -55,9 +55,9 @@ def getMappedQueries(finalQueriesIndexs):
     print(len(finalQueriesIndexs))
     start = timeit.default_timer()
     for idx in finalQueriesIndexs:
-        mappedEntites, mappedAttributes, goals,mappedEntitesDict =  mapToSchema(listOfQueries[idx],testSchema,entityDict,schemaEntityNames)
+        mappedEntites, mappedAttributes, goals,mappedEntitesDict,bestJoin =  mapToSchema(listOfQueries[idx],testSchema,entityDict,schemaEntityNames)
         coverage = queryCoverage(mappedAttributes)
-        query = constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,idx,goals,listOfQueries[idx])
+        query = constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,idx,goals,listOfQueries[idx],bestJoin)
         queries.append(query)
     end = timeit.default_timer()
     print("mapToSchema Time: ",end-start)
@@ -77,9 +77,20 @@ print(mapAttrEntity.cache_info())
 clusteredQueries = getClusteredQueries(queries)
 mergedClusters = getMergdClusters(clusteredQueries,queries)
 rankedQueries = getRankedQueries(mergedClusters,queries)
+
+print("ranked queries")
+finalClusters = []
+for cluster in rankedQueries:
+    clusterQueries = []
+    for query in cluster:
+        clusterQueries.append(queryStructure(query))
+        print(query)
+        print("##################################")
+    finalClusters.append(clusterQueries)
+
 clusters = {}
 outFile = "rankedQueries.txt"
-for i,c in enumerate(rankedQueries):
+for i,c in enumerate(finalClusters):
     clusters["cluster#"+str(i)]=c
 
 with open(outFile,'w') as file:

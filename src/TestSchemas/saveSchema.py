@@ -140,12 +140,13 @@ testSchema = {
         'post_losses': 'int'},
         'primaryKey': ['coachID','year','tmID','stint'],
         'ForgeinKey': [
-        {
-        'attributeName': 'tmID',
-        'ForignKeyTable': 'teams', 
-        'ForignKeyTableAttributeName': 'tmID', 
-        'patricipaction': 'partial', 
-        'dataType': 'str'}]
+        # {
+        # 'attributeName': 'tmID',
+        # 'ForignKeyTable': 'teams', 
+        # 'ForignKeyTableAttributeName': 'tmID', 
+        # 'patricipaction': 'partial', 
+        # 'dataType': 'str'}
+        ]
     },
     6: 
     {
@@ -307,5 +308,5 @@ testSchema = {
 }
 
 import pickle
-with open('/home/menna/Downloads/GP/src/TestSchemas/sportsSchema.pickle', 'wb') as handle:
+with open('/home/hager/college/GP/GP/src/TestSchemas/sportsSchema.pickle', 'wb') as handle:
     pickle.dump(testSchema, handle, protocol=pickle.HIGHEST_PROTOCOL)

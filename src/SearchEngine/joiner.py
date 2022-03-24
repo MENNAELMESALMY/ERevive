@@ -1,5 +1,7 @@
 from collections import deque
 import copy
+import globalVars
+from functools import lru_cache
 # import pickle
 
 class pathEdge():
@@ -35,7 +37,7 @@ def constructGroups(paths,mappedEntities):
 
 def bestJoins(paths,mappedEntities):
     groups = constructGroups(paths,mappedEntities)
-    print("Groups count",len(groups))
+    #print("Groups count",len(groups))
     joins = set()
     for group in groups:
         minJoins = float("inf")
@@ -46,8 +48,8 @@ def bestJoins(paths,mappedEntities):
                 minJoins = joinsCount
                 Join = path
         joins.update(Join)
-        print("NEW JOINS ADDED",Join)
-    print("best join: ",joins)
+        #print("NEW JOINS ADDED",Join)
+    #print("best join: ",joins)
     return joins
     
 #TODO:give to this function only a connected component graph
@@ -112,19 +114,20 @@ def constructGraph(schema):
 
 
 #Best Joins 
-def connectEntities(schema,mappedEntities):
+@lru_cache(maxsize=None)
+def connectEntities(mappedEntities):
     if len(set(mappedEntities)) == 1:
         return [],set(mappedEntities)
-    graph= constructGraph(schema)
+    
     paths = []
     goals = set()
     bestJoin = None
     
     for entity in mappedEntities:
         ###BFS from entity if entities in mapped entites that can be reached from entity
-        paths.append(findPathsBFS(entity,mappedEntities,graph))
-    print("////////////////////////////////////////////")
-    print(mappedEntities)
+        paths.append(findPathsBFS(entity,mappedEntities,globalVars.schemaGraph))
+    #print("////////////////////////////////////////////")
+    #print(mappedEntities)
     #print(paths)
     bestJoin = bestJoins(paths,mappedEntities)
     

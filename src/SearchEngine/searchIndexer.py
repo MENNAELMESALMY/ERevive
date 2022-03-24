@@ -2,7 +2,7 @@ import re
 #import spacy
 import numpy as np
 import globalVars
-from nltk.stem import 	WordNetLemmatizer
+from nltk.stem import WordNetLemmatizer
 from nltk import word_tokenize
 
 #nlp = spacy.load('en_core_web_sm')

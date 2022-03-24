@@ -30,8 +30,14 @@ def getMergdClusters(clusteredQueries,queries):
         newCluster = []
         for i in cluster:
             query = queries[i]
+
+            ## extracting where attributes from where tuples ##
+            currentWhereAttrs = []
+            currentWhereAttrs = [[atr[0],atr[2]] if atr[2]!="value" else [atr[0]]  for atr in query["whereAttrs"]]
+            currentWhereAttrs = flattenList(currentWhereAttrs)
+
             #Todo : Check if where condition is same for merging , should split on _
-            queryWhereKey = flattenList([re.split(r"[.|_]",q) for q in query["whereAttrs"]])
+            queryWhereKey = flattenList([re.split(r"[.|_]",q) for q in currentWhereAttrs])
             queryGroupKey = flattenList([re.split(r"[.|_]",q) for q in query["groupByAttrs"]])
             queryOrderKey = flattenList([re.split(r"[.|_]",q[0]) for q in query["orderByAttrs"]])
             queryKeys = queryWhereKey+queryGroupKey+queryOrderKey
@@ -52,7 +58,7 @@ def getMergdClusters(clusteredQueries,queries):
                 aggrAttrs.extend(query["aggrAttrs"][0:])
             #selectAttrs = getUniqueSelectAttrs(selectAttrs)
             selectAttrs = list(set(selectAttrs))
-            aggrAttrs = list(set(aggrAttrs))
+            aggrAttrs = [list(x) for x in set(tuple(x) for x in aggrAttrs)]
             queries[whereCluster[0]]["selectAttrs"] = selectAttrs
             queries[whereCluster[0]]["aggrAttrs"] = aggrAttrs
             newCluster.append(whereCluster[0])

@@ -15,7 +15,7 @@ from functools import lru_cache
 
 def getListQueries():
     listOfQueries=[]
-    datapath = "/home/nada/GP/GP/GP/notebooks/preparingDatasets/finalOutputs"
+    datapath = "/home/nihal/Desktop/final_gp_repo/GP/notebooks/preparingDatasets/finalOutputs"
     files = os.listdir(datapath)
     for queryFile in files:
         if queryFile.find("synonyms")!=-1:
@@ -100,7 +100,7 @@ def mapAttr(entities , attribute , entityDict, schema):
 
 def getAllAttributes(query):
     attrKeys = ['selectAttrs','groupByAttrs']
-    attrKeysAggr = ['orderByAttrs','aggrAttrs']
+    attrKeysAggr = ['orderByAttrs','aggrAttrs','havingAttrs']
     attributes = set()
     for key in query.keys():
         if query[key] == []:
@@ -200,7 +200,7 @@ def mapToSchema(query,schema,entityDict,schemaEntityNames):
 
         mappedAttributes.append((None,None,0,attribute,attribute))
 
-    return mappedEntities,mappedAttributes,goals,mappedEntitesDict
+    return mappedEntities,mappedAttributes,goals,mappedEntitesDict,bestJoin
 
 
 def queryCoverage(mappedAttributes):
@@ -229,9 +229,9 @@ def flatten_query_entities(listOfQueries):
     return flattened_query_entities
 
 def loadNgramsPickle():
-    with open('/home/nada/GP/GP/GP/src/SearchEngine/nGrams/ngrams.pickle', 'rb') as handle:
+    with open('/home/nihal/Desktop/final_gp_repo/GP/src/SearchEngine/nGrams/ngrams/ngrams.pickle', 'rb') as handle:
         ngrams = pickle.load(handle)
-    with open('/home/nada/GP/GP/GP/src/SearchEngine/nGrams/unigram.pickle', 'rb') as handle:
+    with open('/home/nihal/Desktop/final_gp_repo/GP/src/SearchEngine/nGrams/ngrams/unigram.pickle', 'rb') as handle:
         unigram = pickle.load(handle)
     return ngrams,unigram
 def getBestCombination(ngrams,entities):
@@ -276,7 +276,9 @@ def rankCluster(cluster,queries,k,ngrams,unigram):
             best_combination,best_combination_key = getBestCombination(ngrams,list(query['mappedEntitesDict'].keys()))
         whereAttrsNgrams = ngrams["whereAtrrsDict"][best_combination_key]
         selectAttrsNgrams = ngrams["selectAttrsDict"][best_combination_key]
-        whereAttrs = [attr[0] for attr in query["whereAttrs"]]
+        whereAttrs = [[atr[0],atr[2]] if atr[2]!="value" else [atr[0]]  for atr in query["whereAttrs"]]
+        whereAttrs = flattenList(whereAttrs)
+
         getAttrsProps(whereAttrs,"whereScore",query,whereAttrsNgrams,unigram["whereAtrrsDict"]) 
         getAttrsProps(query["selectAttrs"],"selectScore",query,selectAttrsNgrams,unigram["selectAttrsDict"])
         cluster_queries.append(query)

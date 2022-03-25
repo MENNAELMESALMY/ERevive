@@ -4,7 +4,7 @@ from queryConstruction import constructQuery, queryStructure
 import globalVars
 import timeit
 from collections import Counter
-from ranker import getRankedQueries, mapToSchema,queryCoverage,mapAttrEntity,mapEntity,getListQueries,getNonZeroQueryHits,constructDictionary
+from ranker import flatten_query_entities, getRankedQueries, mapToSchema,queryCoverage,mapAttrEntity,mapEntity,getListQueries,getNonZeroQueryHits,constructDictionary
 from clustering import *
 from numpy import load
 
@@ -36,8 +36,10 @@ tracemalloc.stop()
 tracemalloc.start()
 print("one hot encoding test",OneHotVocab["movie"].shape)
 
-queriesMatrix = load(path+'/SearchEngine/queriesMatrix.npy')
-print("Query Matrix sample",queriesMatrix[10])
+#queriesMatrix = load(path+'/SearchEngine/queriesMatrix.npy')
+#print("Query Matrix sample",queriesMatrix[10])
+flattened_query_entities = flatten_query_entities(listOfQueries)
+queriesMatrix = getQueriesMatrix(flattened_query_entities)
 print("Query Matrix size",queriesMatrix.shape)
 
 print("queriesMatrix: ",tracemalloc.get_traced_memory())
@@ -63,10 +65,10 @@ def getMappedQueries(finalQueriesIndexs):
     start = timeit.default_timer()
     for idx in finalQueriesIndexs:
         mappedEntites, mappedAttributes, goals,mappedEntitesDict,bestJoin =  mapToSchema(listOfQueries[idx],testSchema,entityDict,schemaEntityNames)
+        coverage = queryCoverage(mappedAttributes)
         query = constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,idx,goals,listOfQueries[idx],bestJoin)
         queries.append(query)
         #print("mappedAttributes: ",mappedAttributes)
-        coverage = queryCoverage(mappedAttributes)
         #query = constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,compactness)
         #queries.append(query)
   

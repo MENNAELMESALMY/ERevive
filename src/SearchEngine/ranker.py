@@ -145,7 +145,7 @@ def mapToSchema(query,schema,entityDict,schemaEntityNames):
     
     #mappedEntitesNames = ["players","teams","coaches","awards_coaches"]
     start = timeit.default_timer()
-    bestJoin , goals = connectEntities(schema,mappedEntitesNames)
+    bestJoin , goals = connectEntities(tuple(mappedEntitesNames))
 
     #print(mappedEntitesNames)
     #print(bestJoin,goals,mappedEntitesNames)

@@ -86,40 +86,51 @@ print("join",connectEntities.cache_info())
 
 clusteredQueries = getClusteredQueries(queries)
 mergedClusters = getMergdClusters(clusteredQueries,queries)
+def outQueries(outFileQueries,outFileClusters,allQueries):
+    finalClusters = []
+    for cluster in allQueries:
+        clusterQueries = []
+        for query in cluster["queries"]:
+            clusterQueries.append([queryStructure(query),query["origQuery"]["query"]])
+        finalClusters.append(clusterQueries)
+
+    clusters = {}
+    for i,c in enumerate(finalClusters):
+        clusters["cluster#"+str(i)]=c
+
+    with open(outFileQueries,'w') as file:
+        jsonObj = json.dumps(clusters)
+        file.write(jsonObj)
+        clusters={}
+
+    for i,c in enumerate(allQueries):
+        clusters["cluster#"+str(i)]=c
+
+    with open(outFileClusters,'w') as file:
+        jsonObj = json.dumps(clusters)
+        file.write(jsonObj)
 rankedQueries = getRankedQueries(mergedClusters,queries)
+outQueries("finalMergedQueries.json","finalMergedClusters.json",rankedQueries)
+rankedQueries = getRankedQueries(clusteredQueries,queries)
+outQueries("finalQueries.json","finalClusters.json",rankedQueries)
 
-print("ranked queries")
-finalClusters = []
-for cluster in rankedQueries:
-    clusterQueries = []
-    for query in cluster["queries"]:
-        clusterQueries.append(queryStructure(query))
-        print(query)
-        print("##################################")
-    finalClusters.append(clusterQueries)
 
-clusters = {}
-outFileQueries = "finalQueries.txt"
-outFileClusters = "finalClusters.txt"
-for i,c in enumerate(finalClusters):
-    clusters["cluster#"+str(i)]=c
+# handle alias nada,nihal
+# * handle menna,hager
+# consider ranking with attrs score  nada,nihal
+# data  menna,hager
+# api , handle final query validation nada,hager
+# ui    menna,nihal
 
-with open(outFileQueries,'w') as file:
-    jsonObj = json.dumps(clusters)
-    file.write(jsonObj)
-    clusters={}
 
-for i,c in enumerate(rankedQueries):
-    clusters["cluster#"+str(i)]=c
+# synonyms // check comparing similarity
+# appreviations
 
-with open(outFileClusters,'w') as file:
-    jsonObj = json.dumps(clusters)
-    file.write(jsonObj)
+# evaluation
 
-# handle alias
-# handle final query validation
-# integrate
-#start ranking
+
+
+
 
 ######################################
 # unconnected components handle ----- done

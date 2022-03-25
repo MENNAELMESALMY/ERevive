@@ -12,6 +12,10 @@ import pickle
 from utilities import *
 
 from functools import lru_cache
+global takenAttrs 
+takenAttrs = set()
+global takenEntities
+takenEntities = set()
 
 def getListQueries():
     listOfQueries=[]
@@ -38,20 +42,28 @@ def mapEntity(entityKeywords,schemaEntityNames):
         matchScore = getMatchScore(entityKeywordsSplit,cleanName)
         if matchScore > MaxMatchScore:
             MaxMatchScore = matchScore
-            MappedEntity = entity
-            MatchedWord = cleanName
+            MappedEntity = [entity]
+            MatchedWord = [cleanName]
+        elif MaxMatchScore!=0 and matchScore == MaxMatchScore:
+            MappedEntity.append(entity)
+            MatchedWord.append(cleanName)
     if MappedEntity is not None:
         return (MappedEntity,MatchedWord,MaxMatchScore,entityKeywordsSplit)
     return None
-    
+
 def mapEntities(queryEntities,schemaEntityNames):
+    global takenEntities
     mappedEntitesDict = {}
     mappedEntities = []
     for entityKeywords in queryEntities:
         EntityMatchData = mapEntity(entityKeywords,schemaEntityNames)
         if EntityMatchData is not None:
-            mappedEntitesDict[entityKeywords] = EntityMatchData[0]
-            mappedEntities.append(EntityMatchData)
+            for idx,MappedEntity in enumerate(EntityMatchData[0]):
+                if MappedEntity not in takenEntities:
+                    takenEntities.add(MappedEntity)
+                    mappedEntitesDict[entityKeywords] = MappedEntity
+                    mappedEntities.append((MappedEntity,EntityMatchData[1][idx],EntityMatchData[2],EntityMatchData[3]))
+                    break
     return mappedEntitesDict,mappedEntities
 
 def getMatchScore(queryWords,schemaWords):
@@ -75,28 +87,37 @@ def mapAttrEntity(entityAttributes, attribute):
         matchScore = getMatchScore(attribute,cleanEntityName(attr))
         if matchScore > MaxMatchScore:
             MaxMatchScore = matchScore
-            MatchedWord = attr
+            MatchedWord = [attr]
+        elif MaxMatchScore!=0 and matchScore == MaxMatchScore:
+            MatchedWord.append(attr)
     if MatchedWord is not None:
         return (MatchedWord,MaxMatchScore)
     return None,0
-        
-def mapAttr(entities , attribute , entityDict, schema):
-    origAttribute = attribute
+
+
+def mapAttr(entities , attribute , entityDict, schema,origAttribute):
+    global takenAttrs
     attribute = cleanEntityName(attribute)
-    MaxMatchScore,MatchedWord,MatchedEntityName  = 0,None,None
+    MaxMatchScore,Matched  = 0,None
     for entityName in entities:
-        ####################################
-        #(tuple of attributes of one one entity,)
         idx = entityDict[entityName]
         entityAttributes = tuple(schema[idx]["attributes"].keys())
         attr,matchScore = mapAttrEntity(entityAttributes,tuple(attribute))
         if matchScore > MaxMatchScore:
             MaxMatchScore = matchScore
-            MatchedWord = attr
-            MatchedEntityName = entityName
-    if MatchedWord is not None:
-        return (MatchedEntityName,MatchedWord,MaxMatchScore,attribute,origAttribute)
+            Matched = [(attr,entityName)]
+        elif MaxMatchScore!=0 and matchScore == MaxMatchScore:
+            Matched.append((attr,entityName))
+
+    if Matched is not None:
+        for attrs,MatchedEntityName in Matched:
+            for MatchedWord in attrs:
+                if MatchedWord not in takenAttrs:
+                    takenAttrs.add(MatchedWord)
+                    return (MatchedEntityName,MatchedWord,MaxMatchScore,attribute,origAttribute) 
+
     return None
+
 
 def getAllAttributes(query):
     attrKeys = ['selectAttrs','groupByAttrs']
@@ -153,31 +174,28 @@ def mapToSchema(query,schema,entityDict,schemaEntityNames):
     attributes = getAllAttributes(query)
 
     for attribute in attributes:
-        
+        origAttribute = attribute
         goals_copy = goals.copy()
         schemaEntities = {schema[idx]["TableName"] for idx in schema.keys()}
 
         #level 1
         if '.' in attribute:
             entity = attribute.split('.')[0]
+            attribute = attribute.split('.')[1]
             if entity in mappedEntitesDict.keys(): 
                 entity = mappedEntitesDict[entity]
-                attributeName = attribute.split('.')[1]
-                
-                mapping = mapAttr([entity],attributeName,entityDict,schema)
+                mapping = mapAttr([entity],attribute,entityDict,schema,origAttribute)
                 if mapping is not None:
-                    mapping = list(mapping)
-                    mapping[4] = attribute
-                    mapping = tuple(mapping)
                     mappedAttributes.append(mapping)
                     continue
+
             #else: print(f"This Alias entity '{entity}' did not exist {mappedEntitesDict} xx {query['entities']} xx {attribute}")
             goals_copy.discard(entity) #discard searched entity
             schemaEntities.discard(entity) #discard searched entity
-            
+          
         #level 2
         entities = {entity for _,entity in mappedEntitesDict.items()}
-        mapping = mapAttr(entities,attribute,entityDict,schema)
+        mapping = mapAttr(entities,attribute,entityDict,schema,origAttribute)
         if mapping is not None:
             mappedAttributes.append(mapping)
             continue
@@ -185,7 +203,7 @@ def mapToSchema(query,schema,entityDict,schemaEntityNames):
         schemaEntities = schemaEntities - entities
 
         #level 3
-        mapping = mapAttr(goals_copy,attribute,entityDict,schema)
+        mapping = mapAttr(goals_copy,attribute,entityDict,schema,origAttribute)
         if mapping is not None:
             mappedAttributes.append(mapping)
             continue
@@ -198,10 +216,17 @@ def mapToSchema(query,schema,entityDict,schemaEntityNames):
         #     mappedAttributes.append(mapping)
         #     continue
 
-        mappedAttributes.append((None,None,0,attribute,attribute))
+        mappedAttributes.append((None,None,0,attribute,origAttribute))
 
+    global takenAttrs
+    takenAttrs = set()
+
+    global takenEntities
+    takenEntities = set()
+
+    # global bazetCount
+    # print("bazetCount",bazetCount)
     return mappedEntities,mappedAttributes,goals,mappedEntitesDict,bestJoin
-
 
 def queryCoverage(mappedAttributes):
     found = sum([1 for entity,_,_,_,_ in mappedAttributes if entity is not None])

@@ -129,7 +129,8 @@ def getAllAttributes(query):
         if key in attrKeys:
             attributes.update(set(query[key]))
         elif key in attrKeysAggr:
-            attNames = set(list(zip(*query[key]))[0])
+            zipIndex = 1 if key =="havingAttrs" else 0
+            attNames = set(list(zip(*query[key]))[zipIndex])
             attributes.update(attNames)
         elif key == 'whereAttrs':
             whereAttributes = [[atr[0],atr[2]] if atr[2]!="value" else [atr[0]]  for atr in query[key]]

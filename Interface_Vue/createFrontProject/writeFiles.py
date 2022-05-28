@@ -28,6 +28,7 @@ with open('FrontCode/src/App.vue', 'w') as f:
     }
 </style>
     ''')
+    
 
 
 with open('FrontCode/src/index.html', 'w') as f:

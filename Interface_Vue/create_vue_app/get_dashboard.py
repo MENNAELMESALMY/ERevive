@@ -91,7 +91,7 @@ test_endpoint = {
     'url':'',
     'method':'get',
     'query_params':[('course_name','str','like','max'),('course_id','int','=','avg')],
-    'body_params':['course_ay_7aga'],
+    'body_params':['name','bday'],
     'path_params':['course_path'],
     'response':{'field1':'value1', 'field2':'value2'},
     'cluster_name':'cluster_name',

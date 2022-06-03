@@ -1,19 +1,30 @@
-with open('FrontCode/src/App.vue', 'w') as f:
-    f.write('''
+
+cluster_names = ['cluster1','cluster2','cluster3','cluster4']
+appString = '''
 <template>
     <div id="app">
-        {{ message }}
+      <div 
+      v-for="card in cards"
+          :key="card.name"
+          :title="card.name"
+          :describtion="card.describtion"
+      ></div>
         <p>Try scss</p>
     </div>
 </template>
 
 <script>
-    export default {
+import cardDesign from './components/cardDesign.vue'
+    export default{
     data() {
         return {
         message: 'Hello World',
+        "clusters": {cluster_names},
         };
     },
+  components: {
+    cardDesign
+    }
     };
 </script>
 
@@ -27,7 +38,11 @@ with open('FrontCode/src/App.vue', 'w') as f:
     }
     }
 </style>
-    ''')
+    '''
+
+
+with open('FrontCode/src/App.vue', 'w') as f:
+    f.write()
     
 
 
@@ -98,3 +113,18 @@ f = open('FrontCode/package.json', 'w')
 f.write(l)
 f.close()
 print("Text successfully replaced")
+
+'''
+list of apis:
+  app/home -> card/clusters -> route(-------) to cluster view(each of them has get/post/put/delete)
+  view -> iterate over all apis and generate components(card button convert to delete)
+  store -> modules ()
+  (url, method)
+
+  query1:{
+    url:jjjj,
+    method:kkk,
+  }
+'''
+#getClusterNames()
+cluster_names = ['cluster1','cluster2','cluster3','cluster4']

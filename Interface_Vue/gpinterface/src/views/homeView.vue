@@ -15,6 +15,7 @@
       description="Lorem ipsum dolor sitUt enim ad laboris nisi ut aliquip ex ea commodo"
     />
     <colorPallete />
+    <FormDesign />
   </div>
 </template>
 
@@ -29,12 +30,14 @@ import cardDesign from "../components/cardDesign.vue";
 import colorPallete from "../components/colorPallete.vue";
 import cardDesign2 from "../components/cardDesign2.vue";
 import cardDesign3 from "../components/cardDesign3.vue";
+import FormDesign from "../components/FormDesign.vue";
 export default {
   components: {
     cardDesign,
     colorPallete,
     cardDesign2,
     cardDesign3,
+    FormDesign,
   },
 };
 </script>

@@ -6,6 +6,7 @@
       :cardsData="cardsData"
     ></card-wrapper>
     <card-with-options :colorHex="cardWithOptions.colorHex"></card-with-options>
+    <home-view />
     <endpoint-name></endpoint-name>
   </div>
 </template>
@@ -20,6 +21,7 @@ body {
 <script>
 import CardWrapper from "./components/cardWrapper.vue";
 import CardWithOptions from "./components/cards/cardWithOptions.vue";
+import homeView from "./views/homeView.vue";
 import endpointName from "./components/endpoint_name.vue";
 
 export default {
@@ -72,6 +74,7 @@ export default {
   components: {
     CardWrapper,
     CardWithOptions,
+    homeView,
     endpointName,
   },
 };

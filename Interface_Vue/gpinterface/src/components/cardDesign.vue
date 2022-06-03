@@ -8,7 +8,7 @@
       <p class="card-text">{{ description }}</p>
     </div>
     <div class="card-bottom" :style="backgroundStyle">
-      <button>CLICK ME!</button>
+      <router-link tag="button" :to="title">CLICK ME!</router-link>
     </div>
   </div>
 </template>
@@ -45,11 +45,13 @@
     font-weight: 700;
     position: relative;
     z-index: 9;
+    color: black;
   }
 }
 .card-body {
   .card-text {
     font-size: 17px;
+    color: black;
   }
 }
 .card-bottom {

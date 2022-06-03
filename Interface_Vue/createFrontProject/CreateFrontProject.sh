@@ -16,7 +16,7 @@ touch src/main.js
 touch src/App.vue
 touch src/index.html
 cd ./src
-npm install vue vue-loader vuex vue-router vue-template-compiler webpack webpack-cli webpack-dev-server babel-loader @babel/core @babel/preset-env sass sass-loader css-loader vue-style-loader html-webpack-plugin rimraf -D
+npm install axios vue vue-loader vuex vue-router vue-template-compiler webpack webpack-cli webpack-dev-server babel-loader @babel/core @babel/preset-env sass sass-loader css-loader vue-style-loader html-webpack-plugin rimraf -D
 
 cd ../
 python3 writeFiles.py

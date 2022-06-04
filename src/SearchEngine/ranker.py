@@ -19,7 +19,7 @@ takenEntities = set()
 
 def getListQueries():
     listOfQueries=[]
-    datapath = "/home/nada/GP/GP/notebooks/preparingDatasets/finalOutputs"
+    datapath = "/home/hager/college/GP/GP/notebooks/preparingDatasets/finalOutputs"
     files = os.listdir(datapath)
     for queryFile in files:
         if queryFile.find("synonyms")!=-1:
@@ -279,13 +279,13 @@ def flatten_query_entities(listOfQueries):
     return flattened_query_entities
 
 def loadNgramsPickle():
-    with open('/home/nada/GP/GP/src/SearchEngine/nGrams/ngrams.pickle', 'rb') as handle:
+    with open('/home/hager/college/GP/GP/src/SearchEngine/nGrams/ngrams.pickle', 'rb') as handle:
         ngrams = pickle.load(handle)
-    with open('/home/nada/GP/GP/src/SearchEngine/nGrams/unigram.pickle', 'rb') as handle:
+    with open('/home/hager/college/GP/GP/src/SearchEngine/nGrams/unigram.pickle', 'rb') as handle:
         unigram = pickle.load(handle)
     return ngrams,unigram
 def loadEntitiesGrams():
-    with open('/home/nada/GP/GP/src/SearchEngine/nGrams/entities.pickle', 'rb') as handle:
+    with open('/home/hager/college/GP/GP/src/SearchEngine/nGrams/entities.pickle', 'rb') as handle:
         entitiesGrams = pickle.load(handle)
     return entitiesGrams
 def getBestCombination(ngrams,entities):

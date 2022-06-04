@@ -3,11 +3,15 @@ from os import name
 
 class ApiFactory(object):
     namespaces={}
-    def __init__(self, models,user,password,db):
+    def __init__(self, models,user,password,db,modelsObjects):
         self.models = models
         self.user = user
         self.password=password
         self.db = db
+        self.api_files = None
+        self.modelsObjects=modelsObjects
+        self.crud_clusters = {}
+
 
     def create_app_env(self):
         return ' \n\
@@ -19,72 +23,134 @@ database="{2}" \n\
     def create_models_apis(self):
         Apis={}
         for model in self.models.keys():
-            api = self.create_api(model,self.models[model])
-            Apis[model] = api
-        return Apis
-    def create_api_header(self,model):
+            crud_ui_out,api = self.create_api(model,self.models[model])
+            Apis[model.lower()] = api
+        self.api_files = Apis
+        return Apis,crud_ui_out
+        
+    def create_api_header(self,models):
+        model_import = ' , '.join(models)
         return '\
 from flask.helpers import make_response \n\
-from flask_restx import Resource, Namespace \n\
+from flask_restx import Resource, Namespace , fields , reqparse \n\
 from flask import jsonify, request \n\
 from models import {0} \n\
 from app import db \n\
 from utils import convert_db_model_to_restx_model \n\
-            '.format(model)
+            '.format(model_import)
+
     def create_api(self,model,attributes): 
         model_create_string=''
+        parser_create_string='{0}_id_parser = reqparse.RequestParser() \n'.format(model)
+        primary_keys = self.modelsObjects[model]['primaryKey']
+        body_params = []
+        query_params = []
+        ui_response_model = []
+        self.crud_clusters.update({model:[]})
         for attribute in attributes:
             terminal_command = ','
+            type = self.modelsObjects[model]['attributes'][attribute]
+            ui_response_model.append((attribute,type))
             if attribute == attributes[-1]:
                 terminal_command = ''
+            if attribute in primary_keys:
+                parser_create_string+= "{0}_id_parser.add_argument('{1}',type={2})\n".format(model,attribute,type)
+                query_params.append((attribute,type))
+            body_params.append((attribute,type))
+
             model_create_string+='{0} = request.json.get("{0}")'.format(attribute)+terminal_command   
-        self.namespaces[model] = '{0}s_namespace'.format(model.lower())
-        return self.create_api_header(model)+'\n\
-{1}s_namespace = Namespace("{0}", description="{0} Api") \n\
+        endpoint_name,ui_name = model,model
+        endpoint_url = '/'+model.lower()
+        
+        endpoint_object = [{
+            "method": "get",
+            "url": endpoint_url,
+            "queryParams": [],
+            "bodyParams": [],
+            "response": ui_response_model,
+            "ui_name": ui_name,
+            "cluster_name": model,
+            "endpoint_name":endpoint_name,
+            "is_single_entity":True
+        },
+        {
+            "method": "post",
+            "url": endpoint_url,
+            "queryParams": [],
+            "bodyParams": body_params,
+            "response": ui_response_model,
+            "ui_name": ui_name,
+            "cluster_name": model,
+            "endpoint_name":endpoint_name,
+            "is_single_entity":True
+        },
+        {
+            "method": "put",
+            "url": endpoint_url,
+            "queryParams": [],
+            "bodyParams": body_params,
+            "response": ui_response_model,
+            "ui_name": ui_name,
+            "cluster_name": model,
+            "endpoint_name":endpoint_name,
+            "is_single_entity":True
+        },
+        {
+            "method": "delete",
+            "url": endpoint_url,
+            "queryParams": query_params,
+            "bodyParams": [],
+            "response": ui_response_model,
+            "ui_name": ui_name,
+            "cluster_name": model,
+            "endpoint_name":endpoint_name,
+            "is_single_entity":True
+        },
+        ]
+        crud_out = {
+            model:endpoint_object
+        }
+        self.namespaces[model] = '{0}_namespace'.format(model.lower())
+        return crud_out,self.create_api_header([model])+'\n\
+{1}_namespace = Namespace("{0}", description="{0} Api") \n\
 \n\
 \n\
-{1}_model ={1}s_namespace.model("{1}",convert_db_model_to_restx_model({0})) \n\
+{1}_model ={1}_namespace.model("{1}",convert_db_model_to_restx_model({0})) \n\
+{3}\n\
 \n\
-@{1}s_namespace.route("/")\n\
+@{1}_namespace.route("/")\n\
 class {0}Api(Resource):\n\
 \n\
-    @{1}s_namespace.marshal_list_with({1}_model) \n\
+    @{1}_namespace.marshal_list_with({1}_model) \n\
     def get(self):\n\
         {1}s = db.session.query({0}).all()\n\
         return {1}s , 200  \n\
 \n\
-    @{1}s_namespace.marshal_with({1}_model) \n\
-    @{1}s_namespace.expect({1}_model) \n\
+    @{1}_namespace.marshal_with({1}_model) \n\
+    @{1}_namespace.expect({1}_model) \n\
     def post(self):\n\
         {1} = {0}({2})\n\
         db.session.add({1})\n\
         db.session.commit()    \n\
         return {1} , 201 \n\
 \n\
-\n\
-@{1}s_namespace.route("/<id>")\n\
-class {0}sApi(Resource):\n\
-\n\
-    @{1}s_namespace.marshal_with({1}_model) \n\
-    def get(self, id):\n\
-        {1} = db.session.query({0}).filter({0}.id==id).first() \n\
-        return {1} , 200    \n\
-\n\
-    @{1}s_namespace.marshal_with({1}_model) \n\
-    @{1}s_namespace.expect({1}_model) \n\
-    def put(self, id):\n\
+    @{1}_namespace.marshal_with({1}_model) \n\
+    @{1}_namespace.expect({1}_model) \n\
+    def put(self):\n\
         db.session.query({0}).filter({0}.id==id).update(request.json) \n\
         db.session.commit() \n\
         {1} = db.session.query({0}).filter({0}.id==id).first() \n\
         return {1} , 200    \n\
 \n\
-    @{1}s_namespace.marshal_with({1}_model) \n\
-    def delete(self,id):\n\
+    @{1}_namespace.marshal_with({1}_model) \n\
+    @{1}_namespace.expect({1}_id_parser) \n\
+    def delete(self):\n\
         {1} = db.session.query({0}).filter({0}.id==id).first() \n\
         db.session.query({0}).filter({0}.id==id).delete() \n\
         db.session.commit() \n\
         return {1} , 200    \n\
-        '.format(model,model.lower(),model_create_string)
+\n\
+'.format(model,model.lower(),model_create_string,parser_create_string)
     
         
     def create_api_namespaces(self):
@@ -97,19 +163,19 @@ class {0}sApi(Resource):\n\
     '.format(namespace,model.lower())
 
         return namespaces_imports,namespaces_init
-
+    
     def create_api_init(self):
         namespaces_imports,namespaces_init=self.create_api_namespaces()
-        api = namespaces_imports+'\
+        api = '\
 from flask_restx import Api \n\
 \n\
 \n\
 def api_namespaces(blueprint,url_prefix,title): \n\
     rest_plus_api = Api(blueprint,url_prefix=url_prefix,title=title) \n\
     {0}\
-return rest_plus_api\n\
+\
 '.format(namespaces_init)
-        return api
+        return api ,namespaces_imports
     def create_app(self):
         return '\n\
 from flask import Flask \n\
@@ -208,3 +274,13 @@ def convert_db_model_to_restx_model(model): \n\
             fields_dict[column.name] = fields.String() \n\
     return fields_dict \n\
 '
+    def create_api_structure(self,api_name,route_path,models):
+        namespaces_imports = 'from .{0}_api import {0}_namespace \n\
+'.format(api_name)
+        api_init_namespace = '\n\
+    rest_plus_api.add_namespace({0}_namespace,path="/{1}s")'.format(api_name,route_path)
+        api_namespace = self.create_api_header(models)+'\n\
+{0}_namespace = Namespace("{0}", description="{0} Api") \n\
+'.format(api_name)
+
+        return api_init_namespace,api_namespace,namespaces_imports

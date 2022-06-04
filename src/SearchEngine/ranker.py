@@ -19,7 +19,7 @@ takenEntities = set()
 
 def getListQueries():
     listOfQueries=[]
-    datapath = "/home/nada/GP/GP/GP/notebooks/preparingDatasets/finalOutputs"
+    datapath = "/home/nada/GP/GP/notebooks/preparingDatasets/finalOutputs"
     files = os.listdir(datapath)
     for queryFile in files:
         if queryFile.find("synonyms")!=-1:
@@ -113,8 +113,13 @@ def mapAttr(entities , attribute , entityDict, schema,origAttribute):
         for attrs,MatchedEntityName in Matched:
             for MatchedWord in attrs:
                 if MatchedWord not in takenAttrs:
+                    if type(attribute) is list and attribute[0] == "*":
+                        return (MatchedEntityName,"*",0,"*","*",None)
+                    idx = entityDict[MatchedEntityName]
+                    dtype = schema[idx]["attributes"][MatchedWord]
                     takenAttrs.add(MatchedWord)
-                    return (MatchedEntityName,MatchedWord,MaxMatchScore,attribute,origAttribute) 
+                    MatchedWord = "*" if attribute == "*" else MatchedWord
+                    return (MatchedEntityName,MatchedWord,MaxMatchScore,attribute,origAttribute,dtype) 
 
     return None
 
@@ -142,6 +147,7 @@ def getAllAttributes(query):
 def mapToSchema(query,schema,entityDict,schemaEntityNames):
     ##################Remember mapped Entities
     mappedEntitesDict,mappedEntities = mapEntities(tuple(query['entities']),tuple(schemaEntityNames))
+   
     mappedEntitesNames = [ v for k,v in mappedEntitesDict.items()]
     
     #mappedEntitesNames = ["players","teams","coaches","awards_coaches"]
@@ -175,18 +181,32 @@ def mapToSchema(query,schema,entityDict,schemaEntityNames):
     attributes = getAllAttributes(query)
 
     for attribute in attributes:
+
         origAttribute = attribute
         goals_copy = goals.copy()
         schemaEntities = {schema[idx]["TableName"] for idx in schema.keys()}
+
+        if attribute[0] == "*":
+            mappedAttributes.append((None,"*",0,attribute[0],attribute[0],None))
+            continue
+
 
         #level 1
         if '.' in attribute:
             entity = attribute.split('.')[0]
             attribute = attribute.split('.')[1]
+
             if entity in mappedEntitesDict.keys(): 
                 entity = mappedEntitesDict[entity]
+                if attribute[0] == "*":
+                    if len(query['entities']) == 1: entity = None
+                    mappedAttributes.append((entity,"*",0,attribute[0],origAttribute[0],None))
+                    continue
+
                 mapping = mapAttr([entity],attribute,entityDict,schema,origAttribute)
                 if mapping is not None:
+                    if type(mapping[3]) is list and mapping[3][0] == "*":
+                        mapping = (mapping[0],mapping[3][0],mapping[2],mapping[3][0],origAttribute,mapping[4])
                     mappedAttributes.append(mapping)
                     continue
 
@@ -198,6 +218,8 @@ def mapToSchema(query,schema,entityDict,schemaEntityNames):
         entities = {entity for _,entity in mappedEntitesDict.items()}
         mapping = mapAttr(entities,attribute,entityDict,schema,origAttribute)
         if mapping is not None:
+            if type(mapping[3]) is list and mapping[3][0] == "*":
+                mapping = (mapping[0],mapping[3][0],mapping[2],mapping[3][0],origAttribute,mapping[4])
             mappedAttributes.append(mapping)
             continue
         goals_copy = goals_copy - entities 
@@ -206,6 +228,8 @@ def mapToSchema(query,schema,entityDict,schemaEntityNames):
         #level 3
         mapping = mapAttr(goals_copy,attribute,entityDict,schema,origAttribute)
         if mapping is not None:
+            if type(mapping[3]) is list and mapping[3][0] == "*":
+                mapping = (mapping[0],mapping[3][0],mapping[2],mapping[3][0],origAttribute,mapping[4])
             mappedAttributes.append(mapping)
             continue
         #schemaEntities = schemaEntities - goals_copy
@@ -217,7 +241,7 @@ def mapToSchema(query,schema,entityDict,schemaEntityNames):
         #     mappedAttributes.append(mapping)
         #     continue
 
-        mappedAttributes.append((None,None,0,attribute,origAttribute))
+        mappedAttributes.append((None,None,0,attribute,origAttribute,None))
 
     global takenAttrs
     takenAttrs = set()
@@ -230,7 +254,7 @@ def mapToSchema(query,schema,entityDict,schemaEntityNames):
     return mappedEntities,mappedAttributes,goals,mappedEntitesDict,bestJoin
 
 def queryCoverage(mappedAttributes):
-    found = sum([1 for entity,_,_,_,_ in mappedAttributes if entity is not None])
+    found = sum([1 for entity,_,_,_,_,_ in mappedAttributes if entity is not None])
     attributesMapped = max(len(mappedAttributes),1)
     return found/attributesMapped
 
@@ -255,13 +279,13 @@ def flatten_query_entities(listOfQueries):
     return flattened_query_entities
 
 def loadNgramsPickle():
-    with open('/home/nada/GP/GP/GP/src/SearchEngine/nGrams/ngrams.pickle', 'rb') as handle:
+    with open('/home/nada/GP/GP/src/SearchEngine/nGrams/ngrams.pickle', 'rb') as handle:
         ngrams = pickle.load(handle)
-    with open('/home/nada/GP/GP/GP/src/SearchEngine/nGrams/unigram.pickle', 'rb') as handle:
+    with open('/home/nada/GP/GP/src/SearchEngine/nGrams/unigram.pickle', 'rb') as handle:
         unigram = pickle.load(handle)
     return ngrams,unigram
 def loadEntitiesGrams():
-    with open('/home/nada/GP/GP/GP/src/SearchEngine/nGrams/entities.pickle', 'rb') as handle:
+    with open('/home/nada/GP/GP/src/SearchEngine/nGrams/entities.pickle', 'rb') as handle:
         entitiesGrams = pickle.load(handle)
     return entitiesGrams
 def getBestCombination(ngrams,entities):
@@ -306,11 +330,11 @@ def rankCluster(cluster,queries,ngrams,unigram):
             best_combination,best_combination_key = getBestCombination(ngrams,list(query['mappedEntitesDict'].keys()))
         whereAttrsNgrams = ngrams["whereAtrrsDict"][best_combination_key]
         selectAttrsNgrams = ngrams["selectAttrsDict"][best_combination_key]
-        whereAttrs = [[atr[0],atr[2]] if atr[2]!="value" else [atr[0]]  for atr in query["whereAttrs"]]
+        whereAttrs = [[atr[0][0],atr[2][0]] if atr[2]!="value" else [atr[0][0]]  for atr in query["whereAttrs"]]
         whereAttrs = flattenList(whereAttrs)
-
+        selectAttrs = [ atr[0]  for atr in query["selectAttrs"] ]
         getAttrsProps(whereAttrs,"whereScore",query,whereAttrsNgrams,unigram["whereAtrrsDict"]) 
-        getAttrsProps(query["selectAttrs"],"selectScore",query,selectAttrsNgrams,unigram["selectAttrsDict"])
+        getAttrsProps(selectAttrs,"selectScore",query,selectAttrsNgrams,unigram["selectAttrsDict"])
         cluster_queries.append(query)
     sorted_queries = sorted(cluster_queries, key=lambda k: k['selectScore']+k['whereScore'], reverse=True)
     return list(sorted_queries)

@@ -15,14 +15,9 @@ def getClusteredQueries(queries):
 
 def getUniqueSelectAttrs(attrs):
     selectAttrs = []
-    outAttrs=[]
-    attrsCleaned = [re.split(r"[.|_]",attr) for attr in attrs]
-    for i,attr in enumerate(attrsCleaned):
-        attrOneHot = getKeyWordsVector(attr)
-        if attrOneHot.tostring() not in selectAttrs:
-            selectAttrs.append(attrOneHot.tostring())
-            outAttrs.append(attrs[i])
-    return outAttrs
+    if "*" in attrs: return ["*"] 
+
+
 def getMergdClusters(clusteredQueries,queries):
     mergedClusters = []
     for cluster in clusteredQueries:
@@ -33,13 +28,14 @@ def getMergdClusters(clusteredQueries,queries):
 
             ## extracting where attributes from where tuples ##
             currentWhereAttrs = []
+            #print(query["whereAttrs"],query["groupByAttrs"],query["orderByAttrs"])
             currentWhereAttrs = [[atr[0],atr[2]] if atr[2]!="value" else [atr[0]]  for atr in query["whereAttrs"]]
             currentWhereAttrs = flattenList(currentWhereAttrs)
 
             #Todo : Check if where condition is same for merging , should split on _
-            queryWhereKey = flattenList([re.split(r"[.|_]",q) for q in currentWhereAttrs])
-            queryGroupKey = flattenList([re.split(r"[.|_]",q) for q in query["groupByAttrs"]])
-            queryOrderKey = flattenList([re.split(r"[.|_]",q[0]) for q in query["orderByAttrs"]])
+            queryWhereKey = flattenList([re.split(r"[.|_]",q[0]) for q in currentWhereAttrs])
+            queryGroupKey = flattenList([re.split(r"[.|_]",q[0]) for q in query["groupByAttrs"]])
+            queryOrderKey = flattenList([re.split(r"[.|_]",q[0][0]) for q in query["orderByAttrs"]])
             queryKeys = queryWhereKey+queryGroupKey+queryOrderKey
             queryKeysVector = getKeyWordsVector(queryKeys)
             queryKeysVector = (queryKeysVector.T).tostring()+bytes(len(queryWhereKey))+bytes(len(queryGroupKey))+bytes(len(queryOrderKey))
@@ -56,7 +52,10 @@ def getMergdClusters(clusteredQueries,queries):
                 query = queries[i]
                 selectAttrs.extend(query["selectAttrs"])
                 aggrAttrs.extend(query["aggrAttrs"][0:])
-            #selectAttrs = getUniqueSelectAttrs(selectAttrs)
+            for slct in selectAttrs:
+                if slct[0]=="*": 
+                    selectAttrs = [("*",None)]
+                    break   
             selectAttrs = list(set(selectAttrs))
             aggrAttrs = [list(x) for x in set(tuple(x) for x in aggrAttrs)]
             queries[whereCluster[0]]["selectAttrs"] = selectAttrs

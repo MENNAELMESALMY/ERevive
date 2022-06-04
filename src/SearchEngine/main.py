@@ -61,10 +61,10 @@ entityDict = constructDictionary(testSchema)
 
 def getMappedQueries(finalQueriesIndexs):
     queries = []
-    print("num of queries",len(finalQueriesIndexs))
     start = timeit.default_timer()
     for idx in finalQueriesIndexs:
         mappedEntites, mappedAttributes, goals,mappedEntitesDict,bestJoin =  mapToSchema(listOfQueries[idx],testSchema,entityDict,schemaEntityNames)
+        
         coverage = queryCoverage(mappedAttributes)
         query = constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,idx,goals,listOfQueries[idx],bestJoin)
         queries.append(query)
@@ -80,9 +80,7 @@ def getMappedQueries(finalQueriesIndexs):
     # print(mappedAttributes)
     return queries
 queries = getMappedQueries(nonZeroQueriesIndexs)
-print("mapEntity",mapEntity.cache_info())
-print("mapAttr",mapAttrEntity.cache_info())
-print("join",connectEntities.cache_info())
+
 
 clusteredQueries = getClusteredQueries(queries)
 mergedClusters = getMergdClusters(clusteredQueries,queries)
@@ -91,12 +89,14 @@ def outQueries(outFileQueries,outFileClusters,allQueries):
     for cluster in allQueries:
         clusterQueries = []
         for query in cluster["queries"]:
-            clusterQueries.append([queryStructure(query),query["origQuery"]["query"]])
+            #print(query)
+            clusterQueries.append([query,queryStructure(query),query["origQuery"]["query"]])
         finalClusters.append(clusterQueries)
 
     clusters = {}
     for i,c in enumerate(finalClusters):
         clusters["cluster#"+str(i)]=c
+
 
     with open(outFileQueries,'w') as file:
         jsonObj = json.dumps(clusters)

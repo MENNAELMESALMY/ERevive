@@ -3,7 +3,30 @@ import random
 
 def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,id, goals,origQuery,bestJoin):
     query = {}
-    mappedAttributesDict = {attr[4]:attr[1] if attr[0] is None else attr[0]+"."+attr[1] for attr in mappedAttributes if attr[1] is not None}
+    mappedAttributesDict = {}
+    print(mappedAttributes)
+    for attr in mappedAttributes:
+        if attr[1] is not None:
+            if attr[0] is None:
+                if "*" == attr[3]:
+                    mappedAttributesDict.update({
+                        "*":("*",None)
+                    })
+                else:
+                    mappedAttributesDict.update({
+                        attr[4]:(attr[1],attr[5])
+                    })
+            else:
+                if "*" in attr[3]:
+                    mappedAttributesDict.update({
+                        attr[4]:(attr[0]+"."+"*",None)
+                    })
+                else:
+                    mappedAttributesDict.update({
+                        attr[4]:(attr[0]+"."+attr[1],attr[5])
+                    })
+    print(mappedAttributesDict)
+
     query["coverage"] = coverage
     query["id"] = id
     query["entities"] = [ent for ent in mappedEntitesDict.values()]
@@ -81,12 +104,12 @@ def queryStructure(queryDict):
     ## concatenate aggregation functions
     if len(queryDict["aggrAttrs"]) > 0:
         for aggrAttr in queryDict["aggrAttrs"]:
-            query += aggrAttr[1] + ' ( ' + aggrAttr[0] + ' ), '
+            query += aggrAttr[1] + ' ( ' + aggrAttr[0][0] + ' ), '
 
     ## concatenate select attributes
     if len(queryDict["selectAttrs"]) > 0:
         for selectAttr in queryDict["selectAttrs"]:
-            query += selectAttr + ', '
+            query += selectAttr[0] + ', '
         query = query[:-2]
     else:
         query += '*'
@@ -112,6 +135,9 @@ def queryStructure(queryDict):
             keepEnd = whereAttr[3]
             if whereAttr[3] == "None":
                 whereAttr[3] = ""
+            if whereAttr[2]!="value":
+                whereAttr[2] = whereAttr[2][0]
+            whereAttr = [whereAttr[0][0],whereAttr[1],whereAttr[2],whereAttr[3]]
             whereAttr = ' '.join(whereAttr)
             if query[-1] == " ":
                 query = query[:-1]
@@ -126,7 +152,7 @@ def queryStructure(queryDict):
     if len(queryDict["groupByAttrs"]) > 0:
         query += " GROUP BY "
         for groupbyAttr in queryDict["groupByAttrs"]:
-            query += groupbyAttr + ', '
+            query += groupbyAttr[0] + ', '
         query = query[:-2]
 
     ## concatenate order by attributes
@@ -136,9 +162,9 @@ def queryStructure(queryDict):
         for orderbyAttr in queryDict["orderByAttrs"]:
             index = round(random.random())
             if orderbyAttr[1] != '':
-                query += orderbyAttr[1] + ' ( ' + orderbyAttr[0] + ' ) ' + orderFunction[index] + ', '
+                query += orderbyAttr[1] + ' ( ' + orderbyAttr[0][0] + ' ) ' + orderFunction[index] + ', '
             else:
-                query += orderbyAttr[0] + ' ' + orderFunction[index] + ', '
+                query += orderbyAttr[0][0] + ' ' + orderFunction[index] + ', '
         query = query[:-2]
 
     ## concatenate having attributes
@@ -146,7 +172,7 @@ def queryStructure(queryDict):
     if len(queryDict["havingAttrs"]) > 0:
         query += " HAVING "
         for havingAttr in queryDict["havingAttrs"]:
-            query += havingAttr[0] + ' ( ' + havingAttr[1] + ' ) ' + havingAttr[2] + " value " + " AND "
+            query += havingAttr[0] + ' ( ' + havingAttr[1][0] + ' ) ' + havingAttr[2] + " value " + " AND "
         query = query[:-5]
 
     query = query.strip()

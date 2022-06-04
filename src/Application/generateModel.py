@@ -27,9 +27,11 @@ def createModelFile(modelsPath,ob):
         file.write(f'\t__tablename__ = "{tableName}"\n')
         ## get foreign keys ##
         forgeinKeys = [[item['attributeName'],item['ForignKeyTable'],item['ForignKeyTableAttributeName']] for item in ob['ForgeinKey']]
-        foreignAttributes = list(list(zip(*forgeinKeys))[0])
-        foreignTable = list(list(zip(*forgeinKeys))[1])
-        foreignTableAttribute = list(list(zip(*forgeinKeys))[2])
+        foreignAttributes= []
+        if len(forgeinKeys)>0:
+            foreignAttributes = list(list(zip(*forgeinKeys))[0])
+            foreignTable = list(list(zip(*forgeinKeys))[1])
+            foreignTableAttribute = list(list(zip(*forgeinKeys))[2])
         primaryKeys = ob['primaryKey']
         isKey = ""
         isForgeinKey = ""
@@ -78,13 +80,18 @@ def createModelFile(modelsPath,ob):
 def createAllModels(objectsList):
     foreignKeyRelationList = []
     outPutList = {}
+    modelsObjects={}
     p = createModelsFolder()
     for tableObject in objectsList:
         foreignKeyRelation,tableName,tableAttributes = createModelFile(p,objectsList[tableObject])
         foreignKeyRelationList.append(foreignKeyRelation)
         outPutList[tableName] = tableAttributes
+        modelsObjects[tableName] = objectsList[tableObject]
+        #print(objectsList[tableObject]['primaryKey'])
     ### add db.relation for some models
     for relationObject in foreignKeyRelationList:
+        if not len(list(relationObject.keys())):
+            continue
         tempPath = p
         modelPath = os.path.join(tempPath, relationObject['table1']+".py")
         with open(modelPath, 'a') as file:
@@ -104,7 +111,7 @@ def createAllModels(objectsList):
             for attr in outPutList[item]:
                 file.write(f'\t\t\t"{attr}": self.{attr},\n')
             file.write("\t\t}\n")
-    return outPutList
+    return outPutList ,modelsObjects
 
 
 

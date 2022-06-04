@@ -16,7 +16,7 @@ def flatten_query_entities(listOfQueries):
 
 def getListQueries():
     listOfQueries=[]
-    datapath = "/home/hager/college/GP/GP/notebooks/preparingDatasets/finalOutputs"
+    datapath = "/home/nada/GP/GP/notebooks/preparingDatasets/finalOutputs"
     files = os.listdir(datapath)
     for queryFile in files:
         if queryFile.find("synonyms")!=-1:
@@ -47,7 +47,7 @@ print("saving one hot encoding done")
 
 globalVars.init()
 OneHotVocab = globalVars.OneHotVocab
-with open('/home/hager/college/GP/GP/notebooks/preparingDatasets/finalOutputs/synonyms.json', 'rb') as file:
+with open('/home/nada/GP/GP/notebooks/preparingDatasets/finalOutputs/synonyms.json', 'rb') as file:
     vocab_words = json.load(file)
 print("loading data done")
 OneHotVocab = oneHotVocabEncoding(vocab_words)

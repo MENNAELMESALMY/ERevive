@@ -1,3 +1,4 @@
+from itertools import groupby
 from urllib import response
 from sklearn import cluster
 from sqlalchemy import inspect
@@ -73,24 +74,205 @@ def create_api_namespaces(api,clusters):
         # create parser for each query
         for query in cluster:
             #print(query['entities'])
-            resource_model , endpoint_object = create_query_ui_endpoint(query,api.modelsObjects)  # return to frontend
+            resource_model , endpoint_object , db_selects = create_query_ui_endpoint(query,api.modelsObjects)  # return to frontend
             clusters_out[api_name].append(endpoint_object)
-            api_logic = create_query_api_logic(endpoint_object,query,api.modelsObjects)  
+            parse_args , db_query = create_query_api_logic(endpoint_object,query)  
             #create api logic
-            create_resource(resource_model, endpoint_object,api_file,namespace_name)
+
+            #if "awards_coaches" in query["entities"] and "coaches" in query["entities"]:
+            #    print("\nquery entites: ",query["entities"],"\n")
+            #    print("\nfile name: ",api_file,"\n")
+            #    print("\ncluster entites: ",cluster[0]["entities"],"\n")
+            #    print("\ncluster" , cluster[0])
+            #    print("\nquery" , query)
+
+            create_resource(resource_model, endpoint_object,api_file,namespace_name,parse_args , db_query)
+            
         #handle crud response
         # add is_entity --> true
     return namespaces_imports , inits ,clusters_out
-def create_query_api_logic(endpoint_object,query,modelsObjects):
+
+
+def create_query_api_logic(endpoint_object,query):
+    #if "awards_coaches" in query["entities"] and "coaches" in query["entities"]:
+    #if len(query["entities"])==1 and "coaches" in query["entities"]:
+    #print("//////////////////////////////////////////////")
+    #print("query" , query)
+    #print("whereAttrs" , query["whereAttrs"])
+    #print("groupByAttrs",query["groupByAttrs"])
+    #print("orderbyAttrs" , query["orderByAttrs"])
+    #print("having" , query["havingAttrs"])
+    #print("aggrAttrs", query["aggrAttrs"])
+    #print("selectAttrs",query["selectAttrs"])
+    #print("joins", query["bestJoin"])
+    #print("entities", query["entities"])
+
+    #print()
+    #print("response" , endpoint_object['response'])
+    #print("queryParams" , endpoint_object['queryParams'])
+    #print()
+    #print("query" , query)
+    #print()
+    #print("modelsObjects" , modelsObjects)
+    
+
     params = endpoint_object["queryParams"]
     parser = endpoint_object["endpoint_name"]
     parse_args=""
     if len(params):
-        parse_args = "{0}_parser.parse_args()\n".format(parser)
-    select_params = ""
-    for param in endpoint_object[""]:
+        parse_args = "args = {0}_parser.parse_args()\n".format(parser)
+
+    #get select attrs
+    db_query = "results = db.session.query("
+    select_attr = ""
+    for attr in query["selectAttrs"]:
+        if attr[0] == '*': # get all entities attributes
+            select_attr = ", ".join(query["entities"])
+            select_attr += ", "
+            break
+        elif "*" in attr[0]:
+            select_attr += attr[0].split('.')[0] + ", "
+        else:
+            select_attr += attr[0] + ", "
+
+    for attr in query["aggrAttrs"]:      
+        attr_aggregation = attr[1]
+        attr_name = attr[0][0] if "*" not in attr[0][0] else ""
+        label = 'all' if attr[0][0] == "*" else attr[0][0]
+        select_attr += "func.{0}({1}).label('{2}')".format(attr_aggregation,attr_name,attr_aggregation+'_'+label) + ", "
     
-def create_resource(resource_model, endpoint_object,api_file,namespace_name):
+    if select_attr == "":
+        select_attr = ", ".join(query["entities"])
+    else:
+        select_attr = select_attr[:-2]
+
+    db_query += select_attr + ')'
+
+    #join
+    joins = ""
+    if len(query["entities"]) > 1:
+        #cross product 
+        if len(query["bestJoin"]) == 0:
+            for entity in query["entities"]:
+                joins += "\\\n\t\t\t.join({0})".format(entity)
+        #joins
+        else:
+            for join in query["bestJoin"]:
+                join = join.replace('=','==')
+                entity = join.split('.')[0]
+                entity = entity[1:] # remove space
+                joins += "\\\n\t\t\t.join({0},{1})".format(entity,join)
+       
+    db_query += joins if len(joins) else ""
+
+
+    # filters
+    # Note aggregation in where is not valid
+    # anding and oring not handled currently
+    whereAttr = set()
+    filters = "\\\n\t\t\t.filter(" if len(query["whereAttrs"]) else ""
+    for attr in query["whereAttrs"]:
+        attr_name = attr[0][0]
+        attr_opperator = attr[1]
+        attr_opperator = "==" if attr_opperator is "=" else attr_opperator
+
+        #removing duplicates for anding and oring
+        ##########################
+        if attr_name in whereAttr:
+            continue
+        whereAttr.add(attr_name)
+        ##########################
+
+        #value filter --> get values from parser
+        if attr[2] == "value":
+            value = "args['{0}']".format(attr_name)
+
+        #column filter
+        else:
+            value = attr[2]
+
+        filters += "{0} {1} {2}, ".format(attr_name,attr_opperator,value)
+
+    if len(filters):
+        filters = filters[:-2] +")"
+        db_query += filters
+    
+    
+    # group by
+    # Note -> assumed if there is aggr then all attrs in select are in group by
+    groupByAttrs = set([attr[0] for attr in query["groupByAttrs"]])
+    if len(query["aggrAttrs"]):
+        selectAttrs = [attr[0] for attr in query["selectAttrs"] if "*" not in attr[0]]
+        groupByAttrs.update(selectAttrs)
+    groupby_attr = "\\\n\t\t\t.group_by(" if len(groupByAttrs) else ""
+    for attr in groupByAttrs:
+        groupby_attr += "{0}, ".format(attr)
+    if len(groupby_attr):
+        groupby_attr = groupby_attr[:-2] + ")"
+        db_query += groupby_attr
+
+
+    # having 
+    # Note --> having(count(*)) > having_vale
+    # having_value is the count of rows
+    having = "\\\n\t\t\t.having(" if len(query["havingAttrs"]) else ""
+    for attr in query["havingAttrs"]:
+        attr_name = attr[1][0] if "*" not in attr[1][0] else ""
+        attr_opperator = attr[2]
+        attr_opperator = "==" if attr_opperator is "=" else attr_opperator
+        attr_aggregation = attr[0]
+        arg_name = "having_value" if attr_name == "" else attr_name
+
+        value = "args['{0}']".format(arg_name)
+        if attr_aggregation:
+            having += "func.{0}({1}) {2} {3}".format(attr_aggregation,attr_name,attr_opperator,value) + ", "
+        else:
+            having += "{0} {1} {2}, ".format(attr_name,attr_opperator,value)
+
+    if len(having):
+        having = having[:-2] +")"
+        db_query += having
+
+    # order_by
+    orderby_attr = "\\\n\t\t\t.order_by(" if len(query["orderByAttrs"]) else ""
+    for attr in query["orderByAttrs"]: # [["teams.tmID", "str"], ""]
+        if attr[0][0] == "*" and not attr[1] : continue
+        attr_name = attr[0][0] if "*" not in attr[0][0] else ""
+        attr_aggregation = attr[1]
+
+        aggr = "_"+attr_aggregation +"_" if attr_aggregation else ""
+        if attr[0][0] == "*":
+            param_name = "is_order_of"+aggr+"of_rows_desc"
+        else:
+            aggr = "_" if not aggr else aggr
+            param_name = "is_order_of"+aggr+attr_name.split('.')[1]+"_desc"
+
+        variable_name = attr_name.split('.')[1] + "_" if attr_name else ""
+        parse_args += "\
+        {0}direction = desc if args['{1}'] else asc\n".format(variable_name,param_name)
+        
+        
+        if attr_aggregation:
+            orderby_attr += "{0}direction(func.{2}({1})), ".format(variable_name,attr_name,attr_aggregation)
+        else:
+            orderby_attr += "{0}direction({1}), ".format(variable_name,attr_name)
+
+    if len(orderby_attr):
+        orderby_attr = orderby_attr[:-2] + ")"
+        db_query += orderby_attr
+
+    if len(parse_args):
+        db_logic = parse_args + "\n\t\t" + db_query
+    else:
+        db_logic = db_query
+    #print(db_logic)
+    #if "awards_coaches" in query["entities"] and "coaches" in query["entities"]:
+    #if len(query["entities"])==1 and "coaches" in query["entities"]:
+    #print(db_query)
+    return parse_args , db_query
+
+
+def create_resource(resource_model, endpoint_object,api_file,namespace_name,parse_args , db_query):
     #stringfy the restplus resource_model
     #append to api file
     params = endpoint_object["queryParams"]
@@ -109,7 +291,9 @@ class {0}_resource(Resource):\n\
     @{1}.marshal_list_with({0}_model)\n\
     {5}\n\
     def get(self):\n\
-        return 'hello'\n\n".format(endpoint_object["endpoint_name"],namespace_name,resource_model,endpoint_object["endpoint_name"],parser,except_parser)
+        {6}\n\
+        {7}\n\
+        return results\n\n".format(endpoint_object["endpoint_name"],namespace_name,resource_model,endpoint_object["endpoint_name"],parser,except_parser,parse_args , db_query)
 
     with open(api_file, 'a') as f:
         f.write(resource)
@@ -141,15 +325,33 @@ def create_query_ui_endpoint(query,modelsObjects):
         queryParams.append((attr_name,attr_type,attr_operator,None))
 
     for attr in query["havingAttrs"]:
-        if attr[2] != "value":
-            continue
-        attr_name = attr[1][0]
-        attr_type = attr[1][1]
+        # if "*" in attr[1][0]:
+        #     continue
+        attr_name = attr[1][0] if "*" not in attr[1][0] else "having_value"
+        attr_type = attr[1][1] if "*" not in attr[1][0] else "int"
         attr_operator = attr[2]
         attr_aggregation = attr[0]
         queryParams.append((attr_name,attr_type,attr_operator,attr_aggregation))
 
-    response_model , ui_response_model = create_response_model(query["selectAttrs"],query["aggrAttrs"],query["entities"],modelsObjects)
+    for attr in query["orderByAttrs"]:
+        if attr[0][0] == "*" and attr[1] is None:
+            continue
+        
+        attr_name = attr[0][0]
+        attr_type = attr[0][1]
+        attr_aggregation = attr[1]
+        param_name = ""
+        aggr = "_"+attr_aggregation +"_" if attr_aggregation else ""
+        if attr_name == "*":
+            param_name = "is_order_of"+aggr+"of_rows_desc"
+        else:
+            attr_name = attr_name.split('.')[1]
+            aggr = "_" if not aggr else aggr
+            param_name = "is_order_of"+aggr+attr_name+"_desc"
+        queryParams.append((param_name,"bool",None,attr_aggregation))
+
+    #print(query["selectAttrs"])
+    response_model , ui_response_model , db_selects = create_response_model(query["selectAttrs"],query["aggrAttrs"],query["entities"],modelsObjects)
     response_model = "{ "+response_model+" }"
     endpoint = {
         "method": endpoint_method,
@@ -167,7 +369,7 @@ def create_query_ui_endpoint(query,modelsObjects):
     #print(endpoint)
     #print("////////////////////////////////////////////")
 
-    return response_model , endpoint
+    return response_model , endpoint , db_selects
 
 
 def create_response_model(selectAttrs,aggrAttrs,entities,modelsObject):
@@ -185,22 +387,23 @@ def create_response_model(selectAttrs,aggrAttrs,entities,modelsObject):
     #enttity.*
     #print("aggrAttrs",aggrAttrs)
     #print(entities)
-    print("attr",selectAttrs)
     #print("///////////////////////////////////////////")
-    if len(selectAttrs)==1 and selectAttrs[0][0]=="*":
-        print("entities_astrisk",entities)
+    #print("attr",selectAttrs)
+    #print("///////////////////////////////////////////")
+    if (len(selectAttrs)==1 and selectAttrs[0][0]=="*") or (len(selectAttrs)==0 and len(aggrAttrs)==0):
+        #print("entities_astrisk",entities)
         response_model,ui_response_model =  get_astrisk_models(entities,modelsObject)
         if len(aggrAttrs)!=0:
             response_model+=","
         selectAttrs=[]
-    print("entities",entities)
+    #print("entities",entities)
     all_entities_astrisk=[]
     for attr in selectAttrs:   
         if "*" in attr[0]:
             all_entities_astrisk.append(attr[0].split('.')[0])
     all_entities_astrisk = list(set(all_entities_astrisk))
     if len(all_entities_astrisk):
-        print("all_entities_astrisk",all_entities_astrisk)
+        #print("all_entities_astrisk",all_entities_astrisk)
         response_model,ui_response_model =  get_astrisk_models(all_entities_astrisk,modelsObject)
         if len(aggrAttrs)!=0:
             response_model+=","
@@ -208,6 +411,8 @@ def create_response_model(selectAttrs,aggrAttrs,entities,modelsObject):
         #print("select ",attr)
         attr_name = attr[0]
         attr_type = attr[1]
+        #print("attr_type",attr_type)
+        #print("attr_name",attr_name)
         if "*" in attr:
             continue
         db_selects.append((attr_name,attr_type,None))
@@ -222,9 +427,9 @@ def create_response_model(selectAttrs,aggrAttrs,entities,modelsObject):
     for attr in aggrAttrs:
         attr_aggregation = attr[1]
         attr_name = attr[0][0]
-        attr_type = attr[0][1]
+        attr_type = attr[0][1] if "*" not in attr[0][0] else "int"
         db_selects.append((attr_name,attr_type,attr_aggregation))
-        attr_name = attr_aggregation+"_"+attr_name
+        attr_name = attr_aggregation+"_"+ (attr_name if "*" not in attr_name else "all")
         if attr_type in pythondtypes_restmapping:
             response_model+= "'"+attr_name+"' : "+pythondtypes_restmapping[attr_type]+","
             ui_response_model.append((attr_name , attr_type))
@@ -235,15 +440,15 @@ def create_response_model(selectAttrs,aggrAttrs,entities,modelsObject):
     return response_model , ui_response_model ,db_selects
 
 def get_astrisk_models(entities,modelsObjects):
-    print("inside astrisk",entities)
+    #print("inside astrisk",entities)
     all_models_response=''
     all_models_ui_response = []
     for entity in entities:
         
         attrs = modelsObjects[entity]['attributes'].items()
-        print(attrs)
+        #print(attrs)
         attrs = [(entity+'.'+attr[0],attr[1]) for attr in attrs]
-        print(attrs)
+        #print(attrs)
         
         entity_model,entity_ui_model,_ = create_response_model(attrs,[],entities,modelsObjects)
         all_models_response+=entity_model+","
@@ -368,7 +573,7 @@ def create_api_init(api,cluster_imports,clusters_init):
         
 
 
-with open('/home/nada/GP/GP/src/SearchEngine/finalMergedClusters.json','rb') as file:
+with open('/home/hager/college/GP/GP/src/SearchEngine/finalMergedClusters.json','rb') as file:
     testSchema = json.load(file)
     clusters = [testSchema[cluster]["queries"] for cluster in testSchema.keys()]
 

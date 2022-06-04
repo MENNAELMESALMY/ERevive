@@ -308,5 +308,5 @@ testSchema = {
 }
 
 import pickle
-with open('/home/nada/GP/GP/src/TestSchemas/sportsSchema.pickle', 'wb') as handle:
+with open('/home/hager/college/GP/GP/src/TestSchemas/sportsSchema.pickle', 'wb') as handle:
     pickle.dump(testSchema, handle, protocol=pickle.HIGHEST_PROTOCOL)

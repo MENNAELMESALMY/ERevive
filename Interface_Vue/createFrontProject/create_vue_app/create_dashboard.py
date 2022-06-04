@@ -48,7 +48,7 @@ def generate_dashboard(cluster_name,endpoint,directory):
 </template>
 
 <style lang="scss" scoped>
-@import "../scss/dashboard.scss";
+// @import "../scss/dashboard.scss";
 </style>
 
 <script>

@@ -195,7 +195,6 @@ def createForm (requirments,endpoint,filePath):
 <style lang="scss" scoped>
 form {
   width: 80%;
-  height: 80%;
   margin: auto;
   padding: 20px;
   border: 1px solid #ccc;

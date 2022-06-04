@@ -2,7 +2,11 @@
 import axios from "axios";
 import router from "@/router";
 const state = {
-  endpoint_name1:[],endpoint_name2:[],endpoint_name3:[],endpoint_name4:[],
+		endpoint_name1:[],
+		endpoint_name2:[],
+		endpoint_name3:[],
+		endpoint_name4:[],
+
 };
 
 const actions = {

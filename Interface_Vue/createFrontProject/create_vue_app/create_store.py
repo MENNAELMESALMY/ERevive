@@ -1,11 +1,10 @@
 def generate_store(endpoints,directory):
     store_string = '''
 import axios from "axios";
-import router from "@/router";
 const state = {
-  '''
+'''
     for endpoint in endpoints:
-        store_string += endpoint["endpoint_name"] + ':' + '[],'
+        store_string += '\t\t'+endpoint["endpoint_name"] + ':' + '[],\n'
      
     store_string += '''
 };
@@ -19,10 +18,8 @@ const actions = {
         store_string += '\t\t\turl: "'+endpoint["url"]+'",\n'
         #print(endpoint['method'])
         if endpoint['method'] == 'get' or endpoint['method']=='delete':
-            print('get')
             store_string += '\t\t\tparams: payload.query_param,'
         if endpoint['method'] == 'post' or endpoint['method'] == 'put':
-            print('post')
             store_string += '\t\t\tdata: payload.body_param,'
         
         store_string += '})\n'

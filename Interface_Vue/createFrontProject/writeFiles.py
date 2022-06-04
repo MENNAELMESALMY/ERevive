@@ -5,23 +5,23 @@ from create_vue_app.create_store_idx import *
 from create_vue_app.create_dashboard import *
 from create_vue_app.create_cards import *
 from create_vue_app.create_store import *
+from create_vue_app.create_cards_designs import *
 
 
 
-cluster_names = ['cluster1','cluster2','cluster3','cluster4']
-# appRoute = 'FrontCode/src/App.vue'
-# storeRoute = 'FrontCode/src/store/'
-# storeRouteIdx = 'FrontCode/src/store/index.js'
-# routerRoute = 'FrontCode/src/router/index.js'
-# viewsRoute = 'FrontCode/src/views/'
-# componentsRoute = 'FrontCode/src/components/'
+appRoute = 'FrontCode/src/App.vue'
+storeRoute = 'FrontCode/src/store/modules/'
+storeRouteIdx = 'FrontCode/src/store/index.js'
+routerRoute = 'FrontCode/src/router/index.js'
+viewsRoute = 'FrontCode/src/views/'
+componentsRoute = 'FrontCode/src/components/'
 
-appRoute = '../gpinterface/src/App.vue'
-storeRoute = '../gpinterface/src/store/modules/'
-storeRouteIdx = '../gpinterface/src/store/index.js'
-routerRoute = '../gpinterface/src/router/index.js'
-viewsRoute = '../gpinterface/src/views/'
-componentsRoute = '../gpinterface/src/components/'
+# appRoute = '../gpinterface/src/App.vue'
+# storeRoute = '../gpinterface/src/store/modules/'
+# storeRouteIdx = '../gpinterface/src/store/index.js'
+# routerRoute = '../gpinterface/src/router/index.js'
+# viewsRoute = '../gpinterface/src/views/'
+# componentsRoute = '../gpinterface/src/components/'
 
 c = {
   "c1":[
@@ -155,12 +155,35 @@ c = {
   ]
 }
 
+cluster_names = list(c.keys())
 
 #create application
-with open(appRoute, 'w') as f:
+with open (appRoute, 'w') as f:
+  f.write('''
+<template>
+      <router-view />
+</template>
+
+<script>
+    export default{
+   name: "app"
+    };
+</script>
+
+<style lang='scss' scoped >
+    #app {
+    font-size: 18px;
+    font-family: 'Roboto', sans-serif;
+    }
+</style>
+  ''')
+
+
+#create home
+with open(viewsRoute + "home.vue", 'w') as f:
     f.write('''
 <template>
-    <div id="app">
+    <div id="home">
       <cardDesign 
       v-for="(card,i) in clusters"
           :key=i
@@ -171,7 +194,7 @@ with open(appRoute, 'w') as f:
 </template>
 
 <script>
-import cardDesign from './components/cardDesign.vue'
+import cardDesign from '../components/cardDesign1.vue'
     export default{
     data() {
         return {
@@ -185,20 +208,11 @@ import cardDesign from './components/cardDesign.vue'
 </script>
 
 <style lang='scss' scoped >
-    #app {
-    font-size: 18px;
-    font-family: 'Roboto', sans-serif;
-    color: red;
-    p{
-        color: blue;
-    }
-    }
 </style>
     '''
     %(cluster_names))
 
 #create router
-cluster_names = list(c.keys())
 generate_routing(cluster_names,routerRoute)
 
 #create store idx
@@ -363,85 +377,95 @@ for cluster_name,endpoints in c.items():
     elif endpoint["method"] == "post":
       createForm(requirments,endpoint, filePath)
 
-# with open('FrontCode/src/index.html', 'w') as f:
-#     f.write('''
-# <html>
-#   <head>
-#     <title>Vue Hello World</title>
-#   </head>
-#   <body>
-#     <div id="app"></div>
-#   </body>
-# </html>
-#     ''')
+#Index code generation
+with open('FrontCode/src/index.html', 'w') as f:
+    f.write('''
+<html>
+  <head>
+    <title>Vue Hello World</title>
+  </head>
+  <body>
+    <div id="app"></div>
+  </body>
+</html>
+    ''')
 
-# with open('FrontCode/src/main.js', 'w') as f:
-#     f.write('''
-# import * as Vue from 'vue';
-# import App from "./App.vue";
-# import router from "./router";
-# import store from "./store";
-# import axios from "axios";
-# Vue.config.productionTip = false;
+# create main
+with open('FrontCode/src/main.js', 'w') as f:
+    f.write('''
+import {createApp} from 'vue';
+import App from "./App.vue";
+import router from "./router";
+import store from "./store";
+import axios from "axios";
 
-# axios.defaults.baseURL = "http://localhost:3000/api/";
+axios.defaults.baseURL = "http://localhost:3000/api/";
+createApp(App).use(router).use(store).mount('#app');
 
-##### Vue.createApp(App).mount('#app');
-# new Vue({
-#   router,
-#   store,
-#   render: (h) => h(App),
-# }).$mount("#app");
-#     ''')
-
-
-# with open('FrontCode/.babelrc.js', 'w') as f:
-#     f.write('''
-# module.exports = {
-#   presets: ['@babel/preset-env'],
-# }
-#     ''')
-
-# with open('FrontCode/webpack.config.js', 'w') as f:
-#     f.write('''
-# const HtmlWebpackPlugin = require('html-webpack-plugin');
-# const { VueLoaderPlugin } = require('vue-loader');
-# const webpack  = require('webpack');
-
-# module.exports = {
-#   entry: './src/main.js',
-#   module: {
-#     rules: [
-#       { test: /\.js$/, use: 'babel-loader' },
-#       { test: /\.vue$/, use: 'vue-loader' },
-#       { test: /\.scss$/, use: ['vue-style-loader','css-loader','sass-loader']},
-#     ]
-#   },
-#   devServer: {
-#     open: true,
-#     hot: true,
-#   },
-#   plugins: [
-#     new HtmlWebpackPlugin({
-#       template: './src/index.html',
-#     }),
-#     new VueLoaderPlugin(),
-#     new webpack.HotModuleReplacementPlugin(),
-#   ]
-# };
-#     ''')
+//new Vue({
+//  router,
+//  store,
+//  render: (h) => h(App),
+//}).$mount("#app");
+    ''')
 
 
-# f = open('FrontCode/package.json', 'r+') 
-# l = f.read()
-# f.close()
-# x = '"test": "echo \\"Error: no test specified\\" && exit 1"'
-# y = '"serve": "webpack-dev-server --mode development"'
-# l = l.replace(x, y)
-# f = open('FrontCode/package.json', 'w') 
-# f.write(l)
-# f.close()
-# print("Text successfully replaced")
+with open('FrontCode/.babelrc.js', 'w') as f:
+    f.write('''
+module.exports = {
+  presets: ['@babel/preset-env'],
+}
+    ''')
+
+with open('FrontCode/webpack.config.js', 'w') as f:
+    f.write('''
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const { VueLoaderPlugin } = require('vue-loader');
+const webpack  = require('webpack');
+
+module.exports = {
+  entry: './src/main.js',
+  module: {
+    rules: [
+      { test: /\.js$/, use: 'babel-loader' },
+      { test: /\.vue$/, use: 'vue-loader' },
+      { test: /\.scss$/, use: ['vue-style-loader','css-loader','sass-loader']},
+    ]
+  },
+  devServer: {
+    open: true,
+    hot: true,
+    historyApiFallback: true
+  },
+  plugins: [
+    new HtmlWebpackPlugin({
+      template: './src/index.html',
+    }),
+    new VueLoaderPlugin(),
+    new webpack.HotModuleReplacementPlugin(),
+  ]
+};
+    ''')
+
+
+f = open('FrontCode/package.json', 'r+') 
+l = f.read()
+f.close()
+x = '"test": "echo \\"Error: no test specified\\" && exit 1"'
+y = '"serve": "webpack-dev-server --mode development"'
+l = l.replace(x, y)
+f = open('FrontCode/package.json', 'w') 
+f.write(l)
+f.close()
+print("Text successfully replaced")
+
+### create cards designs
+create_card_design1(componentsRoute + "cardDesign1.vue")
+create_card_design2(componentsRoute + "cardDesign2.vue")
+create_card_design3(componentsRoute + "cardDesign3.vue")
+create_card_design4(componentsRoute + "cardDesign4.vue")
+create_color_pallete(componentsRoute + "colorPallete.vue")
+create_color_pallete_module(storeRoute + "color_pallete.js")
 
 # '''
 # list of apis:
@@ -456,3 +480,16 @@ for cluster_name,endpoints in c.items():
 #   }
 # '''
 #getClusterNames()
+
+'''
+1- read json file
+2- made requirements object and other demo object for some requests
+3- connect form, cards, complete function create cards
+4- design project interface
+5- implement project interface
+6- implement validation interface
+7- connect validation object as the requirements object
+8- complete and integrate put and delete
+9- fix style of every thing
+10- how to make this folder be downloaded
+'''

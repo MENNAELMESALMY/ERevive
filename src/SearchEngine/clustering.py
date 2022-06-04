@@ -7,10 +7,11 @@ def getClusteredQueries(queries):
     clusteredQueries = {}
     for i,query in enumerate(queries):
         queryEntityKey = getKeyWordsVector(flattenList(query["cleanedEntities"]))
-        if clusteredQueries.get((queryEntityKey.T).tostring()) is None: #if key not exist
-            clusteredQueries[(queryEntityKey.T).tostring()] = [i]
+        queryEntityKey = (queryEntityKey.T).tostring()+bytes(len(query["cleanedEntities"]))
+        if clusteredQueries.get(queryEntityKey) is None: #if key not exist
+            clusteredQueries[queryEntityKey] = [i]
         else:
-            clusteredQueries[(queryEntityKey.T).tostring()].append(i)
+            clusteredQueries[queryEntityKey].append(i)
     return list(clusteredQueries.values())
 
 def getUniqueSelectAttrs(attrs):

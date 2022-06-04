@@ -26,7 +26,7 @@ os.chdir('api')
 
 
 # Create Models method
-def Create_Application(schema,clusters,user="root",password = "admin<3Super",db="default"):
+def Create_Application(schema,clusters,user="nada",password = "Ringmybells5",db="default"):
     models,modelsObjects = createAllModels(schema)  #should be replaced with nihal's models 
       
     api = ApiFactory(models,user,password,db,modelsObjects)
@@ -75,22 +75,22 @@ def create_api_namespaces(api,clusters):
             #print(query['entities'])
             resource_model , endpoint_object = create_query_ui_endpoint(query,api.modelsObjects)  # return to frontend
             clusters_out[api_name].append(endpoint_object)
-            api_logic = create_query_api_logic(endpoint_object,query,api.modelsObjects)  
+            #api_logic = create_query_api_logic(endpoint_object,query,api.modelsObjects)  
             #create api logic
-            create_resource(resource_model, endpoint_object,api_file,namespace_name)
+            create_resource(query["constructed_query"],resource_model, endpoint_object,api_file,namespace_name)
         #handle crud response
         # add is_entity --> true
     return namespaces_imports , inits ,clusters_out
-def create_query_api_logic(endpoint_object,query,modelsObjects):
-    params = endpoint_object["queryParams"]
-    parser = endpoint_object["endpoint_name"]
-    parse_args=""
-    if len(params):
-        parse_args = "{0}_parser.parse_args()\n".format(parser)
-    select_params = ""
-    for param in endpoint_object[""]:
+# def create_query_api_logic(endpoint_object,query,modelsObjects):
+#     params = endpoint_object["queryParams"]
+#     parser = endpoint_object["endpoint_name"]
+#     parse_args=""
+#     if len(params):
+#         parse_args = "{0}_parser.parse_args()\n".format(parser)
+#     select_params = ""
+#     for param in endpoint_object[""]:
     
-def create_resource(resource_model, endpoint_object,api_file,namespace_name):
+def create_resource(query,resource_model, endpoint_object,api_file,namespace_name):
     #stringfy the restplus resource_model
     #append to api file
     params = endpoint_object["queryParams"]
@@ -109,7 +109,11 @@ class {0}_resource(Resource):\n\
     @{1}.marshal_list_with({0}_model)\n\
     {5}\n\
     def get(self):\n\
-        return 'hello'\n\n".format(endpoint_object["endpoint_name"],namespace_name,resource_model,endpoint_object["endpoint_name"],parser,except_parser)
+        #execute the query\n\
+        query_result = db.session.execute('{6}')\n\
+        #convert the query result to a list of dictionaries\n\
+        result = [dict(row) for row in query_result]\n\
+        return result \n\n".format(endpoint_object["endpoint_name"],namespace_name,resource_model,endpoint_object["endpoint_name"],parser,except_parser,query)
 
     with open(api_file, 'a') as f:
         f.write(resource)
@@ -149,7 +153,7 @@ def create_query_ui_endpoint(query,modelsObjects):
         attr_aggregation = attr[0]
         queryParams.append((attr_name,attr_type,attr_operator,attr_aggregation))
 
-    response_model , ui_response_model = create_response_model(query["selectAttrs"],query["aggrAttrs"],query["entities"],modelsObjects)
+    response_model , ui_response_model,_ = create_response_model(query["selectAttrs"],query["aggrAttrs"],query["entities"],modelsObjects)
     response_model = "{ "+response_model+" }"
     endpoint = {
         "method": endpoint_method,
@@ -190,20 +194,21 @@ def create_response_model(selectAttrs,aggrAttrs,entities,modelsObject):
     if len(selectAttrs)==1 and selectAttrs[0][0]=="*":
         print("entities_astrisk",entities)
         response_model,ui_response_model =  get_astrisk_models(entities,modelsObject)
-        if len(aggrAttrs)!=0:
-            response_model+=","
+        response_model+=","
         selectAttrs=[]
     print("entities",entities)
     all_entities_astrisk=[]
+    sel_len=0
     for attr in selectAttrs:   
         if "*" in attr[0]:
             all_entities_astrisk.append(attr[0].split('.')[0])
+        else:
+            sel_len+=1
     all_entities_astrisk = list(set(all_entities_astrisk))
     if len(all_entities_astrisk):
         print("all_entities_astrisk",all_entities_astrisk)
         response_model,ui_response_model =  get_astrisk_models(all_entities_astrisk,modelsObject)
-        if len(aggrAttrs)!=0:
-            response_model+=","
+        response_model+=","
     for attr in selectAttrs:
         #print("select ",attr)
         attr_name = attr[0]
@@ -229,7 +234,7 @@ def create_response_model(selectAttrs,aggrAttrs,entities,modelsObject):
             response_model+= "'"+attr_name+"' : "+pythondtypes_restmapping[attr_type]+","
             ui_response_model.append((attr_name , attr_type))
         else:
-            response_model+=  "'"+attr_name+"' : fields.String,"
+            response_model+=  "'"+attr_name+"' : fields.String ,"
             ui_response_model.append((attr_name , "str"))
     response_model = response_model[:-1]
     return response_model , ui_response_model ,db_selects
@@ -367,10 +372,20 @@ def create_api_init(api,cluster_imports,clusters_init):
 
         
 
-
-with open('/home/nada/GP/GP/src/SearchEngine/finalMergedClusters.json','rb') as file:
+with open('/home/nada/GP/GP/src/SearchEngine/finalMergedQueries.json','rb') as file:
     testSchema = json.load(file)
-    clusters = [testSchema[cluster]["queries"] for cluster in testSchema.keys()]
+    clusters = []
+    for cluster in testSchema.keys():
+        c = []
+        for q in testSchema[cluster]:
+            query = q[0]
+            query.update({"constructed_query":q[1]})
+            c.append(query)
+        clusters.append(c)
+    print(clusters[0])
+# with open('/home/nada/GP/GP/src/SearchEngine/finalMergedClusters.json','rb') as file:
+#     testSchema = json.load(file)
+#     clusters = [testSchema[cluster]["queries"] for cluster in testSchema.keys()]
 
     Create_Application({
         1: 
@@ -378,7 +393,7 @@ with open('/home/nada/GP/GP/src/SearchEngine/finalMergedClusters.json','rb') as 
             'TableType':'',
             'attributes': {
             'id': 'str', 
-            'coachID': 'datetime',
+            'coachID': 'str',
             'award': 'str',
             'lgID': 'str',
             'note': 'str',
@@ -597,7 +612,7 @@ with open('/home/nada/GP/GP/src/SearchEngine/finalMergedClusters.json','rb') as 
             'TableType':'',
             'attributes': 
             {'id': 'str', 
-            'draftYear': 'datetime',
+            'draftYear': 'int',
             'draftRound': 'str',
             'draftSelection':'str',
             'draftOverall': 'datetime',
@@ -620,7 +635,7 @@ with open('/home/nada/GP/GP/src/SearchEngine/finalMergedClusters.json','rb') as 
                 'ForignKeyTable': 'teams', 
                 'ForignKeyTableAttributeName': 'year', 
                 'patricipaction': 'partial', 
-                'dataType': 'str'}
+                'dataType': 'int'}
                 ], 
             'isWeak': False
         },
@@ -630,7 +645,7 @@ with open('/home/nada/GP/GP/src/SearchEngine/finalMergedClusters.json','rb') as 
             'TableType':'',
             'attributes': 
                 {'id': 'str',
-                'year': 'str',
+                'year': 'int',
                 'round': 'str',
                 'series': 'str',
                 'tmIDWinner': 'str',
@@ -655,7 +670,7 @@ with open('/home/nada/GP/GP/src/SearchEngine/finalMergedClusters.json','rb') as 
                 'ForignKeyTable': 'teams', 
                 'ForignKeyTableAttributeName': 'year', 
                 'patricipaction': 'full', 
-                'dataType': 'str'},
+                'dataType': 'int'},
                 ], 
             'isWeak': False
         },

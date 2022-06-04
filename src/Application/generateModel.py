@@ -97,7 +97,7 @@ def createAllModels(objectsList):
         with open(modelPath, 'a') as file:
             ## check if item in foreignKeyRelationList, if found add db.relation
             if relationObject['relationType'] == "oTm":
-                file.write(f"\t{relationObject['table2']} = db.relationship('{relationObject['table2']}',backref='{relationObject['table2']}')\n")
+                file.write(f"\t{relationObject['table2']} = db.relationship('{relationObject['table2']}',backref=db.backref('{relationObject['table2']}'))\n")
             elif relationObject['relationType'] == "mTm":
                 file.write(f"\t{relationObject['table2']} = db.relationship('{relationObject['table2']}',secondary='{relationObject['secondary']}',backref=db.backref('{relationObject['table2']}',lazy='dynamic'))\n")
     

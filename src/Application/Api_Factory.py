@@ -31,6 +31,7 @@ database="{2}" \n\
     def create_api_header(self,models):
         model_import = ' , '.join(models)
         return '\
+from datetime import datetime \n\
 from flask.helpers import make_response \n\
 from flask_restx import Resource, Namespace , fields , reqparse \n\
 from flask import jsonify, request \n\
@@ -43,6 +44,8 @@ from utils import convert_db_model_to_restx_model \n\
         model_create_string=''
         parser_create_string='{0}_id_parser = reqparse.RequestParser() \n'.format(model)
         primary_keys = self.modelsObjects[model]['primaryKey']
+        put_filter_primary_keys = ""
+        delete_filter_primary_keys = ""
         body_params = []
         query_params = []
         ui_response_model = []
@@ -56,12 +59,14 @@ from utils import convert_db_model_to_restx_model \n\
             if attribute in primary_keys:
                 parser_create_string+= "{0}_id_parser.add_argument('{1}',type={2})\n".format(model,attribute,type)
                 query_params.append((attribute,type))
+                put_filter_primary_keys+="{0}.{1}==request.json.get('{1}') and ".format(model,attribute)
+                delete_filter_primary_keys+="{0}.{1}=={0}_id_parser.parse_args().get('{1}') and ".format(model,attribute)
             body_params.append((attribute,type))
-
             model_create_string+='{0} = request.json.get("{0}")'.format(attribute)+terminal_command   
         endpoint_name,ui_name = model,model
         endpoint_url = '/'+model.lower()
-        
+        put_filter_primary_keys = put_filter_primary_keys[:-4]
+        delete_filter_primary_keys = delete_filter_primary_keys[:-4]
         endpoint_object = [{
             "method": "get",
             "url": endpoint_url,
@@ -129,28 +134,28 @@ class {0}Api(Resource):\n\
     @{1}_namespace.marshal_with({1}_model) \n\
     @{1}_namespace.expect({1}_model) \n\
     def post(self):\n\
-        {1} = {0}({2})\n\
-        db.session.add({1})\n\
+        {1}s = {0}({2})\n\
+        db.session.add({1}s)\n\
         db.session.commit()    \n\
-        return {1} , 201 \n\
+        return {1}s , 201 \n\
 \n\
     @{1}_namespace.marshal_with({1}_model) \n\
     @{1}_namespace.expect({1}_model) \n\
     def put(self):\n\
-        db.session.query({0}).filter({0}.id==id).update(request.json) \n\
+        db.session.query({0}).filter({4}).update(request.json) \n\
         db.session.commit() \n\
-        {1} = db.session.query({0}).filter({0}.id==id).first() \n\
-        return {1} , 200    \n\
+        {1}s = db.session.query({0}).filter({4}).first() \n\
+        return {1}s , 200    \n\
 \n\
     @{1}_namespace.marshal_with({1}_model) \n\
     @{1}_namespace.expect({1}_id_parser) \n\
     def delete(self):\n\
-        {1} = db.session.query({0}).filter({0}.id==id).first() \n\
-        db.session.query({0}).filter({0}.id==id).delete() \n\
+        {1}s = db.session.query({0}).filter({5}).first() \n\
+        db.session.query({0}).filter({5}).delete() \n\
         db.session.commit() \n\
-        return {1} , 200    \n\
+        return {1}s , 200    \n\
 \n\
-'.format(model,model.lower(),model_create_string,parser_create_string)
+'.format(model,model.lower(),model_create_string,parser_create_string,put_filter_primary_keys,delete_filter_primary_keys)
     
         
     def create_api_namespaces(self):

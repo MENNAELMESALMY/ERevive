@@ -129,31 +129,43 @@ class {0}Api(Resource):\n\
 \n\
     @{1}_namespace.marshal_list_with({1}_model) \n\
     def get(self):\n\
-        {1}s = db.session.query({0}).all()\n\
+        try:\n\
+            {1}s = db.session.query({0}).all()\n\
+        except Exception as e:\n\
+            return None , 500\n\
         return {1}s , 200  \n\
 \n\
     @{1}_namespace.marshal_with({1}_model) \n\
     @{1}_namespace.expect({1}_model) \n\
     def post(self):\n\
-        {1}s = {0}({2})\n\
-        db.session.add({1}s)\n\
-        db.session.commit()    \n\
+        try:\n\
+            {1}s = {0}({2})\n\
+            db.session.add({1}s)\n\
+            db.session.commit()    \n\
+        except Exception as e:\n\
+            return None , 500\n\
         return {1}s , 201 \n\
 \n\
     @{1}_namespace.marshal_with({1}_model) \n\
     @{1}_namespace.expect({1}_model) \n\
     def put(self):\n\
-        db.session.query({0}).filter({4}).update(request.json) \n\
-        db.session.commit() \n\
-        {1}s = db.session.query({0}).filter({4}).first() \n\
+        try:\n\
+            db.session.query({0}).filter({4}).update(request.json) \n\
+            db.session.commit() \n\
+            {1}s = db.session.query({0}).filter({4}).first() \n\
+        except Exception as e:\n\
+            return None , 500\n\
         return {1}s , 200    \n\
 \n\
     @{1}_namespace.marshal_with({1}_model) \n\
     @{1}_namespace.expect({1}_id_parser) \n\
     def delete(self):\n\
-        {1}s = db.session.query({0}).filter({5}).first() \n\
-        db.session.query({0}).filter({5}).delete() \n\
-        db.session.commit() \n\
+        try:\n\
+            {1}s = db.session.query({0}).filter({5}).first() \n\
+            db.session.query({0}).filter({5}).delete() \n\
+            db.session.commit() \n\
+        except Exception as e:\n\
+            return None , 500\n\
         return {1}s , 200    \n\
 \n\
 '.format(model,model.lower(),model_create_string,parser_create_string,put_filter_primary_keys,delete_filter_primary_keys)

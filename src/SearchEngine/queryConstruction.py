@@ -4,7 +4,7 @@ import random
 def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,id, goals,origQuery,bestJoin):
     query = {}
     mappedAttributesDict = {}
-    print(mappedAttributes)
+    #print(mappedAttributes)
     for attr in mappedAttributes:
         if attr[1] is not None:
             if attr[0] is None:
@@ -25,7 +25,7 @@ def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,id,
                     mappedAttributesDict.update({
                         attr[4]:(attr[0]+"."+attr[1],attr[5])
                     })
-    print(mappedAttributesDict)
+    #print(mappedAttributesDict)
 
     query["coverage"] = coverage
     query["id"] = id

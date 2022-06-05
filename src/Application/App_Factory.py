@@ -27,7 +27,7 @@ os.chdir('api')
 
 
 # Create Models method
-def Create_Application(schema,clusters,user="nada",password = "Ringmybells5",db="default"):
+def Create_Application(schema,clusters,user="root",password = "admin<3Super",db="default"):
     models,modelsObjects = createAllModels(schema)  #should be replaced with nihal's models 
       
     api = ApiFactory(models,user,password,db,modelsObjects)
@@ -76,15 +76,16 @@ def create_api_namespaces(api,clusters):
             #print(query['entities'])
             resource_model , endpoint_object , db_selects = create_query_ui_endpoint(query,api.modelsObjects)  # return to frontend
             clusters_out[api_name].append(endpoint_object)
-            parse_args , db_query = create_query_api_logic(endpoint_object,query)  
+            parse_args , db_query = create_query_api_logic(endpoint_object,query,api.modelsObjects)  
             #create api logic
 
             #if "awards_coaches" in query["entities"] and "coaches" in query["entities"]:
-            #    print("\nquery entites: ",query["entities"],"\n")
-            #    print("\nfile name: ",api_file,"\n")
-            #    print("\ncluster entites: ",cluster[0]["entities"],"\n")
-            #    print("\ncluster" , cluster[0])
-            #    print("\nquery" , query)
+            #if "awards_players" in query["entities"] and "player_allstar" in query["entities"]:
+                #print("\nquery entites: ",query["entities"],"\n")
+                #print("\nfile name: ",api_file,"\n")
+                #print("\ncluster entites: ",cluster[0]["entities"],"\n")
+                #print("\ncluster" , cluster[0])
+                #print("\nquery" , query)
 
             create_resource(resource_model, endpoint_object,api_file,namespace_name,parse_args , db_query)
             
@@ -93,10 +94,11 @@ def create_api_namespaces(api,clusters):
     return namespaces_imports , inits ,clusters_out
 
 
-def create_query_api_logic(endpoint_object,query):
+def create_query_api_logic(endpoint_object,query,models_obj):
     #if "awards_coaches" in query["entities"] and "coaches" in query["entities"]:
     #if len(query["entities"])==1 and "coaches" in query["entities"]:
     #print("//////////////////////////////////////////////")
+    #print(models_obj)
     #print("query" , query)
     #print("whereAttrs" , query["whereAttrs"])
     #print("groupByAttrs",query["groupByAttrs"])
@@ -109,6 +111,7 @@ def create_query_api_logic(endpoint_object,query):
 
     #print()
     #print("response" , endpoint_object['response'])
+    #print()
     #print("queryParams" , endpoint_object['queryParams'])
     #print()
     #print("query" , query)
@@ -154,14 +157,14 @@ def create_query_api_logic(endpoint_object,query):
         #cross product 
         if len(query["bestJoin"]) == 0:
             for entity in query["entities"]:
-                joins += "\\\n\t\t\t.join({0})".format(entity)
+                joins += "\\\n\t\t\t\t.join({0})".format(entity)
         #joins
         else:
             for join in query["bestJoin"]:
                 join = join.replace('=','==')
                 entity = join.split('.')[0]
                 entity = entity[1:] # remove space
-                joins += "\\\n\t\t\t.join({0},{1})".format(entity,join)
+                joins += "\\\n\t\t\t\t.join({0},{1})".format(entity,join)
        
     db_query += joins if len(joins) else ""
 
@@ -170,11 +173,12 @@ def create_query_api_logic(endpoint_object,query):
     # Note aggregation in where is not valid
     # anding and oring not handled currently
     whereAttr = set()
-    filters = "\\\n\t\t\t.filter(" if len(query["whereAttrs"]) else ""
+    filters = "\\\n\t\t\t\t.filter(" if len(query["whereAttrs"]) else ""
     for attr in query["whereAttrs"]:
         attr_name = attr[0][0]
         attr_opperator = attr[1]
         attr_opperator = "==" if attr_opperator is "=" else attr_opperator
+        attr_opperator = "in_" if attr_opperator is "in" else attr_opperator
 
         #removing duplicates for anding and oring
         ##########################
@@ -191,7 +195,14 @@ def create_query_api_logic(endpoint_object,query):
         else:
             value = attr[2]
 
-        filters += "{0} {1} {2}, ".format(attr_name,attr_opperator,value) if attr_opperator !="like" else "{0}.{1}({2}), ".format(attr_name,attr_opperator,value)
+        if attr_opperator in ["like","in_"]:
+            filters += "{0}.{1}({2}), ".format(attr_name,attr_opperator,value)
+
+        elif attr_opperator == "between":
+            filters += "{0}.{1}({2}[0],{2}[1]), ".format(attr_name,attr_opperator,value)
+
+        else:
+            filters += "{0} {1} {2}, ".format(attr_name,attr_opperator,value)
 
     if len(filters):
         filters = filters[:-2] +")"
@@ -202,9 +213,21 @@ def create_query_api_logic(endpoint_object,query):
     # Note -> assumed if there is aggr then all attrs in select are in group by
     groupByAttrs = set([attr[0] for attr in query["groupByAttrs"]])
     if len(query["aggrAttrs"]):
-        selectAttrs = [attr[0] for attr in query["selectAttrs"] if "*" not in attr[0]]
+        selectAttrs = set()
+        for attr in query["selectAttrs"]:
+            if attr[0] == '*':
+                for entity in query["entities"]:
+                    attrs = models_obj[entity]["attributes"].keys()
+                    attrs = [entity+'.'+attr for attr in attrs]
+                    selectAttrs.update(attrs)
+                    #print("attrs: ",attrs)
+                    #print()
+            else:
+                selectAttrs.add(attr[0])
+            #selectAttrs = [attr[0] for attr in query["selectAttrs"] if "*" not in attr[0]]
+        #print("final Attrs: ",selectAttrs)
         groupByAttrs.update(selectAttrs)
-    groupby_attr = "\\\n\t\t\t.group_by(" if len(groupByAttrs) else ""
+    groupby_attr = "\\\n\t\t\t\t.group_by(" if len(groupByAttrs) else ""
     for attr in groupByAttrs:
         groupby_attr += "{0}, ".format(attr)
     if len(groupby_attr):
@@ -215,26 +238,38 @@ def create_query_api_logic(endpoint_object,query):
     # having 
     # Note --> having(count(*)) > having_vale
     # having_value is the count of rows
-    having = "\\\n\t\t\t.having(" if len(query["havingAttrs"]) else ""
+    having = "\\\n\t\t\t\t.having(" if len(query["havingAttrs"]) else ""
     for attr in query["havingAttrs"]:
         attr_name = attr[1][0] if "*" not in attr[1][0] else ""
+        attr_aggregation = attr[0]
+
         attr_opperator = attr[2]
         attr_opperator = "==" if attr_opperator is "=" else attr_opperator
-        attr_aggregation = attr[0]
-        arg_name = "having_value" if attr_name == "" else attr_name
+        attr_opperator = "in_" if attr_opperator is "in" else attr_opperator
 
+        arg_name = "having_value" if attr_name == "" else attr_name
         value = "args['{0}']".format(arg_name)
+
         if attr_aggregation:
-            having += "func.{0}({1}) {2} {3}".format(attr_aggregation,attr_name,attr_opperator,value) + ", "
+            having += "func.{0}({1})".format(attr_aggregation,attr_name)
         else:
-            having += "{0} {1} {2}, ".format(attr_name,attr_opperator,value)
+            having += "{0}".format(attr_name)
+
+        if attr_opperator in ["like","in_"]:
+            having += ".{0}({1}), ".format(attr_opperator,value)
+
+        elif attr_opperator == "between":
+            having += ".{0}({1}[0],{1}[1]), ".format(attr_opperator,value)
+
+        else:
+            having += " {0} {1}, ".format(attr_opperator,value)
 
     if len(having):
         having = having[:-2] +")"
         db_query += having
 
     # order_by
-    orderby_attr = "\\\n\t\t\t.order_by(" if len(query["orderByAttrs"]) else ""
+    orderby_attr = "\\\n\t\t\t\t.order_by(" if len(query["orderByAttrs"]) else ""
     for attr in query["orderByAttrs"]: # [["teams.tmID", "str"], ""]
         if attr[0][0] == "*" and not attr[1] : continue
         attr_name = attr[0][0] if "*" not in attr[0][0] else ""
@@ -261,10 +296,6 @@ def create_query_api_logic(endpoint_object,query):
         orderby_attr = orderby_attr[:-2] + ")"
         db_query += orderby_attr
 
-    if len(parse_args):
-        db_logic = parse_args + "\n\t\t" + db_query
-    else:
-        db_logic = db_query
     #print(db_logic)
     #if "awards_coaches" in query["entities"] and "coaches" in query["entities"]:
     #if len(query["entities"])==1 and "coaches" in query["entities"]:
@@ -296,8 +327,12 @@ class {0}_resource(Resource):\n\
     {5}\n\
     def get(self):\n\
         {6}\n\
-        {7}\n\
-        return results\n\n".format(endpoint_object["endpoint_name"],namespace_name,resource_model,endpoint_object["endpoint_name"],parser,except_parser,parse_args , db_query)
+        results = None\n\
+        try:\n\
+            {7}\n\n\
+        except Exception as e:\n\
+            return None , 400\n\n\
+        return results , 200\n\n".format(endpoint_object["endpoint_name"],namespace_name,resource_model,endpoint_object["endpoint_name"],parser,except_parser,parse_args , db_query)
 
     with open(api_file, 'a') as f:
         f.write(resource)
@@ -467,9 +502,11 @@ def get_attr_name_type(attrs):
 
     for attr in attrs:
         if type(attr[0])!=str:
-            attr_name = attr[0][0]
+            attr_name = attr[0][0] 
         else:
             attr_name = attr[0]
+        if type(attr[0])!=str and len(attr) > 2 and attr[2] != "value":
+            attr_names.append(attr[2])    
         attr_names.append(attr_name)
     return attr_names
 
@@ -479,13 +516,18 @@ def query_renaming(entities,whereAttrs,groupAttrs,orderAttrs):
     group_attr = get_attr_name_type(groupAttrs)
     order_attr = get_attr_name_type(orderAttrs)
     #print("orrdderd by before" , order_attr)
-    where_attr = [attr[attr.find(".")+1:] for attr in where_attr if attr != "*"]
-    order_attr = [attr[attr.find(".")+1:] for attr in order_attr if attr != "*"]
-    group_attr = [attr[attr.find(".")+1:] for attr in group_attr if attr != "*"]
+    where_attr = set([attr[attr.find(".")+1:] for attr in where_attr if attr != "*"])
+    order_attr = set([attr[attr.find(".")+1:] for attr in order_attr if attr != "*"])
+    group_attr = set([attr[attr.find(".")+1:] for attr in group_attr if attr != "*"])
     endpoint_name = "get"+"_"+"_".join(entities)
     ui_name = "get "+" ".join(entities)
     #print("orrdderd by after" , order_attr)
     #print()
+    #print("whereAttrs" , whereAttrs)
+
+    #print("where_attr " , where_attr)
+    #print()
+    
     if len(where_attr) != 0:
         endpoint_name += "_filteredby"+"_"+"_".join(where_attr)
         ui_name += " filtered by "+" , ".join(where_attr)
@@ -497,6 +539,7 @@ def query_renaming(entities,whereAttrs,groupAttrs,orderAttrs):
         endpoint_name +="_orderedby"+ "_"+"_".join(order_attr)
         ui_name += " ordered by "+" , ".join(order_attr)
     
+    #print(endpoint_name)
     #print(endpoint_name)
     #print(ui_name)
     #print("////////////////////////////////////////////")
@@ -577,7 +620,7 @@ def create_api_init(api,cluster_imports,clusters_init):
 
         
 
-with open('/home/nada/GP/GP/src/SearchEngine/finalMergedQueries.json','rb') as file:
+with open('/home/hager/college/GP/GP/src/SearchEngine/finalMergedQueries.json','rb') as file:
     testSchema = json.load(file)
     clusters = []
     for cluster in testSchema.keys():
@@ -587,7 +630,7 @@ with open('/home/nada/GP/GP/src/SearchEngine/finalMergedQueries.json','rb') as f
             query.update({"constructed_query":q[1]})
             c.append(query)
         clusters.append(c)
-    print(clusters[0])
+    #print(clusters[0])
 # with open('/home/nada/GP/GP/src/SearchEngine/finalMergedClusters.json','rb') as file:
 #     testSchema = json.load(file)
 #     clusters = [testSchema[cluster]["queries"] for cluster in testSchema.keys()]

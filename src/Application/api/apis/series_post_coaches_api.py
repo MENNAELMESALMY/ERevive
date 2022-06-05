@@ -1,3 +1,4 @@
+from datetime import datetime 
 from flask.helpers import make_response 
 from flask_restx import Resource, Namespace , fields , reqparse 
 from flask import jsonify, request 
@@ -15,8 +16,14 @@ class get_series_post_coaches_resource(Resource):
     
     def get(self):
         
-        results = db.session.query(coaches.coachID)\
-			.join(series_post)\
-			.join(coaches)
-        return results
+        results = None
+        try:
+            results = db.session.query(coaches.coachID)\
+				.join(series_post)\
+				.join(coaches).all()
+
+        except Exception as e:
+            return None , 400
+
+        return results , 200
 

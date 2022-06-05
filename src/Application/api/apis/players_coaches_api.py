@@ -1,3 +1,4 @@
+from datetime import datetime 
 from flask.helpers import make_response 
 from flask_restx import Resource, Namespace , fields , reqparse 
 from flask import jsonify, request 
@@ -19,12 +20,18 @@ class get_players_coaches_groupedby_playerID_resource(Resource):
     def get(self):
         args = get_players_coaches_groupedby_playerID_parser.parse_args()
 
-        results = db.session.query(coaches.coachID)\
-			.join(players)\
-			.join(coaches)\
-			.group_by(players.playerID)\
-			.having(func.count() > args['having_value'])
-        return results
+        results = None
+        try:
+            results = db.session.query(coaches.coachID)\
+				.join(players)\
+				.join(coaches)\
+				.group_by(players.playerID)\
+				.having(func.count() > args['having_value']).all()
+
+        except Exception as e:
+            return None , 400
+
+        return results , 200
 
 get_players_coaches_groupedby_playerID_model = players_coaches_namespace.model('get_players_coaches_groupedby_playerID_model',{ 'coaches.coachID' : fields.String })
 get_players_coaches_groupedby_playerID_parser = reqparse.RequestParser()
@@ -39,12 +46,18 @@ class get_players_coaches_groupedby_playerID_resource(Resource):
         args = get_players_coaches_groupedby_playerID_parser.parse_args()
         direction = desc if args['is_order_of_count_of_rows_desc'] else asc
 
-        results = db.session.query(coaches.coachID)\
-			.join(players)\
-			.join(coaches)\
-			.group_by(players.playerID)\
-			.order_by(direction(func.count()))
-        return results
+        results = None
+        try:
+            results = db.session.query(coaches.coachID)\
+				.join(players)\
+				.join(coaches)\
+				.group_by(players.playerID)\
+				.order_by(direction(func.count())).all()
+
+        except Exception as e:
+            return None , 400
+
+        return results , 200
 
 get_players_coaches_model = players_coaches_namespace.model('get_players_coaches_model',{ 'coaches.post_wins' : fields.Integer })
 
@@ -54,8 +67,14 @@ class get_players_coaches_resource(Resource):
     
     def get(self):
         
-        results = db.session.query(coaches.post_wins)\
-			.join(players)\
-			.join(coaches)
-        return results
+        results = None
+        try:
+            results = db.session.query(coaches.post_wins)\
+				.join(players)\
+				.join(coaches).all()
+
+        except Exception as e:
+            return None , 400
+
+        return results , 200
 

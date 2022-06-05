@@ -45,13 +45,13 @@ def get_shape_features(img):
     straight_rect_solidity = contour_area / straight_rect_area
     ellipse_area = (math.pi * ellipse[1][0] * ellipse[1][1]) / 4
     ellipse_solidity = contour_area / ellipse_area
-    print("Contour area: ", contour_area)
-    print("Rect area: ", rect_area)
-    print("Rect solidity: ", rect_solidity)
-    print("Straight rect area: ", straight_rect_area)   
-    print("Straight rect solidity: ", straight_rect_solidity)
-    print("Ellipse area: ", ellipse_area)
-    print("Ellipse solidity: ", ellipse_solidity)
+    # print("Contour area: ", contour_area)
+    # print("Rect area: ", rect_area)
+    # print("Rect solidity: ", rect_solidity)
+    # print("Straight rect area: ", straight_rect_area)   
+    # print("Straight rect solidity: ", straight_rect_solidity)
+    # print("Ellipse area: ", ellipse_area)
+    # print("Ellipse solidity: ", ellipse_solidity)
 
     shape=""
     if rect_solidity > 0.8 and straight_rect_solidity > 0.8 and ellipse_solidity < 0.95:
@@ -134,6 +134,7 @@ def detect_shapes(shapes_no):
         img = cv.imread(path)
         gray_img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
         shape = get_features(gray_img)
+        print(i,shape)
         shapes.append(shape)
             
     return shapes

@@ -493,3 +493,20 @@ create_color_pallete_module(storeRoute + "color_pallete.js")
 9- fix style of every thing
 10- how to make this folder be downloaded
 '''
+
+'''
+entity (check name)
+        ,attributes(change name(ocr)or change (data types) ,requirement
+        or input field type or add new attribute)
+        ,relationships(change name 
+        or add new relationship or check cardinality and participation)
+'''
+
+# creating app
+
+'''
+sql (schema/queries)[ edit query/add query/delete query] -> call python code/endpoints
+api -> navigate to api
+interface -> navigate to interface
+download folder
+'''

@@ -5,8 +5,8 @@ from ContourDetection import *
 from detection.shapes_detection import detect_shapes
 from ImageProcessing.detectWeak import *
 from ImageProcessing.connectComponents import *
-from detect_rel_prop import *
-from OCR import *
+from ImageProcessing.detect_rel_prop import *
+from ImageProcessing.OCR import *
 from dataTypesPrediction.scripts.dataTypePrediction import *
 from schema_generation import *
 import cv2

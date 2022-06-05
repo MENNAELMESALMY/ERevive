@@ -1,4 +1,4 @@
-from ImageProcessing.removeLines import scale_contours
+from removeLines import scale_contours
 import numpy as np
 import cv2
 

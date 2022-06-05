@@ -63,7 +63,8 @@ def BFS(shapes,y,x,colored_contours,skb,idx,colored_contours_labelled,foundVis):
 
     while len(q):
         y,x = q.pop(0)
-        skb[y,x]=254
+  
+
         hasFound = False
         countVis,countWhite=0,0
         for nY,nX in neighbors:
@@ -83,6 +84,7 @@ def BFS(shapes,y,x,colored_contours,skb,idx,colored_contours_labelled,foundVis):
                 break
                 
             if(skb[coorY,coorX]==0):
+                skb[coorY,coorX] = 254
                 q.append((coorY,coorX))
             else:
                 countWhite +=1
@@ -159,7 +161,7 @@ def connectEntities(hulls,hulls_orig,binarizedImg,shapes,text,weak,isKey,dataTyp
         cv2.drawContours(colored_contours_labelled,[h],-1,(b,r,g),1)
         cv2.putText(colored_contours_labelled,f'Label: {b} {r} {g}',(boxes[i][0],boxes[i][1]-5),0,0.3,(0,0,255)) #for visualization
 
-    path = "src/"
+    path = "../connectEntitiesOutput/"
     cv2.imwrite(path+"colored_contours.png",colored_contours)
     cv2.imwrite(path+"inner_outer_borders.png",bin_copy)
     bin_copy = (255 - bin_copy)/255
@@ -178,7 +180,11 @@ def connectEntities(hulls,hulls_orig,binarizedImg,shapes,text,weak,isKey,dataTyp
         if s == 'rectangle':
             foundVis[i]=1
             y,x  = findPixel(boxes[i],skeleton,colored_contours,i)
+            #print(skeleton[y,x])
+            #print("found shape at y and x", y,x )
             colored_contours_labelled[y,x]=(0,0,255)
+            #cv2.putText(colored_contours_labelled,f'Label: {i}',(x,y),0,0.3,(0,0,255)) #for visualization
+            #cv2.imwrite(path+"colored_contours_test.png",colored_contours_labelled)
             deadEnds,foundShapes = BFS(shapes,y,x,colored_contours,skeleton,i,colored_contours_labelled,foundVis)
             # #print(f"shape {i} found {foundShapes}")
             # #print(f"shape {i} deadends {deadEnds}")

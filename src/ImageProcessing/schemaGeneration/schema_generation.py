@@ -88,6 +88,7 @@ def generateSchema(entites , relations , shapes_no):
         else:
             r1 = r["entities"][0]
             r2 = r["entities"][0] if len(r["entities"]) == 1 else r["entities"][1]
+            #print("rel",r1,r2)
             if r1["cardinality"] == '1' and r2["cardinality"] == '1':
                 #1 to 1
                 if r1["participation"] == 'full':
@@ -95,9 +96,9 @@ def generateSchema(entites , relations , shapes_no):
                 else:
                     addForgeinKey(r['name'],r2,r1,schema,r["attributes"])
 
-            elif (r1["cardinality"] == '1' and r2["cardinality"] == 'N'): 
+            elif (r1["cardinality"] == '1' and r2["cardinality"] in ['N','M']): 
                 addForgeinKey(r['name'],r2,r1,schema,r["attributes"])
-            elif (r1["cardinality"] == 'N' and r2["cardinality"] == '1'):
+            elif (r1["cardinality"] in ['N','M'] and r2["cardinality"] == '1'):
                 addForgeinKey(r['name'],r1,r2,schema,r["attributes"])
             else:
                 shapes_no += 1

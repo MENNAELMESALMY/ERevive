@@ -191,7 +191,7 @@ def create_query_api_logic(endpoint_object,query):
         else:
             value = attr[2]
 
-        filters += "{0} {1} {2}, ".format(attr_name,attr_opperator,value)
+        filters += "{0} {1} {2}, ".format(attr_name,attr_opperator,value) if attr_opperator !="like" else "{0}.{1}({2}), ".format(attr_name,attr_opperator,value)
 
     if len(filters):
         filters = filters[:-2] +")"
@@ -269,6 +269,7 @@ def create_query_api_logic(endpoint_object,query):
     #if "awards_coaches" in query["entities"] and "coaches" in query["entities"]:
     #if len(query["entities"])==1 and "coaches" in query["entities"]:
     #print(db_query)
+    db_query = db_query+".all()"
     return parse_args , db_query
 
 
@@ -282,7 +283,10 @@ def create_resource(resource_model, endpoint_object,api_file,namespace_name,pars
         except_parser =  "@{1}.expect({0}_parser)\n".format(endpoint_object["endpoint_name"],namespace_name)
         parser = endpoint_object["endpoint_name"]+"_parser = reqparse.RequestParser()\n"
         for param in params:
-            parser += endpoint_object["endpoint_name"]+"_parser.add_argument('"+param[0]+"', type="+param[1]+", required=True, location='args')\n"
+            if param[2] in ["in","between"]:
+                parser += endpoint_object["endpoint_name"]+"_parser.add_argument('"+param[0]+"', type="+param[1]+", required=True,action='append', location='args')\n"
+            else:
+                parser += endpoint_object["endpoint_name"]+"_parser.add_argument('"+param[0]+"', type="+param[1]+", required=True, location='args')\n"
     resource = "\
 {0}_model = {1}.model('{0}_model',{2})\n\
 {4}\n\

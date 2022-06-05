@@ -39,7 +39,7 @@ def createModelFile(modelsPath,ob):
         for key,value in ob['attributes'].items():
             attributesList.append(key)
             if key in primaryKeys:
-                isKey = "primary_key=True"
+                isKey = "unique=True,primary_key=True"
             else:
                 isKey = ""
             value = dataTypes[value]
@@ -89,17 +89,17 @@ def createAllModels(objectsList):
         modelsObjects[tableName] = objectsList[tableObject]
         #print(objectsList[tableObject]['primaryKey'])
     ### add db.relation for some models
-    for relationObject in foreignKeyRelationList:
-        if not len(list(relationObject.keys())):
-            continue
-        tempPath = p
-        modelPath = os.path.join(tempPath, relationObject['table1']+".py")
-        with open(modelPath, 'a') as file:
-            ## check if item in foreignKeyRelationList, if found add db.relation
-            if relationObject['relationType'] == "oTm":
-                file.write(f"\t{relationObject['table2']} = db.relationship('{relationObject['table2']}',backref=db.backref('{relationObject['table2']}'))\n")
-            elif relationObject['relationType'] == "mTm":
-                file.write(f"\t{relationObject['table2']} = db.relationship('{relationObject['table2']}',secondary='{relationObject['secondary']}',backref=db.backref('{relationObject['table2']}',lazy='dynamic'))\n")
+    # for relationObject in foreignKeyRelationList:
+    #     if not len(list(relationObject.keys())):
+    #         continue
+    #     tempPath = p
+    #     modelPath = os.path.join(tempPath, relationObject['table1']+".py")
+    #     with open(modelPath, 'a') as file:
+    #         ## check if item in foreignKeyRelationList, if found add db.relation
+    #         if relationObject['relationType'] == "oTm":
+    #             file.write(f"\t{relationObject['table2']} = db.relationship('{relationObject['table2']}',backref=db.backref('{relationObject['table2']}'))\n")
+    #         elif relationObject['relationType'] == "mTm":
+    #             file.write(f"\t{relationObject['table2']} = db.relationship('{relationObject['table2']}',secondary='{relationObject['secondary']}',backref=db.backref('{relationObject['table2']}',lazy='dynamic'))\n")
     
     for item in outPutList:
         tempPath = p

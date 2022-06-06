@@ -1,3 +1,7 @@
+from tkinter import Tk,Frame, Canvas, OptionMenu, Variable, Button,Label,Scrollbar,StringVar,IntVar,Checkbutton
+from tkinter import RIGHT,Y,BOTTOM,LEFT,X,TOP,W,E,N,S
+from customtkinter import CTkEntry,CTkFrame,CTkCheckBox,CTkComboBox,CTkLabel,CTkButton
+
 test_schema = {
     11: 
     {'TableName': 'DEPARTMENT', 
@@ -98,30 +102,90 @@ test_schema = {
     'dataType': 'str'}], 
     'isWeak': False}}
 
+dataTypes = ['str', 'int', 'float', 'datetime','bool']
+
+class attribute:
+    def __init__(self,wrapperFrame, name, dataType,isPrimaryKey):
+        self.removed = False
+        self.name = StringVar(wrapperFrame)
+        self.name.set(name)
+
+        self.dataType = StringVar(wrapperFrame)
+        self.dataType.set(dataType)
+        self.attrName = CTkEntry(wrapperFrame,\
+             textvariable=self.name, width=120)
+        # self.attrName.grid(row=row)
+        self.attrName.pack(fill='both', expand=True,padx=20, pady=20)
+
+        
+        self.dataTypeMenu = OptionMenu(wrapperFrame,self.dataType,*dataTypes)
+        self.dataTypeMenu.pack(fill='both', expand=True,padx=20, pady=20)
+
+
+        # self.dataTypeMenu.grid(row=row+1)
+        #self.isPrimaryKey = isPrimaryKey
+        self.isPrimaryKey = Variable()
+        self.isPrimaryCheckbox = CTkCheckBox(wrapperFrame, text = "isPrimaryKey", \
+            variable=self.isPrimaryKey)
+        self.isPrimaryCheckbox.pack(fill='both', expand=True,padx=20, pady=20)
+        # self.c.grid(row=row+1, column=3)
+        self.isPrimaryKey.set(isPrimaryKey)
+        if isPrimaryKey: self.isPrimaryCheckbox.select()
+        #self.isForeignKey = isForeignKey
+
+        self.removeAttrButton = CTkButton(wrapperFrame, \
+            text="Remove Attribute",command=self.removeAttribute)
+
+        self.removeAttrButton.pack(fill='both', expand=True,padx=20, pady=20)
+    def removeAttribute(self):
+        self.attrName.destroy()
+        self.isPrimaryCheckbox.destroy()
+        self.dataTypeMenu.destroy()
+        self.removeAttrButton.destroy()
+        self.removed = True
+
 class entity:
     def __init__(self, name, attributes, \
-        primaryKey, ForgeinKey, isWeak,row):
-        self.attributes = attributes
-        self.primaryKey = primaryKey
+        primaryKeys, ForgeinKey, isWeak):
+        self.wrapper = Frame(validation_frame, highlightthickness=2, highlightbackground='black')
+        # self.wrapper.grid(row=row)
+        self.attributes = []
+        self.primaryKeys = set(primaryKeys)
         self.ForgeinKey = ForgeinKey
         # Entity Name
-        self.name = StringVar(frame)
-        self.entityName = Entry(frame,\
-             textvariable=self.name, width=20, font="Calibri, 12")
-        self.entityName.grid(row=row+1, column=1)
-        # self.entityName.pack(padx=20, pady=20)
+        self.name = StringVar(self.wrapper)
         self.name.set(name)
+        self.entityName = CTkEntry(self.wrapper,\
+             textvariable=self.name, width=120)
+        self.entityName.pack(fill='both', expand=True,padx=20, pady=20)
+
+        # self.entityName.grid(row=row+1, column=1)
+        # self.entityName.pack(padx=20, pady=20)
         # Is Weak
         self.isWeak = Variable()
-        self.c = Checkbutton(frame, text = "isWeak", variable=self.isWeak)
-        self.c.grid(row=row+1, column=3)
+        self.c = CTkCheckBox(self.wrapper, text = "isWeak", variable=self.isWeak)
+        # self.c.grid(row=row+1, column=3)
         self.isWeak.set(int(value['isWeak']))
         if isWeak: self.c.select()
-        # self.c.pack(padx=20, pady=20)
+        self.wrapper.pack(fill='both', expand=True,padx=20, pady=20)
+        self.c.pack(fill='both', expand=True,padx=20, pady=20)
         # Attributes
+        for attributeName,dataType in attributes.items():
+            # print(attributeName,dataType)
+            self.attributes.append(attribute(self.wrapper,\
+                attributeName, dataType,attributeName in self.primaryKeys))
 
-from tkinter import Tk,Frame, Canvas, Entry, Variable, Button,Label,Scrollbar,StringVar,IntVar,Checkbutton
-from tkinter import RIGHT,Y
+        self.newAttrButton = CTkButton(self.wrapper, \
+            text="Add Attribute",command=self.addAttribute)
+
+        self.newAttrButton.pack(fill='both', expand=True,padx=20, pady=20)
+
+    
+    def addAttribute(self):
+        self.attributes.append(attribute(self.wrapper,"", "",False))
+    
+    def removeAttribute(self):
+        self.attributes.pop()
 
 root = Tk()
 screen_width = root.winfo_screenwidth()
@@ -129,30 +193,35 @@ screen_height = root.winfo_screenheight()
 
 root.geometry(f"{screen_width}x{screen_height}")
 root.configure(bg = "#FFFFFF")
-# canvas = Canvas(root)
-scroll_y = Scrollbar(root, orient="vertical", command=Y)
-
-frame = Frame(root)
+# create main frame 
+frame = CTkFrame(root)
+frame.pack(fill='both', expand=True)
 frame.configure(bg = "#FFFFFF")
 
+# create canvas
+canvas = Canvas(frame)
+canvas.pack(fill='both', expand=True,side='left')
+
+scroll_y = Scrollbar(frame, orient="vertical", command=canvas.yview)
+scroll_y.pack(fill=Y, side=RIGHT)
+canvas.configure(yscrollcommand=scroll_y.set)
+canvas.bind("<Configure>", lambda event: canvas.configure(scrollregion=canvas.bbox("all")))
+validation_frame = Frame(canvas)
+canvas.create_window((0, 0), window=validation_frame, anchor="nw")
+
 entities_list = []
-i = 0
 # group of widgets
 for _, value in test_schema.items():
     entities_list.append(entity(value['TableName'],\
          value['attributes'], value['primaryKey'],\
-              value['ForgeinKey'], value['isWeak'],i))
-    i += 1
+              value['ForgeinKey'], value['isWeak']))
 
 # put the frame in the canvas
 # canvas.create_window(0, 0, anchor='nw', window=frame)
 # make sure everything is displayed before configuring the scrollregion
-# canvas.update_idletasks()
+canvas.update_idletasks()
 
-# canvas.configure(scrollregion=canvas.bbox('all'), 
-#                  yscrollcommand=scroll_y.set)
+
                  
-# canvas.pack(fill='both', expand=True, side='left')
-# scroll_y.pack(fill='y', side='right')
-frame.pack(fill='both', expand=True, side='left')
+# scroll_y.config(command=frame.yview)
 root.mainloop()

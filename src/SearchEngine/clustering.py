@@ -6,8 +6,8 @@ from globalVars import *
 def getClusteredQueries(queries):
     clusteredQueries = {}
     for i,query in enumerate(queries):
-        queryEntityKey = getKeyWordsVector(flattenList(query["cleanedEntities"]))
-        queryEntityKey = (queryEntityKey.T).tostring()+bytes(len(query["cleanedEntities"]))
+        
+        queryEntityKey = "_".join(query["entities"])
         if clusteredQueries.get(queryEntityKey) is None: #if key not exist
             clusteredQueries[queryEntityKey] = [i]
         else:

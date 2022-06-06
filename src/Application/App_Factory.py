@@ -27,7 +27,7 @@ os.chdir('api')
 
 
 # Create Models method
-def Create_Application(schema,clusters,user="root",password = "admin<3Super",db="default"):
+def Create_Application(schema,clusters,user="root",password = "Ringmybells5",db="default"):
     models,modelsObjects = createAllModels(schema)  #should be replaced with nihal's models 
       
     api = ApiFactory(models,user,password,db,modelsObjects)
@@ -179,6 +179,7 @@ def create_query_api_logic(endpoint_object,query,models_obj):
         attr_opperator = attr[1]
         attr_opperator = "==" if attr_opperator is "=" else attr_opperator
         attr_opperator = "in_" if attr_opperator is "in" else attr_opperator
+        attr_opperator = "notlike" if attr_opperator is "not like" else attr_opperator
 
         #removing duplicates for anding and oring
         ##########################
@@ -195,7 +196,7 @@ def create_query_api_logic(endpoint_object,query,models_obj):
         else:
             value = attr[2]
 
-        if attr_opperator in ["like","in_"]:
+        if attr_opperator in ["like","in_","notlike"]:
             filters += "{0}.{1}({2}), ".format(attr_name,attr_opperator,value)
 
         elif attr_opperator == "between":
@@ -246,6 +247,7 @@ def create_query_api_logic(endpoint_object,query,models_obj):
         attr_opperator = attr[2]
         attr_opperator = "==" if attr_opperator is "=" else attr_opperator
         attr_opperator = "in_" if attr_opperator is "in" else attr_opperator
+        attr_opperator = "notlike" if attr_opperator is "not like" else attr_opperator
 
         arg_name = "having_value" if attr_name == "" else attr_name
         value = "args['{0}']".format(arg_name)
@@ -255,7 +257,7 @@ def create_query_api_logic(endpoint_object,query,models_obj):
         else:
             having += "{0}".format(attr_name)
 
-        if attr_opperator in ["like","in_"]:
+        if attr_opperator in ["like","in_","notlike"]:  
             having += ".{0}({1}), ".format(attr_opperator,value)
 
         elif attr_opperator == "between":
@@ -620,7 +622,7 @@ def create_api_init(api,cluster_imports,clusters_init):
 
         
 
-with open('/home/hager/college/GP/GP/src/SearchEngine/finalMergedQueries.json','rb') as file:
+with open('/home/nada/GP/GP/src/SearchEngine/finalMergedQueries.json','rb') as file:
     testSchema = json.load(file)
     clusters = []
     for cluster in testSchema.keys():

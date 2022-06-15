@@ -258,6 +258,7 @@ Flask_SQLAlchemy==2.5.1 \n\
 python-decouple==3.5 \n\
 SQLAlchemy==1.4.27 \n\
 mysql-connector \n\
+flask-cors\n\
 '
     def create_app_run(self):
         return ' \n\

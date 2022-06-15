@@ -27,7 +27,7 @@ os.chdir('api')
 
 
 # Create Models method
-def Create_Application(schema,clusters,user="root",password = "Ringmybells5",db="default"):
+def Create_Application(schema,clusters,user="root",password = "admin<3Super",db="default"):
     models,modelsObjects = createAllModels(schema)  #should be replaced with nihal's models 
       
     api = ApiFactory(models,user,password,db,modelsObjects)
@@ -117,6 +117,26 @@ def is_agg_in_orderby(aggr_attrs):
             return True
     return False
 
+def get_aggr_attrs(aggr_attrs):
+    count_attrs = []
+    final_aggr_attr = []
+    remove_counts = False
+    for attr in aggr_attrs:
+        attr_aggregation = attr[1]
+        if attr_aggregation != "count":
+            final_aggr_attr.append(attr)
+        else:
+            count_attrs.append(attr)
+            if "*" in attr[0][0]:
+                final_aggr_attr.append(attr)
+                remove_counts = True
+    
+    if not remove_counts:
+        final_aggr_attr.extend(count_attrs)
+    
+    return final_aggr_attr
+
+
 def create_query_api_logic(endpoint_object,query,models_obj):
     #if "awards_coaches" in query["entities"] and "coaches" in query["entities"]:
     #if len(query["entities"])==1 and "coaches" in query["entities"]:
@@ -168,7 +188,12 @@ def create_query_api_logic(endpoint_object,query,models_obj):
                 
             select_attr += attr[0] + ", "
 
-    for attr in query["aggrAttrs"]:      
+    aggr_attrs = get_aggr_attrs(query["aggrAttrs"])
+    if len(query["aggrAttrs"]):
+        print("////////////////////////////////////////////////")
+        print(query["aggrAttrs"])
+        print(aggr_attrs)
+    for attr in aggr_attrs:      
         attr_aggregation = attr[1]
         attr_name = attr[0][0] if "*" not in attr[0][0] else ""
         label = 'all' if attr[0][0] == "*" else attr[0][0]
@@ -354,13 +379,13 @@ def create_query_api_logic(endpoint_object,query,models_obj):
     #if len(query["entities"])==1 and "coaches" in query["entities"]:
     #print(db_query)
     db_query = db_query+".all()"
-    if hereJoins:
-        print("//////////////////////////////")
-        print("selectAttrs",query["selectAttrs"])
-        print("aggrAttrs", query["aggrAttrs"])
-        print("groupByAttrs",query["groupByAttrs"])
-        print("entities",query["entities"])
-        print(db_query,"\n")
+    # if hereJoins:
+    #     print("//////////////////////////////")
+    #     print("selectAttrs",query["selectAttrs"])
+    #     print("aggrAttrs", query["aggrAttrs"])
+    #     print("groupByAttrs",query["groupByAttrs"])
+    #     print("entities",query["entities"])
+    #     print(db_query,"\n")
         
     return parse_args , db_query
 
@@ -682,7 +707,7 @@ def create_api_init(api,cluster_imports,clusters_init):
 
         
 
-with open('/home/nada/GP/GP/src/SearchEngine/finalMergedQueries.json','rb') as file:
+with open('/home/hager/college/GP/GP/src/SearchEngine/finalMergedQueries.json','rb') as file:
     testSchema = json.load(file)
     clusters = []
     for cluster in testSchema.keys():

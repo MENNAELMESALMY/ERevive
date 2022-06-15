@@ -190,9 +190,10 @@ def create_query_api_logic(endpoint_object,query,models_obj):
 
     aggr_attrs = get_aggr_attrs(query["aggrAttrs"])
     if len(query["aggrAttrs"]):
-        print("////////////////////////////////////////////////")
-        print(query["aggrAttrs"])
-        print(aggr_attrs)
+        pass
+        #print("////////////////////////////////////////////////")
+        #print(query["aggrAttrs"])
+        #print(aggr_attrs)
     for attr in aggr_attrs:      
         attr_aggregation = attr[1]
         attr_name = attr[0][0] if "*" not in attr[0][0] else ""
@@ -228,16 +229,27 @@ def create_query_api_logic(endpoint_object,query,models_obj):
             #     joins += "\\\n\t\t\t\t.join({0})".format(entity)
         #joins
         else:
-            
+            hereJoins = True
             for join in query["bestJoin"]:
                 join = join.replace('=','==')
                 entity = join.split('.')[0]
                 entity1 = entity[1:] # remove space
                 entity2 = join.split('==')[1].split('.')[0][1:]
-                print(entity1,entity2)
+                #print(entity1,entity2)
                 entity = entity1
                 if len(query["bestJoin"]) == 1:
-                    entity = entity1 if entity1 not in select_attr else entity2
+                    substrings = "({0},|({0})| {0},| {0})".format(entity1)
+                    substrings = substrings.split("|")
+                    print("select",db_query)
+                    print(substrings)
+                    print(entity1) 
+                    print(entity2)
+                    print(list(map(db_query.__contains__, substrings)))
+                    if any(map(db_query.__contains__, substrings)):
+                        entity = entity2
+                    else:
+                        entity = entity1
+                    #entity = entity1 if entity1 not in select_attr else entity2
                 joins += "\\\n\t\t\t\t.join({0},{1})".format(entity,join)
        
     db_query += joins if len(joins) else ""
@@ -252,11 +264,11 @@ def create_query_api_logic(endpoint_object,query,models_obj):
         attr_name = attr[0][0]
         attr_opperator = attr[1]
         attr_opperator = attr_opperator.strip()
-        print(attr_name,attr_opperator)
+        #print(attr_name,attr_opperator)
         attr_opperator = "==" if attr_opperator == "=" else attr_opperator
         attr_opperator = "in_" if attr_opperator == "in" else attr_opperator
         attr_opperator = "notlike" if attr_opperator == "not like" else attr_opperator
-        print(attr_name,attr_opperator)
+        #print(attr_name,attr_opperator)
         #removing duplicates for anding and oring
         ##########################
         if attr_name in whereAttr:
@@ -381,13 +393,13 @@ def create_query_api_logic(endpoint_object,query,models_obj):
     #if len(query["entities"])==1 and "coaches" in query["entities"]:
     #print(db_query)
     db_query = db_query+".all()"
-    # if hereJoins:
-    #     print("//////////////////////////////")
-    #     print("selectAttrs",query["selectAttrs"])
-    #     print("aggrAttrs", query["aggrAttrs"])
-    #     print("groupByAttrs",query["groupByAttrs"])
-    #     print("entities",query["entities"])
-    #     print(db_query,"\n")
+    if hereJoins and len(query["bestJoin"]) == 1:
+        print("//////////////////////////////")
+        print("selectAttrs",query["selectAttrs"])
+        print("aggrAttrs", query["aggrAttrs"])
+        print("groupByAttrs",query["groupByAttrs"])
+        print("entities",query["entities"])
+        print(db_query,"\n")
         
     return parse_args , db_query
 
@@ -479,7 +491,8 @@ def create_query_ui_endpoint(query,modelsObjects):
         queryParams.append((param_name,"bool",None,attr_aggregation))
 
     #print(query["selectAttrs"])
-    response_model , ui_response_model , db_selects = create_response_model(query["selectAttrs"],query["aggrAttrs"],query["entities"],modelsObjects)
+    aggrAttrs = get_aggr_attrs(query["aggrAttrs"])
+    response_model , ui_response_model , db_selects = create_response_model(query["selectAttrs"],aggrAttrs,query["entities"],modelsObjects)
     response_model = "{ "+response_model+" }"
     endpoint = {
         "method": endpoint_method,
@@ -556,9 +569,10 @@ def create_response_model(selectAttrs,aggrAttrs,entities,modelsObject):
     for attr in aggrAttrs:
         attr_aggregation = attr[1]
         attr_name = attr[0][0]
-        attr_type = attr[0][1] if "*" not in attr[0][0] else "int"
+        attr_type = attr[0][1] if ("*" not in attr[0][0] and attr[1] != "count") else "int"
         db_selects.append((attr_name,attr_type,attr_aggregation))
         attr_name = attr_aggregation+"_"+ (attr_name if "*" not in attr_name else "all")
+        if attr_name == "count_awards_players.playerID":print(attr)
         if attr_type in pythondtypes_restmapping:
             response_model+= "'"+attr_name+"' : "+pythondtypes_restmapping[attr_type]+","
             ui_response_model.append((attr_name , attr_type))
@@ -778,7 +792,7 @@ with open('/home/hager/college/GP/GP/src/SearchEngine/finalMergedQueries.json','
             'TableType':'',
             'attributes': {
             'playerID': 'str', 
-            'last_name': 'datetime',
+            'last_name': 'str',
             'first_name': 'str',
             'season_id': 'str',
             'conference': 'str',

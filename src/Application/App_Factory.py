@@ -94,6 +94,29 @@ def create_api_namespaces(api,clusters):
     return namespaces_imports , inits ,clusters_out
 
 
+def get_entities_as_select_attr(entities,models_obj):
+    select_attr = ""
+    if len(entities) > 1:
+        select_attr = ", ".join(entities)
+        select_attr += ", "
+    else:
+        entity_name = entities[0]
+        attr = next(iter(models_obj[entity_name]["attributes"])) # O(1)
+        #print("//////////////////////////////////////////////")
+        #print(entity_name)
+        #print(attr)
+        #if primaryKey == "name":print(models_obj[entity_name])
+        select_attr += "{0}, {0}.{1}.label('{0}.{1}'), ".format(entity_name , attr)
+        #print(select_attr)
+    return select_attr
+
+
+def is_agg_in_orderby(aggr_attrs):
+    for attr in aggr_attrs:
+        if attr[1]:
+            return True
+    return False
+
 def create_query_api_logic(endpoint_object,query,models_obj):
     #if "awards_coaches" in query["entities"] and "coaches" in query["entities"]:
     #if len(query["entities"])==1 and "coaches" in query["entities"]:
@@ -130,12 +153,19 @@ def create_query_api_logic(endpoint_object,query,models_obj):
     select_attr = ""
     for attr in query["selectAttrs"]:
         if attr[0] == '*': # get all entities attributes
-            select_attr = ", ".join(query["entities"])
-            select_attr += ", "
+            select_attr += get_entities_as_select_attr(query["entities"],models_obj)
             break
         elif "*" in attr[0]:
-            select_attr += attr[0].split('.')[0] + ", "
+            entity_name = attr[0].split('.')[0]
+            attr_name = models_obj[entity_name]["primaryKey"][0]
+            select_attr += "{0}.{1}.label('{0}.{1}')".format(entity_name , attr_name)           
         else:
+            entity = attr[0].split('.')[0]
+            if entity and entity not in select_attr:
+                select_attr += entity +", "
+                #print("/////////////////////////////////////")
+                #print(select_attr)
+                
             select_attr += attr[0] + ", "
 
     for attr in query["aggrAttrs"]:      
@@ -144,26 +174,45 @@ def create_query_api_logic(endpoint_object,query,models_obj):
         label = 'all' if attr[0][0] == "*" else attr[0][0]
         select_attr += "func.{0}({1}).label('{2}')".format(attr_aggregation,attr_name,attr_aggregation+'_'+label) + ", "
     
-    if select_attr == "":
-        select_attr = ", ".join(query["entities"])
+    #cross product put entities in select
+    if len(query["entities"]) > 1 and len(query["bestJoin"]) == 0:
+        for entity in query["entities"]:
+            if entity not in select_attr:
+                select_attr += entity + ", "
+
+    if select_attr == "" :
+        #select_attr = ", ".join(query["entities"])
+        select_attr += get_entities_as_select_attr(query["entities"],models_obj)
+        select_attr = select_attr[:-2]
     else:
         select_attr = select_attr[:-2]
 
     db_query += select_attr + ')'
 
+
     #join
+    hereJoins = False
     joins = ""
     if len(query["entities"]) > 1:
         #cross product 
+        #no entities in join for cross product
         if len(query["bestJoin"]) == 0:
-            for entity in query["entities"]:
-                joins += "\\\n\t\t\t\t.join({0})".format(entity)
+            hereJoins = True
+            pass
+            # for entity in query["entities"]:
+            #     joins += "\\\n\t\t\t\t.join({0})".format(entity)
         #joins
         else:
+            
             for join in query["bestJoin"]:
                 join = join.replace('=','==')
                 entity = join.split('.')[0]
-                entity = entity[1:] # remove space
+                entity1 = entity[1:] # remove space
+                entity2 = join.split('==')[1].split('.')[0][1:]
+                print(entity1,entity2)
+                entity = entity1
+                if len(query["bestJoin"]) == 1:
+                    entity = entity1 if entity1 not in select_attr else entity2
                 joins += "\\\n\t\t\t\t.join({0},{1})".format(entity,join)
        
     db_query += joins if len(joins) else ""
@@ -211,8 +260,9 @@ def create_query_api_logic(endpoint_object,query,models_obj):
     
     # group by
     # Note -> assumed if there is aggr then all attrs in select are in group by
+    agg_in_orderby = is_agg_in_orderby(query["orderByAttrs"])
     groupByAttrs = set([attr[0] for attr in query["groupByAttrs"]])
-    if len(query["aggrAttrs"]):
+    if len(query["aggrAttrs"]) or agg_in_orderby:
         selectAttrs = set()
         for attr in query["selectAttrs"]:
             if attr[0] == '*':
@@ -268,6 +318,7 @@ def create_query_api_logic(endpoint_object,query,models_obj):
         having = having[:-2] +")"
         db_query += having
 
+
     # order_by
     orderby_attr = "\\\n\t\t\t\t.order_by(" if len(query["orderByAttrs"]) else ""
     for attr in query["orderByAttrs"]: # [["teams.tmID", "str"], ""]
@@ -301,6 +352,14 @@ def create_query_api_logic(endpoint_object,query,models_obj):
     #if len(query["entities"])==1 and "coaches" in query["entities"]:
     #print(db_query)
     db_query = db_query+".all()"
+    if hereJoins:
+        print("//////////////////////////////")
+        print("selectAttrs",query["selectAttrs"])
+        print("aggrAttrs", query["aggrAttrs"])
+        print("groupByAttrs",query["groupByAttrs"])
+        print("entities",query["entities"])
+        print(db_query,"\n")
+        
     return parse_args , db_query
 
 
@@ -331,6 +390,7 @@ class {0}_resource(Resource):\n\
         try:\n\
             {7}\n\n\
         except Exception as e:\n\
+            print(e)\n\
             return None , 400\n\n\
         return results , 200\n\n".format(endpoint_object["endpoint_name"],namespace_name,resource_model,endpoint_object["endpoint_name"],parser,except_parser,parse_args , db_query)
 

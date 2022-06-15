@@ -132,6 +132,7 @@ class {0}Api(Resource):\n\
         try:\n\
             {1}s = db.session.query({0}).all()\n\
         except Exception as e:\n\
+            print(e)\n\
             return None , 500\n\
         return {1}s , 200  \n\
 \n\
@@ -143,6 +144,7 @@ class {0}Api(Resource):\n\
             db.session.add({1}s)\n\
             db.session.commit()    \n\
         except Exception as e:\n\
+            print(e)\n\
             return None , 500\n\
         return {1}s , 201 \n\
 \n\
@@ -154,6 +156,7 @@ class {0}Api(Resource):\n\
             db.session.commit() \n\
             {1}s = db.session.query({0}).filter({4}).first() \n\
         except Exception as e:\n\
+            print(e)\n\
             return None , 500\n\
         return {1}s , 200    \n\
 \n\
@@ -165,6 +168,7 @@ class {0}Api(Resource):\n\
             db.session.query({0}).filter({5}).delete() \n\
             db.session.commit() \n\
         except Exception as e:\n\
+            print(e)\n\
             return None , 500\n\
         return {1}s , 200    \n\
 \n\

@@ -9,6 +9,9 @@ def createModelsFolder():
     modelPath = os.path.join(currentPath, "models")
     if not os.path.exists(modelPath):
         os.makedirs(modelPath)
+    elif os.path.join(modelPath, "__init__.py"):
+        with open(os.path.join(modelPath, "__init__.py"), 'w') as file:
+            file.write("")
 
     return modelPath
 
@@ -21,7 +24,7 @@ def createModelFile(modelsPath,ob):
     initPath = os.path.join(modelsPath, "__init__.py")
     with open(initPath, 'a') as initFile:
         initFile.write(f'from .{tableName} import {tableName}\n')
-    with open(filePath, 'a') as file:
+    with open(filePath, 'w') as file:
         file.write("from app import db \n\n")
         file.write("class " + tableName +  "(db.Model):\n")
         file.write(f'\t__tablename__ = "{tableName}"\n')

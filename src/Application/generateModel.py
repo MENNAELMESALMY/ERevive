@@ -48,7 +48,7 @@ def createModelFile(modelsPath,ob):
             value = dataTypes[value]
             if key in foreignAttributes:
                 keyIndex = foreignAttributes.index(key)
-                isForgeinKey = f"db.ForeignKey('{foreignTable[keyIndex]}.{foreignTableAttribute[keyIndex]}')"
+                isForgeinKey = f"db.ForeignKey('{foreignTable[keyIndex]}.{foreignTableAttribute[keyIndex]}',onupdate='CASCADE',ondelete='CASCADE')"
             else:
                 isForgeinKey = ""
             ### primary key

@@ -204,6 +204,7 @@ from flask import Flask \n\
 from flask_sqlalchemy import SQLAlchemy \n\
 from sqlalchemy import create_engine \n\
 from decouple import config \n\
+from flask_cors import CORS \n\
 \n\
 user=config("user") \n\
 password=config("password") \n\
@@ -212,6 +213,7 @@ db = SQLAlchemy() \n\
 connection_string = "mysql+mysqlconnector://{0}:{1}@127.0.0.1:3306".format(user, password) \n\
 def create_app(): \n\
     app = Flask(__name__) \n\
+    cors = CORS(app, resources={r"/api/*": {"origins": "*"}})\n\
     settings = dict() \n\
     settings["SQLALCHEMY_DATABASE_URI"] = connection_string+"/{0}".format(database) \n\
     settings["SQLALCHEMY_TRACK_MODIFICATIONS"] = False \n\

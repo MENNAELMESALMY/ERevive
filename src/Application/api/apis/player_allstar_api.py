@@ -23,6 +23,7 @@ class player_allstarApi(Resource):
         try:
             player_allstars = db.session.query(player_allstar).all()
         except Exception as e:
+            print(e)
             return None , 500
         return player_allstars , 200  
 
@@ -34,6 +35,7 @@ class player_allstarApi(Resource):
             db.session.add(player_allstars)
             db.session.commit()    
         except Exception as e:
+            print(e)
             return None , 500
         return player_allstars , 201 
 
@@ -45,6 +47,7 @@ class player_allstarApi(Resource):
             db.session.commit() 
             player_allstars = db.session.query(player_allstar).filter(player_allstar.playerID==request.json.get('playerID') ).first() 
         except Exception as e:
+            print(e)
             return None , 500
         return player_allstars , 200    
 
@@ -56,6 +59,7 @@ class player_allstarApi(Resource):
             db.session.query(player_allstar).filter(player_allstar.playerID==player_allstar_id_parser.parse_args().get('playerID') ).delete() 
             db.session.commit() 
         except Exception as e:
+            print(e)
             return None , 500
         return player_allstars , 200    
 

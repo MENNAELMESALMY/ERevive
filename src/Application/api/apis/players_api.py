@@ -23,6 +23,7 @@ class playersApi(Resource):
         try:
             playerss = db.session.query(players).all()
         except Exception as e:
+            print(e)
             return None , 500
         return playerss , 200  
 
@@ -34,6 +35,7 @@ class playersApi(Resource):
             db.session.add(playerss)
             db.session.commit()    
         except Exception as e:
+            print(e)
             return None , 500
         return playerss , 201 
 
@@ -45,6 +47,7 @@ class playersApi(Resource):
             db.session.commit() 
             playerss = db.session.query(players).filter(players.playerID==request.json.get('playerID') ).first() 
         except Exception as e:
+            print(e)
             return None , 500
         return playerss , 200    
 
@@ -56,10 +59,11 @@ class playersApi(Resource):
             db.session.query(players).filter(players.playerID==players_id_parser.parse_args().get('playerID') ).delete() 
             db.session.commit() 
         except Exception as e:
+            print(e)
             return None , 500
         return playerss , 200    
 
-get_players_filteredby_playerID_model = players_namespace.model('get_players_filteredby_playerID_model',{ 'players.playerID' : fields.String,'players.useFirst' : fields.String,'players.firstName' : fields.String,'players.middleName' : fields.String,'players.lastName' : fields.String,'players.nameGiven' : fields.String,'players.fullGivenName' : fields.String,'players.nameSuffix' : fields.String,'players.nameNick' : fields.String,'players.pos' : fields.String,'players.firstseason' : fields.Integer,'players.lastseason' : fields.Integer,'players.height' : fields.Float,'players.weight' : fields.Integer,'players.college' : fields.String,'players.collegeOther' : fields.String,'players.birthDate' : fields.DateTime,'players.birthCity' : fields.String,'players.birthState' : fields.String,'players.birthCountry' : fields.String,'players.highSchool' : fields.String,'players.hsCity' : fields.String,'players.hsState' : fields.String,'players.hsCountry' : fields.String,'players.deathDate' : fields.DateTime,'players.race' : fields.String,'count_players.firstName' : fields.String,'count_players.birthDate' : fields.DateTime,'count_all' : fields.Integer,'min_players.hsCity' : fields.String,'count_players.playerID' : fields.String })
+get_players_filteredby_playerID_model = players_namespace.model('get_players_filteredby_playerID_model',{ 'players.playerID' : fields.String,'players.useFirst' : fields.String,'players.firstName' : fields.String,'players.middleName' : fields.String,'players.lastName' : fields.String,'players.nameGiven' : fields.String,'players.fullGivenName' : fields.String,'players.nameSuffix' : fields.String,'players.nameNick' : fields.String,'players.pos' : fields.String,'players.firstseason' : fields.Integer,'players.lastseason' : fields.Integer,'players.height' : fields.Float,'players.weight' : fields.Integer,'players.college' : fields.String,'players.collegeOther' : fields.String,'players.birthDate' : fields.DateTime,'players.birthCity' : fields.String,'players.birthState' : fields.String,'players.birthCountry' : fields.String,'players.highSchool' : fields.String,'players.hsCity' : fields.String,'players.hsState' : fields.String,'players.hsCountry' : fields.String,'players.deathDate' : fields.DateTime,'players.race' : fields.String,'count_players.firstName' : fields.String,'count_all' : fields.Integer,'count_players.playerID' : fields.String,'min_players.hsCity' : fields.String,'count_players.birthDate' : fields.DateTime,'count_players.middleName' : fields.String })
 get_players_filteredby_playerID_parser = reqparse.RequestParser()
 get_players_filteredby_playerID_parser.add_argument('players.playerID', type=str, required=True, location='args')
 
@@ -73,16 +77,17 @@ class get_players_filteredby_playerID_resource(Resource):
 
         results = None
         try:
-            results = db.session.query(players, func.count(players.firstName).label('count_players.firstName'), func.count(players.birthDate).label('count_players.birthDate'), func.count().label('count_all'), func.min(players.hsCity).label('min_players.hsCity'), func.count(players.playerID).label('count_players.playerID'))\
+            results = db.session.query(players, players.playerID.label('players.playerID'), func.count().label('count_all'), func.min(players.hsCity).label('min_players.hsCity'))\
 				.filter(players.playerID == args['players.playerID'])\
-				.group_by(players.hsCity, players.height, players.lastseason, players.hsCountry, players.birthState, players.nameNick, players.weight, players.hsState, players.firstseason, players.deathDate, players.nameSuffix, players.lastName, players.playerID, players.race, players.nameGiven, players.fullGivenName, players.highSchool, players.birthCity, players.useFirst, players.collegeOther, players.firstName, players.birthDate, players.pos, players.middleName, players.college, players.birthCountry).all()
+				.group_by(players.nameSuffix, players.birthDate, players.hsCountry, players.nameGiven, players.firstName, players.pos, players.hsCity, players.race, players.middleName, players.nameNick, players.deathDate, players.birthCity, players.lastseason, players.weight, players.birthCountry, players.firstseason, players.lastName, players.collegeOther, players.height, players.birthState, players.hsState, players.college, players.useFirst, players.fullGivenName, players.playerID, players.highSchool).all()
 
         except Exception as e:
+            print(e)
             return None , 400
 
         return results , 200
 
-get_players_filteredby_middleName_firstName_model = players_namespace.model('get_players_filteredby_middleName_firstName_model',{ 'players.firstName' : fields.String,'players.middleName' : fields.String,'players.playerID' : fields.String,'players.birthDate' : fields.DateTime,'count_players.birthDate' : fields.DateTime,'count_players.playerID' : fields.String,'count_all' : fields.Integer,'count_players.firstName' : fields.String })
+get_players_filteredby_middleName_firstName_model = players_namespace.model('get_players_filteredby_middleName_firstName_model',{ 'players.playerID' : fields.String,'players.birthDate' : fields.DateTime,'players.middleName' : fields.String,'players.firstName' : fields.String,'count_all' : fields.Integer,'count_players.playerID' : fields.String,'count_players.firstName' : fields.String,'count_players.birthDate' : fields.DateTime })
 get_players_filteredby_middleName_firstName_parser = reqparse.RequestParser()
 get_players_filteredby_middleName_firstName_parser.add_argument('players.middleName', type=str, required=True, location='args')
 get_players_filteredby_middleName_firstName_parser.add_argument('players.firstName', type=str, required=True, location='args')
@@ -97,11 +102,12 @@ class get_players_filteredby_middleName_firstName_resource(Resource):
 
         results = None
         try:
-            results = db.session.query(players.firstName, players.middleName, players.playerID, players.birthDate, func.count(players.birthDate).label('count_players.birthDate'), func.count(players.playerID).label('count_players.playerID'), func.count().label('count_all'), func.count(players.firstName).label('count_players.firstName'))\
+            results = db.session.query(players, players.playerID, players.birthDate, players.middleName, players.firstName, func.count().label('count_all'))\
 				.filter(players.middleName == args['players.middleName'], players.firstName != args['players.firstName'])\
-				.group_by(players.middleName, players.firstName, players.birthDate, players.playerID).all()
+				.group_by(players.birthDate, players.playerID, players.firstName, players.middleName).all()
 
         except Exception as e:
+            print(e)
             return None , 400
 
         return results , 200
@@ -120,29 +126,12 @@ class get_players_filteredby_height_resource(Resource):
 
         results = None
         try:
-            results = db.session.query(players, func.count().label('count_all'))\
+            results = db.session.query(players, players.playerID.label('players.playerID'), func.count().label('count_all'))\
 				.filter(players.height < args['players.height'])\
-				.group_by(players.hsCity, players.height, players.lastseason, players.hsCountry, players.birthState, players.nameNick, players.weight, players.hsState, players.firstseason, players.deathDate, players.nameSuffix, players.lastName, players.playerID, players.race, players.nameGiven, players.fullGivenName, players.highSchool, players.birthCity, players.useFirst, players.collegeOther, players.firstName, players.birthDate, players.pos, players.middleName, players.college, players.birthCountry).all()
+				.group_by(players.nameSuffix, players.birthDate, players.hsCountry, players.nameGiven, players.firstName, players.pos, players.hsCity, players.race, players.middleName, players.nameNick, players.deathDate, players.birthCity, players.lastseason, players.weight, players.birthCountry, players.firstseason, players.lastName, players.collegeOther, players.height, players.birthState, players.hsState, players.college, players.useFirst, players.fullGivenName, players.playerID, players.highSchool).all()
 
         except Exception as e:
-            return None , 400
-
-        return results , 200
-
-get_players_model = players_namespace.model('get_players_model',{ 'players.playerID' : fields.String,'players.useFirst' : fields.String,'players.firstName' : fields.String,'players.middleName' : fields.String,'players.lastName' : fields.String,'players.nameGiven' : fields.String,'players.fullGivenName' : fields.String,'players.nameSuffix' : fields.String,'players.nameNick' : fields.String,'players.pos' : fields.String,'players.firstseason' : fields.Integer,'players.lastseason' : fields.Integer,'players.height' : fields.Float,'players.weight' : fields.Integer,'players.college' : fields.String,'players.collegeOther' : fields.String,'players.birthDate' : fields.DateTime,'players.birthCity' : fields.String,'players.birthState' : fields.String,'players.birthCountry' : fields.String,'players.highSchool' : fields.String,'players.hsCity' : fields.String,'players.hsState' : fields.String,'players.hsCountry' : fields.String,'players.deathDate' : fields.DateTime,'players.race' : fields.String,'max_players.weight' : fields.Integer,'min_players.playerID' : fields.String,'count_players.birthCountry' : fields.String,'count_players.firstName' : fields.String,'max_players.hsCity' : fields.String,'avg_players.height' : fields.Float,'min_players.birthDate' : fields.DateTime,'count_all' : fields.Integer,'max_players.playerID' : fields.String,'avg_players.weight' : fields.Integer,'min_players.weight' : fields.Integer,'min_players.hsCity' : fields.String,'avg_players.hsCity' : fields.String,'max_players.height' : fields.Float,'count_players.playerID' : fields.String,'avg_players.playerID' : fields.String,'max_players.birthDate' : fields.DateTime })
-
-@players_namespace.route('/get_players', methods=['GET'])
-class get_players_resource(Resource):
-    @players_namespace.marshal_list_with(get_players_model)
-    
-    def get(self):
-        
-        results = None
-        try:
-            results = db.session.query(players, func.max(players.weight).label('max_players.weight'), func.min(players.playerID).label('min_players.playerID'), func.count(players.birthCountry).label('count_players.birthCountry'), func.count(players.firstName).label('count_players.firstName'), func.max(players.hsCity).label('max_players.hsCity'), func.avg(players.height).label('avg_players.height'), func.min(players.birthDate).label('min_players.birthDate'), func.count().label('count_all'), func.max(players.playerID).label('max_players.playerID'), func.avg(players.weight).label('avg_players.weight'), func.min(players.weight).label('min_players.weight'), func.min(players.hsCity).label('min_players.hsCity'), func.avg(players.hsCity).label('avg_players.hsCity'), func.max(players.height).label('max_players.height'), func.count(players.playerID).label('count_players.playerID'), func.avg(players.playerID).label('avg_players.playerID'), func.max(players.birthDate).label('max_players.birthDate'))\
-				.group_by(players.hsCity, players.height, players.lastseason, players.hsCountry, players.birthState, players.nameNick, players.weight, players.hsState, players.firstseason, players.deathDate, players.nameSuffix, players.lastName, players.playerID, players.race, players.nameGiven, players.fullGivenName, players.highSchool, players.birthCity, players.useFirst, players.collegeOther, players.firstName, players.birthDate, players.pos, players.middleName, players.college, players.birthCountry).all()
-
-        except Exception as e:
+            print(e)
             return None , 400
 
         return results , 200

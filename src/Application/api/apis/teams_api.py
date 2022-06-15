@@ -24,6 +24,7 @@ class teamsApi(Resource):
         try:
             teamss = db.session.query(teams).all()
         except Exception as e:
+            print(e)
             return None , 500
         return teamss , 200  
 
@@ -35,6 +36,7 @@ class teamsApi(Resource):
             db.session.add(teamss)
             db.session.commit()    
         except Exception as e:
+            print(e)
             return None , 500
         return teamss , 201 
 
@@ -46,6 +48,7 @@ class teamsApi(Resource):
             db.session.commit() 
             teamss = db.session.query(teams).filter(teams.year==request.json.get('year') and teams.tmID==request.json.get('tmID') ).first() 
         except Exception as e:
+            print(e)
             return None , 500
         return teamss , 200    
 
@@ -57,10 +60,11 @@ class teamsApi(Resource):
             db.session.query(teams).filter(teams.year==teams_id_parser.parse_args().get('year') and teams.tmID==teams_id_parser.parse_args().get('tmID') ).delete() 
             db.session.commit() 
         except Exception as e:
+            print(e)
             return None , 500
         return teamss , 200    
 
-get_teams_filteredby_name_model = teams_namespace.model('get_teams_filteredby_name_model',{ 'teams.year' : fields.Integer,'teams.lgID' : fields.String,'teams.tmID' : fields.String,'teams.franchID' : fields.String,'teams.confID' : fields.String,'teams.divID' : fields.String,'teams.rank' : fields.Integer,'teams.confRank' : fields.Integer,'teams.playoff' : fields.String,'teams.name' : fields.String,'count_teams.lgID' : fields.String,'count_teams.year' : fields.Integer,'count_all' : fields.Integer })
+get_teams_filteredby_name_model = teams_namespace.model('get_teams_filteredby_name_model',{ 'teams.year' : fields.Integer,'teams.lgID' : fields.String,'teams.tmID' : fields.String,'teams.franchID' : fields.String,'teams.confID' : fields.String,'teams.divID' : fields.String,'teams.rank' : fields.Integer,'teams.confRank' : fields.Integer,'teams.playoff' : fields.String,'teams.name' : fields.String,'count_teams.year' : fields.Integer,'count_all' : fields.Integer,'count_teams.lgID' : fields.String })
 get_teams_filteredby_name_parser = reqparse.RequestParser()
 get_teams_filteredby_name_parser.add_argument('teams.name', type=str, required=True, location='args')
 
@@ -74,16 +78,17 @@ class get_teams_filteredby_name_resource(Resource):
 
         results = None
         try:
-            results = db.session.query(teams, func.count(teams.lgID).label('count_teams.lgID'), func.count(teams.year).label('count_teams.year'), func.count().label('count_all'))\
+            results = db.session.query(teams, teams.year.label('teams.year'), func.count().label('count_all'))\
 				.filter(teams.name == args['teams.name'])\
-				.group_by(teams.franchID, teams.confRank, teams.name, teams.divID, teams.playoff, teams.confID, teams.year, teams.lgID, teams.tmID, teams.rank).all()
+				.group_by(teams.confRank, teams.confID, teams.year, teams.playoff, teams.rank, teams.name, teams.franchID, teams.lgID, teams.tmID, teams.divID).all()
 
         except Exception as e:
+            print(e)
             return None , 400
 
         return results , 200
 
-get_teams_groupedby_lgID_model = teams_namespace.model('get_teams_groupedby_lgID_model',{ 'teams.lgID' : fields.String,'teams.name' : fields.String })
+get_teams_groupedby_lgID_model = teams_namespace.model('get_teams_groupedby_lgID_model',{ 'teams.name' : fields.String,'teams.lgID' : fields.String })
 get_teams_groupedby_lgID_parser = reqparse.RequestParser()
 get_teams_groupedby_lgID_parser.add_argument('is_order_of_count_of_rows_desc', type=bool, required=True, location='args')
 
@@ -98,58 +103,37 @@ class get_teams_groupedby_lgID_resource(Resource):
 
         results = None
         try:
-            results = db.session.query(teams.lgID, teams.name)\
-				.group_by(teams.lgID)\
+            results = db.session.query(teams, teams.name, teams.lgID)\
+				.group_by(teams.lgID, teams.name)\
 				.order_by(direction(func.count())).all()
 
         except Exception as e:
+            print(e)
             return None , 400
 
         return results , 200
 
-get_teams_filteredby_tmID_lgID_orderedby_franchID_model = teams_namespace.model('get_teams_filteredby_tmID_lgID_orderedby_franchID_model',{ 'teams.year' : fields.Integer,'teams.lgID' : fields.String,'teams.tmID' : fields.String,'teams.franchID' : fields.String,'teams.confID' : fields.String,'teams.divID' : fields.String,'teams.rank' : fields.Integer,'teams.confRank' : fields.Integer,'teams.playoff' : fields.String,'teams.name' : fields.String })
-get_teams_filteredby_tmID_lgID_orderedby_franchID_parser = reqparse.RequestParser()
-get_teams_filteredby_tmID_lgID_orderedby_franchID_parser.add_argument('is_order_of_franchID_desc', type=bool, required=True, location='args')
+get_teams_filteredby_franchID_tmID_orderedby_lgID_model = teams_namespace.model('get_teams_filteredby_franchID_tmID_orderedby_lgID_model',{ 'teams.year' : fields.Integer,'teams.lgID' : fields.String,'teams.tmID' : fields.String,'teams.franchID' : fields.String,'teams.confID' : fields.String,'teams.divID' : fields.String,'teams.rank' : fields.Integer,'teams.confRank' : fields.Integer,'teams.playoff' : fields.String,'teams.name' : fields.String })
+get_teams_filteredby_franchID_tmID_orderedby_lgID_parser = reqparse.RequestParser()
+get_teams_filteredby_franchID_tmID_orderedby_lgID_parser.add_argument('is_order_of_lgID_desc', type=bool, required=True, location='args')
 
-@teams_namespace.route('/get_teams_filteredby_tmID_lgID_orderedby_franchID', methods=['GET'])
-class get_teams_filteredby_tmID_lgID_orderedby_franchID_resource(Resource):
-    @teams_namespace.marshal_list_with(get_teams_filteredby_tmID_lgID_orderedby_franchID_model)
-    @teams_namespace.expect(get_teams_filteredby_tmID_lgID_orderedby_franchID_parser)
+@teams_namespace.route('/get_teams_filteredby_franchID_tmID_orderedby_lgID', methods=['GET'])
+class get_teams_filteredby_franchID_tmID_orderedby_lgID_resource(Resource):
+    @teams_namespace.marshal_list_with(get_teams_filteredby_franchID_tmID_orderedby_lgID_model)
+    @teams_namespace.expect(get_teams_filteredby_franchID_tmID_orderedby_lgID_parser)
 
     def get(self):
-        args = get_teams_filteredby_tmID_lgID_orderedby_franchID_parser.parse_args()
-        franchID_direction = desc if args['is_order_of_franchID_desc'] else asc
+        args = get_teams_filteredby_franchID_tmID_orderedby_lgID_parser.parse_args()
+        lgID_direction = desc if args['is_order_of_lgID_desc'] else asc
 
         results = None
         try:
-            results = db.session.query(teams)\
-				.filter(teams.lgID == teams.tmID)\
-				.order_by(franchID_direction(teams.franchID)).all()
+            results = db.session.query(teams, teams.year.label('teams.year'))\
+				.filter(teams.tmID == teams.franchID)\
+				.order_by(lgID_direction(teams.lgID)).all()
 
         except Exception as e:
-            return None , 400
-
-        return results , 200
-
-get_teams_filteredby_lgID_model = teams_namespace.model('get_teams_filteredby_lgID_model',{ 'teams.year' : fields.Integer,'teams.lgID' : fields.String,'teams.tmID' : fields.String,'teams.franchID' : fields.String,'teams.confID' : fields.String,'teams.divID' : fields.String,'teams.rank' : fields.Integer,'teams.confRank' : fields.Integer,'teams.playoff' : fields.String,'teams.name' : fields.String,'count_teams.tmID' : fields.String,'count_all' : fields.Integer })
-get_teams_filteredby_lgID_parser = reqparse.RequestParser()
-get_teams_filteredby_lgID_parser.add_argument('teams.lgID', type=str, required=True, location='args')
-
-@teams_namespace.route('/get_teams_filteredby_lgID', methods=['GET'])
-class get_teams_filteredby_lgID_resource(Resource):
-    @teams_namespace.marshal_list_with(get_teams_filteredby_lgID_model)
-    @teams_namespace.expect(get_teams_filteredby_lgID_parser)
-
-    def get(self):
-        args = get_teams_filteredby_lgID_parser.parse_args()
-
-        results = None
-        try:
-            results = db.session.query(teams, func.count(teams.tmID).label('count_teams.tmID'), func.count().label('count_all'))\
-				.filter(teams.lgID == args['teams.lgID'])\
-				.group_by(teams.franchID, teams.confRank, teams.name, teams.divID, teams.playoff, teams.confID, teams.year, teams.lgID, teams.tmID, teams.rank).all()
-
-        except Exception as e:
+            print(e)
             return None , 400
 
         return results , 200

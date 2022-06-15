@@ -23,6 +23,7 @@ class series_postApi(Resource):
         try:
             series_posts = db.session.query(series_post).all()
         except Exception as e:
+            print(e)
             return None , 500
         return series_posts , 200  
 
@@ -34,6 +35,7 @@ class series_postApi(Resource):
             db.session.add(series_posts)
             db.session.commit()    
         except Exception as e:
+            print(e)
             return None , 500
         return series_posts , 201 
 
@@ -45,6 +47,7 @@ class series_postApi(Resource):
             db.session.commit() 
             series_posts = db.session.query(series_post).filter(series_post.id==request.json.get('id') ).first() 
         except Exception as e:
+            print(e)
             return None , 500
         return series_posts , 200    
 
@@ -56,6 +59,7 @@ class series_postApi(Resource):
             db.session.query(series_post).filter(series_post.id==series_post_id_parser.parse_args().get('id') ).delete() 
             db.session.commit() 
         except Exception as e:
+            print(e)
             return None , 500
         return series_posts , 200    
 

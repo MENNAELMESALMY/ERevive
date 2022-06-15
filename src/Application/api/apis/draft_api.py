@@ -23,6 +23,7 @@ class draftApi(Resource):
         try:
             drafts = db.session.query(draft).all()
         except Exception as e:
+            print(e)
             return None , 500
         return drafts , 200  
 
@@ -34,6 +35,7 @@ class draftApi(Resource):
             db.session.add(drafts)
             db.session.commit()    
         except Exception as e:
+            print(e)
             return None , 500
         return drafts , 201 
 
@@ -45,6 +47,7 @@ class draftApi(Resource):
             db.session.commit() 
             drafts = db.session.query(draft).filter(draft.id==request.json.get('id') ).first() 
         except Exception as e:
+            print(e)
             return None , 500
         return drafts , 200    
 
@@ -56,6 +59,7 @@ class draftApi(Resource):
             db.session.query(draft).filter(draft.id==draft_id_parser.parse_args().get('id') ).delete() 
             db.session.commit() 
         except Exception as e:
+            print(e)
             return None , 500
         return drafts , 200    
 

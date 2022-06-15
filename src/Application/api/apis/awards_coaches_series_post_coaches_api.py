@@ -23,10 +23,11 @@ class get_awards_coaches_series_post_coaches_filteredby_id_resource(Resource):
         results = None
         try:
             results = db.session.query(awards_coaches, series_post, coaches)\
-				.join(awards_coaches, awards_coaches.coachID == coaches.coachID)\
+				.join(coaches, awards_coaches.coachID == coaches.coachID)\
 				.filter(awards_coaches.id == args['awards_coaches.id']).all()
 
         except Exception as e:
+            print(e)
             return None , 400
 
         return results , 200
@@ -41,10 +42,11 @@ class get_awards_coaches_series_post_coaches_resource(Resource):
         
         results = None
         try:
-            results = db.session.query(awards_coaches.id)\
-				.join(awards_coaches, awards_coaches.coachID == coaches.coachID).all()
+            results = db.session.query(awards_coaches, awards_coaches.id)\
+				.join(coaches, awards_coaches.coachID == coaches.coachID).all()
 
         except Exception as e:
+            print(e)
             return None , 400
 
         return results , 200

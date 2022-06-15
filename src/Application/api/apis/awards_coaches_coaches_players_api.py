@@ -8,7 +8,7 @@ from app import db
 from utils import convert_db_model_to_restx_model 
             
 awards_coaches_coaches_players_namespace = Namespace("awards_coaches_coaches_players", description="awards_coaches_coaches_players Api") 
-get_awards_coaches_coaches_players_model = awards_coaches_coaches_players_namespace.model('get_awards_coaches_coaches_players_model',{ 'players.firstName' : fields.String,'players.playerID' : fields.String,'coaches.year' : fields.Integer,'coaches.coachID' : fields.String })
+get_awards_coaches_coaches_players_model = awards_coaches_coaches_players_namespace.model('get_awards_coaches_coaches_players_model',{ 'coaches.year' : fields.Integer,'players.playerID' : fields.String,'coaches.coachID' : fields.String,'players.firstName' : fields.String })
 
 @awards_coaches_coaches_players_namespace.route('/get_awards_coaches_coaches_players', methods=['GET'])
 class get_awards_coaches_coaches_players_resource(Resource):
@@ -18,10 +18,11 @@ class get_awards_coaches_coaches_players_resource(Resource):
         
         results = None
         try:
-            results = db.session.query(players.firstName, players.playerID, coaches.year, coaches.coachID)\
+            results = db.session.query(coaches, coaches.year, players, players.playerID, coaches.coachID, players.firstName)\
 				.join(awards_coaches, awards_coaches.coachID == coaches.coachID).all()
 
         except Exception as e:
+            print(e)
             return None , 400
 
         return results , 200
@@ -40,11 +41,12 @@ class get_awards_coaches_coaches_players_filteredby_year_resource(Resource):
 
         results = None
         try:
-            results = db.session.query(players.playerID, coaches.coachID)\
+            results = db.session.query(players, players.playerID, coaches, coaches.coachID)\
 				.join(awards_coaches, awards_coaches.coachID == coaches.coachID)\
-				.filter(coaches.year < args['coaches.year']).all()
+				.filter(coaches.year > args['coaches.year']).all()
 
         except Exception as e:
+            print(e)
             return None , 400
 
         return results , 200
@@ -63,11 +65,12 @@ class get_awards_coaches_coaches_players_filteredby_coachID_resource(Resource):
 
         results = None
         try:
-            results = db.session.query(players.playerID, coaches.coachID)\
+            results = db.session.query(players, players.playerID, coaches, coaches.coachID)\
 				.join(awards_coaches, awards_coaches.coachID == coaches.coachID)\
 				.filter(coaches.coachID == args['coaches.coachID']).all()
 
         except Exception as e:
+            print(e)
             return None , 400
 
         return results , 200

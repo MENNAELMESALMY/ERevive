@@ -23,6 +23,7 @@ class players_teamsApi(Resource):
         try:
             players_teamss = db.session.query(players_teams).all()
         except Exception as e:
+            print(e)
             return None , 500
         return players_teamss , 200  
 
@@ -34,6 +35,7 @@ class players_teamsApi(Resource):
             db.session.add(players_teamss)
             db.session.commit()    
         except Exception as e:
+            print(e)
             return None , 500
         return players_teamss , 201 
 
@@ -45,6 +47,7 @@ class players_teamsApi(Resource):
             db.session.commit() 
             players_teamss = db.session.query(players_teams).filter(players_teams.id==request.json.get('id') ).first() 
         except Exception as e:
+            print(e)
             return None , 500
         return players_teamss , 200    
 
@@ -56,8 +59,130 @@ class players_teamsApi(Resource):
             db.session.query(players_teams).filter(players_teams.id==players_teams_id_parser.parse_args().get('id') ).delete() 
             db.session.commit() 
         except Exception as e:
+            print(e)
             return None , 500
         return players_teamss , 200    
+
+get_players_teams_filteredby_name_model = players_teams_namespace.model('get_players_teams_filteredby_name_model',{ 'teams.year' : fields.Integer,'players.playerID' : fields.String,'teams.name' : fields.String,'count_all' : fields.Integer })
+get_players_teams_filteredby_name_parser = reqparse.RequestParser()
+get_players_teams_filteredby_name_parser.add_argument('teams.name', type=str, required=True, location='args')
+
+@players_teams_namespace.route('/get_players_teams_filteredby_name', methods=['GET'])
+class get_players_teams_filteredby_name_resource(Resource):
+    @players_teams_namespace.marshal_list_with(get_players_teams_filteredby_name_model)
+    @players_teams_namespace.expect(get_players_teams_filteredby_name_parser)
+
+    def get(self):
+        args = get_players_teams_filteredby_name_parser.parse_args()
+
+        results = None
+        try:
+            results = db.session.query(teams, teams.year, players, players.playerID, teams.name, func.count().label('count_all'))\
+				.join(players, players.playerID == players_teams.playerID)\
+				.join(players_teams, players_teams.tmID == teams.tmID)\
+				.filter(teams.name == args['teams.name'])\
+				.group_by(players.playerID, teams.year, teams.name).all()
+
+        except Exception as e:
+            print(e)
+            return None , 400
+
+        return results , 200
+
+get_players_teams_filteredby_name_year_model = players_teams_namespace.model('get_players_teams_filteredby_name_year_model',{ 'players.middleName' : fields.String,'players.firstName' : fields.String,'players.lastName' : fields.String })
+get_players_teams_filteredby_name_year_parser = reqparse.RequestParser()
+get_players_teams_filteredby_name_year_parser.add_argument('teams.name', type=str, required=True, location='args')
+get_players_teams_filteredby_name_year_parser.add_argument('teams.year', type=int, required=True, location='args')
+
+@players_teams_namespace.route('/get_players_teams_filteredby_name_year', methods=['GET'])
+class get_players_teams_filteredby_name_year_resource(Resource):
+    @players_teams_namespace.marshal_list_with(get_players_teams_filteredby_name_year_model)
+    @players_teams_namespace.expect(get_players_teams_filteredby_name_year_parser)
+
+    def get(self):
+        args = get_players_teams_filteredby_name_year_parser.parse_args()
+
+        results = None
+        try:
+            results = db.session.query(players, players.middleName, players.firstName, players.lastName)\
+				.join(players, players.playerID == players_teams.playerID)\
+				.join(players_teams, players_teams.tmID == teams.tmID)\
+				.filter(teams.name == args['teams.name'], teams.year == args['teams.year']).all()
+
+        except Exception as e:
+            print(e)
+            return None , 400
+
+        return results , 200
+
+get_players_teams_filteredby_year_model = players_teams_namespace.model('get_players_teams_filteredby_year_model',{ 'teams.year' : fields.Integer,'players.middleName' : fields.String,'players.firstName' : fields.String,'count_teams.year' : fields.Integer })
+get_players_teams_filteredby_year_parser = reqparse.RequestParser()
+get_players_teams_filteredby_year_parser.add_argument('teams.year', type=int, required=True, location='args')
+get_players_teams_filteredby_year_parser.add_argument('teams.year', type=int, required=True, location='args')
+
+@players_teams_namespace.route('/get_players_teams_filteredby_year', methods=['GET'])
+class get_players_teams_filteredby_year_resource(Resource):
+    @players_teams_namespace.marshal_list_with(get_players_teams_filteredby_year_model)
+    @players_teams_namespace.expect(get_players_teams_filteredby_year_parser)
+
+    def get(self):
+        args = get_players_teams_filteredby_year_parser.parse_args()
+
+        results = None
+        try:
+            results = db.session.query(teams, teams.year, players, players.middleName, players.firstName, func.count(teams.year).label('count_teams.year'))\
+				.join(players, players.playerID == players_teams.playerID)\
+				.join(players_teams, players_teams.tmID == teams.tmID)\
+				.filter(teams.year == args['teams.year'])\
+				.group_by(players.firstName, teams.year, players.middleName).all()
+
+        except Exception as e:
+            print(e)
+            return None , 400
+
+        return results , 200
+
+get_players_teams_groupedby_playerID_model = players_teams_namespace.model('get_players_teams_groupedby_playerID_model',{ 'players.middleName' : fields.String,'players.firstName' : fields.String })
+
+@players_teams_namespace.route('/get_players_teams_groupedby_playerID', methods=['GET'])
+class get_players_teams_groupedby_playerID_resource(Resource):
+    @players_teams_namespace.marshal_list_with(get_players_teams_groupedby_playerID_model)
+    
+    def get(self):
+        
+        results = None
+        try:
+            results = db.session.query(players, players.middleName, players.firstName)\
+				.join(players, players.playerID == players_teams.playerID)\
+				.join(players_teams, players_teams.tmID == teams.tmID)\
+				.group_by(players.playerID).all()
+
+        except Exception as e:
+            print(e)
+            return None , 400
+
+        return results , 200
+
+get_players_teams_groupedby_year_model = players_teams_namespace.model('get_players_teams_groupedby_year_model',{ 'teams.year' : fields.Integer,'count_teams.year' : fields.Integer })
+
+@players_teams_namespace.route('/get_players_teams_groupedby_year', methods=['GET'])
+class get_players_teams_groupedby_year_resource(Resource):
+    @players_teams_namespace.marshal_list_with(get_players_teams_groupedby_year_model)
+    
+    def get(self):
+        
+        results = None
+        try:
+            results = db.session.query(teams, teams.year, func.count(teams.year).label('count_teams.year'))\
+				.join(players, players.playerID == players_teams.playerID)\
+				.join(players_teams, players_teams.tmID == teams.tmID)\
+				.group_by(teams.year).all()
+
+        except Exception as e:
+            print(e)
+            return None , 400
+
+        return results , 200
 
 get_players_teams_model = players_teams_namespace.model('get_players_teams_model',{ 'count_all' : fields.Integer })
 
@@ -72,6 +197,7 @@ class get_players_teams_resource(Resource):
             results = db.session.query(func.count().label('count_all')).all()
 
         except Exception as e:
+            print(e)
             return None , 400
 
         return results , 200

@@ -18,11 +18,10 @@ class get_series_post_coaches_resource(Resource):
         
         results = None
         try:
-            results = db.session.query(coaches.coachID)\
-				.join(series_post)\
-				.join(coaches).all()
+            results = db.session.query(coaches, coaches.coachID, series_post).all()
 
         except Exception as e:
+            print(e)
             return None , 400
 
         return results , 200

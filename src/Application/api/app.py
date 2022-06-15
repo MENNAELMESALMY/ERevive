@@ -3,6 +3,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy 
 from sqlalchemy import create_engine 
 from decouple import config 
+from flask_cors import CORS 
 
 user=config("user") 
 password=config("password") 
@@ -11,6 +12,7 @@ db = SQLAlchemy()
 connection_string = "mysql+mysqlconnector://{0}:{1}@127.0.0.1:3306".format(user, password) 
 def create_app(): 
     app = Flask(__name__) 
+    cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
     settings = dict() 
     settings["SQLALCHEMY_DATABASE_URI"] = connection_string+"/{0}".format(database) 
     settings["SQLALCHEMY_TRACK_MODIFICATIONS"] = False 

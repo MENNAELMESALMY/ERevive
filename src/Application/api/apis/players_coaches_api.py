@@ -22,13 +22,12 @@ class get_players_coaches_groupedby_playerID_resource(Resource):
 
         results = None
         try:
-            results = db.session.query(coaches.coachID)\
-				.join(players)\
-				.join(coaches)\
+            results = db.session.query(coaches, coaches.coachID, players)\
 				.group_by(players.playerID)\
 				.having(func.count() > args['having_value']).all()
 
         except Exception as e:
+            print(e)
             return None , 400
 
         return results , 200
@@ -48,13 +47,12 @@ class get_players_coaches_groupedby_playerID_resource(Resource):
 
         results = None
         try:
-            results = db.session.query(coaches.coachID)\
-				.join(players)\
-				.join(coaches)\
-				.group_by(players.playerID)\
+            results = db.session.query(coaches, coaches.coachID, players)\
+				.group_by(coaches.coachID, players.playerID)\
 				.order_by(direction(func.count())).all()
 
         except Exception as e:
+            print(e)
             return None , 400
 
         return results , 200
@@ -69,11 +67,10 @@ class get_players_coaches_resource(Resource):
         
         results = None
         try:
-            results = db.session.query(coaches.post_wins)\
-				.join(players)\
-				.join(coaches).all()
+            results = db.session.query(coaches, coaches.post_wins, players).all()
 
         except Exception as e:
+            print(e)
             return None , 400
 
         return results , 200

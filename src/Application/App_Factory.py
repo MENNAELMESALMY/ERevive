@@ -251,10 +251,12 @@ def create_query_api_logic(endpoint_object,query,models_obj):
     for attr in query["whereAttrs"]:
         attr_name = attr[0][0]
         attr_opperator = attr[1]
-        attr_opperator = "==" if attr_opperator is "=" else attr_opperator
-        attr_opperator = "in_" if attr_opperator is "in" else attr_opperator
-        attr_opperator = "notlike" if attr_opperator is "not like" else attr_opperator
-
+        attr_opperator = attr_opperator.strip()
+        print(attr_name,attr_opperator)
+        attr_opperator = "==" if attr_opperator == "=" else attr_opperator
+        attr_opperator = "in_" if attr_opperator == "in" else attr_opperator
+        attr_opperator = "notlike" if attr_opperator == "not like" else attr_opperator
+        print(attr_name,attr_opperator)
         #removing duplicates for anding and oring
         ##########################
         if attr_name in whereAttr:
@@ -320,9 +322,9 @@ def create_query_api_logic(endpoint_object,query,models_obj):
         attr_aggregation = attr[0]
 
         attr_opperator = attr[2]
-        attr_opperator = "==" if attr_opperator is "=" else attr_opperator
-        attr_opperator = "in_" if attr_opperator is "in" else attr_opperator
-        attr_opperator = "notlike" if attr_opperator is "not like" else attr_opperator
+        attr_opperator = "==" if attr_opperator == "=" else attr_opperator
+        attr_opperator = "in_" if attr_opperator == "in" else attr_opperator
+        attr_opperator = "notlike" if attr_opperator == "not like" else attr_opperator
 
         arg_name = "having_value" if attr_name == "" else attr_name
         value = "args['{0}']".format(arg_name)

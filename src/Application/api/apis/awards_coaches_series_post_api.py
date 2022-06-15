@@ -24,12 +24,11 @@ class get_awards_coaches_series_post_groupedby_id_resource(Resource):
         results = None
         try:
             results = db.session.query(awards_coaches, series_post)\
-				.join(awards_coaches)\
-				.join(series_post)\
-				.group_by(awards_coaches.id)\
+				.group_by(series_post.series, awards_coaches.award, series_post.year, series_post.id, awards_coaches.lgID, series_post.tmIDWinner, series_post.tmIDLoser, awards_coaches.id, series_post.lgIDWinner, awards_coaches.coachID, series_post.lgIDLoser, series_post.w, series_post.round, awards_coaches.note, series_post.L)\
 				.order_by(direction(func.count())).all()
 
         except Exception as e:
+            print(e)
             return None , 400
 
         return results , 200
@@ -44,11 +43,10 @@ class get_awards_coaches_series_post_resource(Resource):
         
         results = None
         try:
-            results = db.session.query(series_post.id)\
-				.join(awards_coaches)\
-				.join(series_post).all()
+            results = db.session.query(series_post, series_post.id, awards_coaches).all()
 
         except Exception as e:
+            print(e)
             return None , 400
 
         return results , 200
@@ -63,12 +61,11 @@ class get_awards_coaches_series_post_groupedby_id_resource(Resource):
         
         results = None
         try:
-            results = db.session.query(func.count().label('count_all'))\
-				.join(awards_coaches)\
-				.join(series_post)\
+            results = db.session.query(func.count().label('count_all'), awards_coaches, series_post)\
 				.group_by(awards_coaches.id).all()
 
         except Exception as e:
+            print(e)
             return None , 400
 
         return results , 200

@@ -75,8 +75,7 @@ def BFS(shapes,y,x,colored_contours,skb,idx,colored_contours_labelled,foundVis):
                 continue
             cur = int(sum(colored_contours[coorY,coorX]))
             if(cur != 255*3 and cur != idx):
-                if (foundVis[cur] and shapes[cur]=="oval"):
-                    break
+                if (foundVis[cur] and shapes[cur]=="oval"): break
                 foundVis[cur] = 1
                 found.append(cur)
                 hasFound = True

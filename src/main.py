@@ -23,7 +23,7 @@ def changeContours(contours, img,idx):
     return  np.array([contour])
 
 
-img_dirs =["24.png"]
+img_dirs =["13.png"]
 
 #dirs = os.listdir('input')
 #for idx,img_dir in enumerate(dirs):

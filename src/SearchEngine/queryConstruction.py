@@ -2,6 +2,8 @@ from utilities import flattenList
 import random
 
 def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,id, goals,origQuery,bestJoin):
+    mappedEntitesNames = mappedEntitesDict.values()
+    mappedEntitesDict.update({entity:entity for entity in goals if entity not in mappedEntitesNames})
     query = {}
     mappedAttributesDict = {}
     #print(mappedAttributes)
@@ -26,7 +28,6 @@ def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,id,
                         attr[4]:(attr[0]+"."+attr[1],attr[5])
                     })
     #print(mappedAttributesDict)
-
     query["coverage"] = coverage
     query["id"] = id
     query["entities"] = [ent for ent in mappedEntitesDict.values()]

@@ -240,11 +240,11 @@ def create_query_api_logic(endpoint_object,query,models_obj):
                 if len(query["bestJoin"]) == 1:
                     substrings = "({0},|({0})| {0},| {0})".format(entity1)
                     substrings = substrings.split("|")
-                    print("select",db_query)
-                    print(substrings)
-                    print(entity1) 
-                    print(entity2)
-                    print(list(map(db_query.__contains__, substrings)))
+                    #print("select",db_query)
+                    #print(substrings)
+                    #print(entity1) 
+                    #print(entity2)
+                    #print(list(map(db_query.__contains__, substrings)))
                     if any(map(db_query.__contains__, substrings)):
                         entity = entity2
                     else:
@@ -393,13 +393,17 @@ def create_query_api_logic(endpoint_object,query,models_obj):
     #if len(query["entities"])==1 and "coaches" in query["entities"]:
     #print(db_query)
     db_query = db_query+".all()"
-    if hereJoins and len(query["bestJoin"]) == 1:
+    #if hereJoins and len(query["bestJoin"]) == 1:
+    if "db.session.query(player_allstar, player_allstar.minutes, func.avg(player_allstar.minutes).label('avg_player_allstar.minutes'), func.count().label('count_all'), func.sum(player_allstar.minutes).label('sum_player_allstar.minutes'))" in db_query:
         print("//////////////////////////////")
+        #print("entites",query["en"])
+        print(db_query)
         print("selectAttrs",query["selectAttrs"])
         print("aggrAttrs", query["aggrAttrs"])
         print("groupByAttrs",query["groupByAttrs"])
         print("entities",query["entities"])
         print(db_query,"\n")
+        print("///////////////////////////////////////////////")
         
     return parse_args , db_query
 

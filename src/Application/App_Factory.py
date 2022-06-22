@@ -1,13 +1,8 @@
-from itertools import groupby
-from urllib import response
 from sklearn import cluster
-from sqlalchemy import inspect
 from Api_Factory import ApiFactory
-import pickle
 import json
 import os
 import stat
-from flask_restx import fields
 from generateModel import createAllModels
 def Create_Directory(directory):
     path = os.path.join(os.getcwd(), directory) 
@@ -75,7 +70,7 @@ def create_api_namespaces(api,clusters):
         # create parser for each query
         for query in cluster:
             #print(query['entities'])
-            resource_model , endpoint_object , db_selects = create_query_ui_endpoint(query,api.modelsObjects)  # return to frontend
+            resource_model , endpoint_object , _ = create_query_ui_endpoint(query,api.modelsObjects)  # return to frontend
             clusters_out[api_name].append(endpoint_object)
             parse_args , db_query = create_query_api_logic(endpoint_object,query,api.modelsObjects)  
             #create api logic
@@ -428,7 +423,7 @@ def create_resource(resource_model, endpoint_object,api_file,namespace_name,pars
     #append to api file
     params = endpoint_object["queryParams"]
     parser = ""
-    except_parser =  "" 
+    except_parser =  "\n" 
     if len(params):
         except_parser =  "@{1}.expect({0}_parser)\n".format(endpoint_object["endpoint_name"],namespace_name)
         parser = endpoint_object["endpoint_name"]+"_parser = reqparse.RequestParser()\n"
@@ -438,21 +433,21 @@ def create_resource(resource_model, endpoint_object,api_file,namespace_name,pars
             else:
                 parser += endpoint_object["endpoint_name"]+"_parser.add_argument('"+param[0]+"', type="+param[1]+", required=True, location='args')\n"
     resource = "\
-{0}_model = {1}.model('{0}_model',{2})\n\
 {4}\n\
 @{1}.route('/{3}', methods=['GET'])\n\
 class {0}_resource(Resource):\n\
-    @{1}.marshal_list_with({0}_model)\n\
-    {5}\n\
+    \n\
+    {5}\
     def get(self):\n\
         {6}\n\
         results = None\n\
         try:\n\
             {7}\n\n\
+            results = serialize(results)\n\
+            return results , 200\n\
         except Exception as e:\n\
             print(e)\n\
-            return None , 400\n\n\
-        return results , 200\n\n".format(endpoint_object["endpoint_name"],namespace_name,resource_model,endpoint_object["endpoint_name"],parser,except_parser,parse_args , db_query)
+            return str(e) , 400\n\n".format(endpoint_object["endpoint_name"],namespace_name,resource_model,endpoint_object["endpoint_name"],parser,except_parser,parse_args , db_query)
 
     with open(api_file, 'a') as f:
         f.write(resource)
@@ -685,8 +680,6 @@ select aggr() from where group by
 '''
 
 
-def create_endpoint(query):
-    pass
 
 def create_app_utils(api):
     app_utils = api.create_app_utils()

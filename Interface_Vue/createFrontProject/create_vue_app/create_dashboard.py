@@ -3,11 +3,12 @@ def generate_dashboard(cluster_name,endpoint,directory):
     table_headers = [header.replace('.',' ').replace('_',' ')  for header in table_headers]
     # cluster_name = endpoint['cluster_name']
     endpoint_name = endpoint['endpoint_name']
-    query_params = [(param.replace('.',' ').replace('_',' '),d,o,a) for param,d,o,a in endpoint['query_params']]
+    query_params = [(param.replace('.',' ').replace('_',' '),d,o,a) for param,d,o,a in endpoint['queryParams']]
     dashboard_string = '''<template>
     <div class="dashboard">
         <div>'''
     for param,datatype,operator,aggregate in query_params:
+        print(param,datatype,operator,aggregate)
         dashboard_string += '\t\t<label>'+ param +'</label>\n'
         if datatype == 'str':datatype = 'text'
         elif datatype == 'int' or datatype == 'float':datatype = 'number'
@@ -23,10 +24,12 @@ def generate_dashboard(cluster_name,endpoint,directory):
         elif operator == '>=':operator = 'greater than or equal to'
         elif operator == 'like':operator = 'regex matching (case invariant)'
         elif operator == 'not like':operator = 'regex matching (case invariant)'
-
+        if not operator:
+            operator = 'equal to'
         dashboard_string += '\t\t<input type="'+datatype+'" :v-model='+param+'>\n'
         dashboard_string += '\t\t<label> '+ operator +'</label>\n'
-        dashboard_string += '\t\t<label> '+ aggregate +'</label><br>\n'
+        if aggregate:
+            dashboard_string += '\t\t<label> '+ aggregate +'</label><br>\n'
 
     dashboard_string +='''
         <input type="submit"

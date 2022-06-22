@@ -22,7 +22,7 @@ os.chdir('api')
 
 
 # Create Models method
-def Create_Application(schema,clusters,user="nada",password = "Ringmybells5",db="default"):
+def Create_Application(schema,clusters,user="root",password = "admin<3Super",db="default"):
     models,modelsObjects = createAllModels(schema)  #should be replaced with nihal's models 
       
     api = ApiFactory(models,user,password,db,modelsObjects)
@@ -98,19 +98,26 @@ def create_api_namespaces(api,clusters):
 
 
 def get_entities_as_select_attr(entities,models_obj):
-    select_attr = ""
-    if len(entities) > 1:
-        select_attr = ", ".join(entities)
-        select_attr += ", "
-    else:
-        entity_name = entities[0]
-        attr = next(iter(models_obj[entity_name]["attributes"])) # O(1)
-        #print("//////////////////////////////////////////////")
-        #print(entity_name)
-        #print(attr)
-        #if primaryKey == "name":print(models_obj[entity_name])
-        select_attr += "{0}, {0}.{1}.label('{0}.{1}'), ".format(entity_name , attr)
-        #print(select_attr)
+    
+    select_attr = ", ".join(entities)
+    select_attr += ", "
+
+    # ???????
+    # select_attr = ""
+    # if len(entities) > 1:
+    #     select_attr = ", ".join(entities)
+    #     select_attr += ", "
+    # else:
+    #     entity_name = entities[0]
+    #     attr = next(iter(models_obj[entity_name]["attributes"])) # O(1)
+    #     #print("//////////////////////////////////////////////")
+    #     #print(entity_name)
+    #     #print(attr)
+    #     #if primaryKey == "name":print(models_obj[entity_name])
+    #     select_attr += "{0}, {0}.{1}.label('{0}.{1}'), ".format(entity_name , attr)
+    #     #print(select_attr)
+    
+
     return select_attr
 
 
@@ -184,8 +191,10 @@ def create_query_api_logic(endpoint_object,query,models_obj):
             select_attr += "{0}.{1}.label('{0}.{1}')".format(entity_name , attr_name)           
         else:
             entity = attr[0].split('.')[0]
-            if entity and entity not in select_attr:
-                select_attr += entity +", "
+            # ???????
+            # if entity and entity not in select_attr: 
+            #     select_attr += entity +", "
+
                 #print("/////////////////////////////////////")
                 #print(select_attr)
                 
@@ -241,18 +250,20 @@ def create_query_api_logic(endpoint_object,query,models_obj):
                 #print(entity1,entity2)
                 entity = entity1
                 if len(query["bestJoin"]) == 1:
-                    substrings = "({0},|({0})| {0},| {0})".format(entity1)
+                    substrings = "({0},|({0})| {0},| {0})|({0}.| {0}.".format(entity1)
                     substrings = substrings.split("|")
-                    #print("select",db_query)
-                    #print(substrings)
-                    #print(entity1) 
-                    #print(entity2)
-                    #print(list(map(db_query.__contains__, substrings)))
+                    print("select",db_query)
+                    print(substrings)
+                    print(entity1) 
+                    print(entity2)
+                    print(list(map(db_query.__contains__, substrings)))
                     if any(map(db_query.__contains__, substrings)):
                         entity = entity2
                     else:
                         entity = entity1
-                    #entity = entity1 if entity1 not in select_attr else entity2
+                    if "results = db.session.query(awards_coaches.id)" in db_query:
+                        print("/////////////////////////////////////////")
+                    #entity = entity1 if entity1 not in select_attr else entity2ّ
                 joins += "\\\n\t\t\t\t.join({0},{1})".format(entity,join)
        
     db_query += joins if len(joins) else ""
@@ -399,17 +410,7 @@ def create_query_api_logic(endpoint_object,query,models_obj):
     #print(db_query)
     db_query = db_query+".all()"
     #if hereJoins and len(query["bestJoin"]) == 1:
-    if "db.session.query(player_allstar, player_allstar.minutes, func.avg(player_allstar.minutes).label('avg_player_allstar.minutes'), func.count().label('count_all'), func.sum(player_allstar.minutes).label('sum_player_allstar.minutes'))" in db_query:
-        print("//////////////////////////////")
-        #print("entites",query["en"])
-        print(db_query)
-        print("selectAttrs",query["selectAttrs"])
-        print("aggrAttrs", query["aggrAttrs"])
-        print("groupByAttrs",query["groupByAttrs"])
-        print("entities",query["entities"])
-        print(db_query,"\n")
-        
-    print("groupByAttrsgroupByAttrs",groupByAttrs)
+
     endpoint_name,ui_name = query_renaming(query["entities"],query["whereAttrs"],groupByAttrs,query["orderByAttrs"],True,is_group_all)
     endpoint_url = '/'.join(query["entities"])+'/'+endpoint_name
     parse_args = parse_args.replace(parser,endpoint_name)
@@ -418,6 +419,17 @@ def create_query_api_logic(endpoint_object,query,models_obj):
         "ui_name":ui_name,
         "url":endpoint_url,
         }) 
+
+    if "results = db.session.query(awards_players.lgID, awards_players.playerID, func.count().label('count_all'))" in db_query:
+        print("//////////////////////////////")
+        #print("entites",query["en"])
+        print(db_query)
+        print(endpoint_object["response"])
+        #print("selectAttrs",query["selectAttrs"])
+        #print("aggrAttrs", query["aggrAttrs"])
+        #print("groupByAttrs",query["groupByAttrs"])
+        #print("entities",query["entities"])
+        #print(db_query,"\n")
     
     return parse_args , db_query
 
@@ -741,7 +753,7 @@ def create_api_init(api,cluster_imports,clusters_init):
 
         
 
-with open('/home/nada/GP/GP/src/SearchEngine/finalMergedQueries.json','rb') as file:
+with open('/home/hager/college/GP/GP/src/SearchEngine/finalMergedQueries.json','rb') as file:
     testSchema = json.load(file)
     clusters = []
     for cluster in testSchema.keys():

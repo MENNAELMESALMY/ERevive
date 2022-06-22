@@ -1,7 +1,7 @@
 from utilities import flattenList
 import random
 
-def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,id, goals,origQuery,bestJoin):
+def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,id, goals,origQuery,bestJoin,testSchema):
     mappedEntitesNames = mappedEntitesDict.values()
     mappedEntitesDict.update({entity:entity for entity in goals if entity not in mappedEntitesNames})
     query = {}
@@ -84,11 +84,13 @@ def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,id,
             query[key] = [list(x) for x in set(tuple(x) for x in query[key])]
     query = updateQueryGroupBy(query,testSchema)
     return query
+
 def is_agg_in_orderby(aggr_attrs):
     for attr in aggr_attrs:
         if attr[1]:
             return True
     return False
+
 def getModelsObj(testSchema):
     models_obj = {}
     for model in testSchema.values():

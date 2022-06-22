@@ -296,9 +296,16 @@ def convert_db_model_to_restx_model(model): \n\
             fields_dict[column.name] = fields.String() \n\
     return fields_dict \n\
 \n\
-def serialize_result(res_dict):\n\
+def serialize_result(res):\n\
+    res_dict = res._asdict() if hasattr(res, "_asdict") else res.__dict__ if hasattr(res, "__dict__") else res\n\
+    table = None\n\
+    if res_dict.get("_sa_instance_state"):\n\
+        table = res_dict["_sa_instance_state"].class_.__table__.name+"."\n\
+\n\
+    res_dict.pop("_sa_instance_state", None)\n\
     serialized_result = res_dict.copy()\n\
     for attr_key, attr_value in res_dict.items():\n\
+        print(attr_key, attr_value)\n\
         if hasattr(attr_value, "__dict__"):\n\
             model_dict = attr_value.serialize()\n\
             model_dict_updated = {}\n\
@@ -307,10 +314,15 @@ def serialize_result(res_dict):\n\
             model_dict_updated = serialize_result(model_dict_updated)\n\
             serialized_result.pop(attr_key)\n\
             serialized_result.update(model_dict_updated)\n\
+        elif table:\n\
+            serialized_result[table+attr_key] = attr_value\n\
+            serialized_result.pop(attr_key)\n\
+\n\
     return serialized_result\n\
 \n\
 def serialize(results):\n\
-    return [serialize_result(row._asdict()) for row in results]\n\
+\n\
+    return [serialize_result(row) for row in results]\n\
 \n\
 '
     def create_api_structure(self,api_name,route_path,models):

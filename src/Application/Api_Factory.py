@@ -33,12 +33,12 @@ database="{2}" \n\
         return '\
 from datetime import datetime \n\
 from flask.helpers import make_response \n\
-from flask_restx import Resource, Namespace , fields , reqparse \n\
+from flask_restx import Resource, Namespace , reqparse \n\
 from flask import jsonify, request \n\
 from sqlalchemy import func,desc,asc \n\
 from models import {0} \n\
 from app import db \n\
-from utils import convert_db_model_to_restx_model \n\
+from utils import convert_db_model_to_restx_model , serialize \n\
             '.format(model_import)
 
     def create_api(self,model,attributes): 
@@ -127,50 +127,47 @@ from utils import convert_db_model_to_restx_model \n\
 @{1}_namespace.route("/")\n\
 class {0}Api(Resource):\n\
 \n\
-    @{1}_namespace.marshal_list_with({1}_model) \n\
     def get(self):\n\
         try:\n\
             {1}s = db.session.query({0}).all()\n\
+            {1}s = [row.serialize() for row in {1}s]\n\
+            return {1}s , 200 \n\
         except Exception as e:\n\
             print(e)\n\
-            return None , 500\n\
-        return {1}s , 200  \n\
+            return str(e) , 400\n\
 \n\
-    @{1}_namespace.marshal_with({1}_model) \n\
     @{1}_namespace.expect({1}_model) \n\
     def post(self):\n\
         try:\n\
             {1}s = {0}({2})\n\
             db.session.add({1}s)\n\
             db.session.commit()    \n\
+            return {1}s.serialize() , 201 \n\
         except Exception as e:\n\
             print(e)\n\
-            return None , 500\n\
-        return {1}s , 201 \n\
+            return str(e) , 400\n\
 \n\
-    @{1}_namespace.marshal_with({1}_model) \n\
     @{1}_namespace.expect({1}_model) \n\
     def put(self):\n\
         try:\n\
             db.session.query({0}).filter({4}).update(request.json) \n\
             db.session.commit() \n\
             {1}s = db.session.query({0}).filter({4}).first() \n\
+            return {1}s.serialize() , 200 \n\
         except Exception as e:\n\
             print(e)\n\
-            return None , 500\n\
-        return {1}s , 200    \n\
+            return str(e) , 400\n\
 \n\
-    @{1}_namespace.marshal_with({1}_model) \n\
     @{1}_namespace.expect({1}_id_parser) \n\
     def delete(self):\n\
         try:\n\
             {1}s = db.session.query({0}).filter({5}).first() \n\
             db.session.query({0}).filter({5}).delete() \n\
             db.session.commit() \n\
+            return {1}s.serialize() , 200 \n\
         except Exception as e:\n\
             print(e)\n\
-            return None , 500\n\
-        return {1}s , 200    \n\
+            return str(e) , 400\n\
 \n\
 '.format(model,model.lower(),model_create_string,parser_create_string,put_filter_primary_keys,delete_filter_primary_keys)
     
@@ -298,6 +295,23 @@ def convert_db_model_to_restx_model(model): \n\
         else: \n\
             fields_dict[column.name] = fields.String() \n\
     return fields_dict \n\
+\n\
+def serialize_result(res_dict):\n\
+    serialized_result = res_dict.copy()\n\
+    for attr_key, attr_value in res_dict.items():\n\
+        if hasattr(attr_value, "__dict__"):\n\
+            model_dict = attr_value.serialize()\n\
+            model_dict_updated = {}\n\
+            for key, value in model_dict.items():\n\
+                model_dict_updated[attr_key + "." + key] = value\n\
+            model_dict_updated = serialize_result(model_dict_updated)\n\
+            serialized_result.pop(attr_key)\n\
+            serialized_result.update(model_dict_updated)\n\
+    return serialized_result\n\
+\n\
+def serialize(results):\n\
+    return [serialize_result(row._asdict()) for row in results]\n\
+\n\
 '
     def create_api_structure(self,api_name,route_path,models):
         namespaces_imports = 'from .{0}_api import {0}_namespace \n\

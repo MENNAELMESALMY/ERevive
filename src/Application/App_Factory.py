@@ -27,7 +27,7 @@ os.chdir('api')
 
 
 # Create Models method
-def Create_Application(schema,clusters,user="root",password = "admin<3Super",db="default"):
+def Create_Application(schema,clusters,user="nada",password = "Ringmybells5",db="default"):
     models,modelsObjects = createAllModels(schema)  #should be replaced with nihal's models 
       
     api = ApiFactory(models,user,password,db,modelsObjects)
@@ -54,6 +54,7 @@ def create_api_namespaces(api,clusters):
     namespaces_imports = ""
     inits = ""
     clusters_out= {}
+    errors = []
     for cluster in clusters:
         
         #endoint = create_endpoint(clusters[0])
@@ -78,7 +79,14 @@ def create_api_namespaces(api,clusters):
             clusters_out[api_name].append(endpoint_object)
             parse_args , db_query = create_query_api_logic(endpoint_object,query,api.modelsObjects)  
             #create api logic
-
+            if endpoint_object["endpoint_name"] == "get_awards_players_player_allstar_groupedby__minutes":
+                print("WEWEWE\n")
+                query.pop("origQuery")
+                print(query)
+            if endpoint_object['endpoint_name'] not in errors:
+                errors.append(endpoint_object['endpoint_name'])
+            else:
+                print("ENDPOINT ALREADY EXISTS\n",query,endpoint_object['endpoint_name'])   
             #if "awards_coaches" in query["entities"] and "coaches" in query["entities"]:
             #if "awards_players" in query["entities"] and "player_allstar" in query["entities"]:
                 #print("\nquery entites: ",query["entities"],"\n")
@@ -302,10 +310,12 @@ def create_query_api_logic(endpoint_object,query,models_obj):
     # Note -> assumed if there is aggr then all attrs in select are in group by
     agg_in_orderby = is_agg_in_orderby(query["orderByAttrs"])
     groupByAttrs = set([attr[0] for attr in query["groupByAttrs"]])
+    is_group_all = False
     if len(query["aggrAttrs"]) or agg_in_orderby:
         selectAttrs = set()
         for attr in query["selectAttrs"]:
             if attr[0] == '*':
+                is_group_all = True
                 for entity in query["entities"]:
                     attrs = models_obj[entity]["attributes"].keys()
                     attrs = [entity+'.'+attr for attr in attrs]
@@ -378,7 +388,7 @@ def create_query_api_logic(endpoint_object,query,models_obj):
         parse_args += "\
         {0}direction = desc if args['{1}'] else asc\n".format(variable_name,param_name)
         
-        
+
         if attr_aggregation:
             orderby_attr += "{0}direction(func.{2}({1})), ".format(variable_name,attr_name,attr_aggregation)
         else:
@@ -400,7 +410,16 @@ def create_query_api_logic(endpoint_object,query,models_obj):
         print("groupByAttrs",query["groupByAttrs"])
         print("entities",query["entities"])
         print(db_query,"\n")
-        
+    print("groupByAttrsgroupByAttrs",groupByAttrs)
+    endpoint_name,ui_name = query_renaming(query["entities"],query["whereAttrs"],groupByAttrs,query["orderByAttrs"],True,is_group_all)
+    endpoint_url = '/'.join(query["entities"])+'/'+endpoint_name
+    parse_args = parse_args.replace(parser,endpoint_name)
+    endpoint_object.update({
+        "endpoint_name":endpoint_name,
+        "ui_name":ui_name,
+        "url":endpoint_url,
+        }) 
+    
     return parse_args , db_query
 
 
@@ -442,14 +461,7 @@ class {0}_resource(Resource):\n\
     
 
 def create_query_ui_endpoint(query,modelsObjects):
-    #generate object for ui and resource
-    #method
-    #url0 x    
-    #query params
-    #body params
-    #response (primary key is required if len(entities)=1)
-    #ui query name
-
+ 
     endpoint_name,ui_name = query_renaming(query["entities"],query["whereAttrs"],query["groupByAttrs"],query["orderByAttrs"])
     endpoint_url = '/'.join(query["entities"])+'/'+endpoint_name
     endpoint_method = "get"
@@ -608,15 +620,24 @@ def get_attr_name_type(attrs):
             attr_name = attr[0][0] 
         else:
             attr_name = attr[0]
+        if attr_name.find('*')!=-1:   
+            #replace * with all
+            attr_name = attr_name.replace('*','all')
+
         if type(attr[0])!=str and len(attr) > 2 and attr[2] != "value":
             attr_names.append(attr[2])    
         attr_names.append(attr_name)
     return attr_names
 
-def query_renaming(entities,whereAttrs,groupAttrs,orderAttrs):
+def query_renaming(entities,whereAttrs,groupAttrs,orderAttrs,isUpdate=False,is_group_all=False):
     #print("////////////////////////////////////////////")
     where_attr = get_attr_name_type(whereAttrs)
-    group_attr = get_attr_name_type(groupAttrs)
+    if not isUpdate:
+        group_attr = get_attr_name_type(groupAttrs)
+    else:
+        group_attr = groupAttrs
+    if is_group_all:
+        group_attr = ["all"]
     order_attr = get_attr_name_type(orderAttrs)
     #print("orrdderd by before" , order_attr)
     where_attr = set([attr[attr.find(".")+1:] for attr in where_attr if attr != "*"])
@@ -723,7 +744,7 @@ def create_api_init(api,cluster_imports,clusters_init):
 
         
 
-with open('/home/hager/college/GP/GP/src/SearchEngine/finalMergedQueries.json','rb') as file:
+with open('/home/nada/GP/GP/src/SearchEngine/finalMergedQueries.json','rb') as file:
     testSchema = json.load(file)
     clusters = []
     for cluster in testSchema.keys():

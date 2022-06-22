@@ -2,9 +2,6 @@ import cv2
 import numpy as np
 from numpy.core.fromnumeric import partition
 
-
-
-
 def getContours(binary_img):
     #applying closing
     kernel = np.ones((5,5),np.uint8)

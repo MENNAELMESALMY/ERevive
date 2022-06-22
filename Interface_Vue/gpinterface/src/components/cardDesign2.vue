@@ -89,7 +89,7 @@ export default {
   },
   computed: {
     ...mapState({
-      themeColor: (state) => state.colorPallete.themeColor,
+      themeColor: (state) => state.color_pallete.themeColor,
     }),
     backgroundStyle() {
       return {

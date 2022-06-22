@@ -1,3 +1,5 @@
+from audioop import reverse
+from numpy import append
 from sklearn import cluster
 from Api_Factory import ApiFactory
 import json
@@ -147,6 +149,95 @@ def get_aggr_attrs(aggr_attrs):
     return final_aggr_attr
 
 
+def oreder_joins(query_joins,db_query):
+    joins = query_joins.copy()
+    best_Joins = []
+    best_entities = []
+    first_join = True
+    not_found = []
+    not_found_entities = []
+
+    join = joins.pop(0)
+    entity1 = join.split('.')[0][1:]
+    entity2 = join.split('=')[1].split('.')[0][1:]
+    search_entity = entity2
+    first_search = True
+    while len(joins):
+        found = False
+        
+        for i in range(len(joins)):
+            j = joins[i]
+            j_entity1 = j.split('.')[0][1:]
+            j_entity2 = j.split('=')[1].split('.')[0][1:]
+            if search_entity == j_entity1 or search_entity == j_entity2:
+                if first_join:
+                    best_Joins.append(join.replace('=','=='))
+                    #best_entities.append(entity2 if entity2 != search_entity else entity1)
+                    first_join = False
+                found = True
+                best_Joins.append(joins.pop(i).replace('=','=='))
+                #best_entities.append(search_entity)
+                entity1 , entity2 = j_entity1 , j_entity2
+                search_entity = entity1 if entity1 != search_entity else entity2
+                break
+        
+        if not found and not first_search:
+            first_search = False
+            j = joins.pop(0)
+            not_found.append()
+            not_found_entities.append(entity1)
+            entity1 = j.split('.')[0][1:] 
+            entity2 = j.split('=')[1].split('.')[0][1:]
+            search_entity = entity2
+
+        if not found and first_search:
+            first_search = False
+            search_entity = entity1 if entity1 != search_entity else entity2
+
+        if found:
+            first_search = True
+        
+        
+    #reverse or not
+    entity1 = best_Joins[-1].split('.')[0][1:]
+    entity2 = best_Joins[-1].split('==')[1].split('.')[0][1:]
+    substrings1 = "({0},|({0})| {0},| {0})|({0}.| {0}.".format(entity1).split("|")
+    substrings2 = "({0},|({0})| {0},| {0})|({0}.| {0}.".format(entity2).split("|")
+
+    if any(map(db_query.__contains__, substrings1)) or any(map(db_query.__contains__, substrings2)):
+        best_entities.reverse()
+        best_Joins.reverse()
+
+    #choose right entity
+    best_entities = []
+    entity1 = best_Joins[0].split('.')[0][1:]
+    entity2 = best_Joins[0].split('==')[1].split('.')[0][1:]
+    substrings1 = "({0},|({0})| {0},| {0})|({0}.| {0}.".format(entity1).split("|")
+
+    if any(map(db_query.__contains__, substrings1)):
+        prev_entity = entity2
+        best_entities.append(entity2)
+    else:
+        prev_entity = entity1
+        best_entities.append(entity1)
+
+    for i in range(1,len(best_Joins)):
+        join = best_Joins[i]
+        entity1 = join.split('.')[0][1:]
+        entity2 = join.split('==')[1].split('.')[0][1:]
+        if prev_entity == entity1:
+            best_entities.append(entity2)
+        else:
+            best_entities.append(entity1)
+        prev_entity = best_entities[-1]
+
+    best_Joins.extend(not_found)
+    best_entities.extend(not_found_entities)
+
+    return best_entities , best_Joins 
+
+    
+
 def create_query_api_logic(endpoint_object,query,models_obj):
     #if "awards_coaches" in query["entities"] and "coaches" in query["entities"]:
     #if len(query["entities"])==1 and "coaches" in query["entities"]:
@@ -188,7 +279,7 @@ def create_query_api_logic(endpoint_object,query,models_obj):
         elif "*" in attr[0]:
             entity_name = attr[0].split('.')[0]
             attr_name = models_obj[entity_name]["primaryKey"][0]
-            select_attr += "{0}.{1}.label('{0}.{1}')".format(entity_name , attr_name)           
+            select_attr += "{0}.{1}.label('{0}.{1}'), ".format(entity_name , attr_name)           
         else:
             entity = attr[0].split('.')[0]
             # ???????
@@ -197,8 +288,8 @@ def create_query_api_logic(endpoint_object,query,models_obj):
 
                 #print("/////////////////////////////////////")
                 #print(select_attr)
-                
-            select_attr += attr[0] + ", "
+            select_attr += "{0}.label('{0}'), ".format(attr[0])    
+            #select_attr += attr[0] + ", "
 
     aggr_attrs = get_aggr_attrs(query["aggrAttrs"])
     if len(query["aggrAttrs"]):
@@ -235,36 +326,82 @@ def create_query_api_logic(endpoint_object,query,models_obj):
         #cross product 
         #no entities in join for cross product
         if len(query["bestJoin"]) == 0:
-            hereJoins = True
             pass
-            # for entity in query["entities"]:
-            #     joins += "\\\n\t\t\t\t.join({0})".format(entity)
         #joins
-        else:
-            hereJoins = True
+        elif len(query["bestJoin"]) == 1:
             for join in query["bestJoin"]:
+                
                 join = join.replace('=','==')
                 entity = join.split('.')[0]
                 entity1 = entity[1:] # remove space
                 entity2 = join.split('==')[1].split('.')[0][1:]
-                #print(entity1,entity2)
                 entity = entity1
-                if len(query["bestJoin"]) == 1:
-                    substrings = "({0},|({0})| {0},| {0})|({0}.| {0}.".format(entity1)
-                    substrings = substrings.split("|")
-                    print("select",db_query)
-                    print(substrings)
-                    print(entity1) 
-                    print(entity2)
-                    print(list(map(db_query.__contains__, substrings)))
-                    if any(map(db_query.__contains__, substrings)):
-                        entity = entity2
-                    else:
-                        entity = entity1
-                    if "results = db.session.query(awards_coaches.id)" in db_query:
-                        print("/////////////////////////////////////////")
-                    #entity = entity1 if entity1 not in select_attr else entity2ّ
+                substrings1 = "({0},|({0})| {0},| {0})|({0}.| {0}.".format(entity1).split("|")
+                substrings2 = "({0},|({0})| {0},| {0})|({0}.| {0}.".format(entity2).split("|")
+                if any(map(db_query.__contains__, substrings1)):
+                    entity = entity2
+                else:
+                    entity = entity1
+                    if not any(map(db_query.__contains__, substrings2)):
+                        id = join.split("==")[1][1:]
+                        db_query = db_query[:-1]
+                        db_query += ", " if db_query[-1] != "(" else ""
+                        db_query += "{0}.label('{0}'))".format(id)
+                        query["selectAttrs"].append([id , "str"])
                 joins += "\\\n\t\t\t\t.join({0},{1})".format(entity,join)
+        else:
+            hereJoins = True
+            entities,best_joins = oreder_joins(query["bestJoin"],db_query)
+            for i in range(len(best_joins)):
+                joins += "\\\n\t\t\t\t.join({0},{1})".format(entities[i],best_joins[i])
+
+
+        # else:
+        #     if len(query["bestJoin"]) > 1:
+        #         hereJoins = True
+        #     firstJoin = True
+        #     join_entities = set() 
+        #     for join in query["bestJoin"]:
+                
+        #         join = join.replace('=','==')
+        #         entity = join.split('.')[0]
+        #         entity1 = entity[1:] # remove space
+        #         entity2 = join.split('==')[1].split('.')[0][1:]
+        #         #print(entity1,entity2)
+        #         entity = entity1
+        #         #if firstJoin:
+        #         #firstJoin = False
+        #         substrings1 = "({0},|({0})| {0},| {0})|({0}.| {0}.".format(entity1).split("|")
+        #         substrings2 = "({0},|({0})| {0},| {0})|({0}.| {0}.".format(entity2).split("|")
+        #         if any(map(db_query.__contains__, substrings1)) or entity1 in join_entities:
+        #             entity = entity2
+        #         elif len(query["bestJoin"]) == 1:
+        #             entity = entity1
+
+        #             # entity1 and entity2 not in the select
+        #             if not any(map(db_query.__contains__, substrings2)) and entity2 not in join_entities:
+                        
+        #                 #print("select",db_query)
+        #                 id = join.split("==")[1][1:]
+        #                 db_query = db_query[:-1]
+        #                 db_query += ", " if db_query[-1] != "(" else ""
+        #                 db_query += "{0}.label('{0}'))".format(id)
+        #                 query["selectAttrs"].append([id , "str"])
+
+        #                 #print("select",db_query)
+        #                 #print(substrings1)
+        #                 #print(substrings2)
+        #                 #print(entity1) 
+        #                 #print(entity2)
+        #                 #print(list(map(db_query.__contains__, substrings1)))
+        #                     #print("//////////////////////////////////////////")
+                        
+        #             #if "results = db.session.query(awards_coaches.id)" in db_query:
+        #             #    print("/////////////////////////////////////////")
+        #             #entity = entity1 if entity1 not in select_attr else entity2
+        #         join_entities.add(entity1)
+        #         join_entities.add(entity2)
+        #         joins += "\\\n\t\t\t\t.join({0},{1})".format(entity,join)
        
     db_query += joins if len(joins) else ""
 
@@ -317,7 +454,7 @@ def create_query_api_logic(endpoint_object,query,models_obj):
     agg_in_orderby = is_agg_in_orderby(query["orderByAttrs"])
     groupByAttrs = set([attr[0] for attr in query["groupByAttrs"]])
     is_group_all = False
-    if len(query["aggrAttrs"]) or agg_in_orderby:
+    if len(query["aggrAttrs"]) or agg_in_orderby or groupByAttrs:
         selectAttrs = set()
         for attr in query["selectAttrs"]:
             if attr[0] == '*':
@@ -419,17 +556,23 @@ def create_query_api_logic(endpoint_object,query,models_obj):
         "ui_name":ui_name,
         "url":endpoint_url,
         }) 
-
-    if "results = db.session.query(awards_players.lgID, awards_players.playerID, func.count().label('count_all'))" in db_query:
-        print("//////////////////////////////")
+    
+    #if "results = db.session.query(awards_players.lgID, awards_players.playerID, func.count().label('count_all'))" in db_query:
+    if hereJoins and "db.session.query(teams.rank.label('teams.rank'), teams.name.label('teams.name'), teams.lgID.label('teams.lgID'))" in db_query:
+    #if "db.session.query(func.count().label('count_all'), coaches.coachID.label('coaches.coachID'))" in db_query:   
         #print("entites",query["en"])
-        print(db_query)
-        print(endpoint_object["response"])
-        #print("selectAttrs",query["selectAttrs"])
-        #print("aggrAttrs", query["aggrAttrs"])
-        #print("groupByAttrs",query["groupByAttrs"])
+        print(select_attr)
+        print()
+        print(joins)
+        print()
+        print(query["bestJoin"])
+        #print(endpoint_object["response"])
+        print("//////////////////////////////")
+        print("selectAttrs",query["selectAttrs"])
+        print("aggrAttrs", query["aggrAttrs"])
+        print("groupByAttrs",query["groupByAttrs"])
         #print("entities",query["entities"])
-        #print(db_query,"\n")
+        print(db_query,"\n")
     
     return parse_args , db_query
 

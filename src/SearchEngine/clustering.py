@@ -6,17 +6,14 @@ from globalVars import *
 def getClusteredQueries(queries):
     clusteredQueries = {}
     for i,query in enumerate(queries):
-        queryEntityKey = getKeyWordsVector(flattenList(query["cleanedEntities"]))
-        queryEntityKey = (queryEntityKey.T).tostring()+bytes(len(query["cleanedEntities"]))
+        sorted_entities = sorted(query["entities"])
+        queryEntityKey = "_".join(sorted_entities)
         if clusteredQueries.get(queryEntityKey) is None: #if key not exist
             clusteredQueries[queryEntityKey] = [i]
         else:
             clusteredQueries[queryEntityKey].append(i)
     return list(clusteredQueries.values())
 
-def getUniqueSelectAttrs(attrs):
-    selectAttrs = []
-    if "*" in attrs: return ["*"] 
 
 
 def getMergdClusters(clusteredQueries,queries):
@@ -35,7 +32,7 @@ def getMergdClusters(clusteredQueries,queries):
 
             #Todo : Check if where condition is same for merging , should split on _
             queryWhereKey = flattenList([re.split(r"[.|_]",q[0]) for q in currentWhereAttrs])
-            queryGroupKey = flattenList([re.split(r"[.|_]",q[0]) for q in query["groupByAttrs"]])
+            queryGroupKey = flattenList([re.split(r"[.|_]",q) for q in query["updatedGroupByAttrs"]])
             queryOrderKey = flattenList([re.split(r"[.|_]",q[0][0]) for q in query["orderByAttrs"]])
             queryKeys = queryWhereKey+queryGroupKey+queryOrderKey
             queryKeysVector = getKeyWordsVector(queryKeys)

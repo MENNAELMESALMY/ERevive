@@ -33,12 +33,12 @@ database="{2}" \n\
         return '\
 from datetime import datetime \n\
 from flask.helpers import make_response \n\
-from flask_restx import Resource, Namespace , fields , reqparse \n\
+from flask_restx import Resource, Namespace , reqparse \n\
 from flask import jsonify, request \n\
 from sqlalchemy import func,desc,asc \n\
 from models import {0} \n\
 from app import db \n\
-from utils import convert_db_model_to_restx_model \n\
+from utils import convert_db_model_to_restx_model , serialize \n\
             '.format(model_import)
 
     def create_api(self,model,attributes): 
@@ -127,34 +127,47 @@ from utils import convert_db_model_to_restx_model \n\
 @{1}_namespace.route("/")\n\
 class {0}Api(Resource):\n\
 \n\
-    @{1}_namespace.marshal_list_with({1}_model) \n\
     def get(self):\n\
-        {1}s = db.session.query({0}).all()\n\
-        return {1}s , 200  \n\
+        try:\n\
+            {1}s = db.session.query({0}).all()\n\
+            {1}s = [row.serialize() for row in {1}s]\n\
+            return {1}s , 200 \n\
+        except Exception as e:\n\
+            print(e)\n\
+            return str(e) , 400\n\
 \n\
-    @{1}_namespace.marshal_with({1}_model) \n\
     @{1}_namespace.expect({1}_model) \n\
     def post(self):\n\
-        {1}s = {0}({2})\n\
-        db.session.add({1}s)\n\
-        db.session.commit()    \n\
-        return {1}s , 201 \n\
+        try:\n\
+            {1}s = {0}({2})\n\
+            db.session.add({1}s)\n\
+            db.session.commit()    \n\
+            return {1}s.serialize() , 201 \n\
+        except Exception as e:\n\
+            print(e)\n\
+            return str(e) , 400\n\
 \n\
-    @{1}_namespace.marshal_with({1}_model) \n\
     @{1}_namespace.expect({1}_model) \n\
     def put(self):\n\
-        db.session.query({0}).filter({4}).update(request.json) \n\
-        db.session.commit() \n\
-        {1}s = db.session.query({0}).filter({4}).first() \n\
-        return {1}s , 200    \n\
+        try:\n\
+            db.session.query({0}).filter({4}).update(request.json) \n\
+            db.session.commit() \n\
+            {1}s = db.session.query({0}).filter({4}).first() \n\
+            return {1}s.serialize() , 200 \n\
+        except Exception as e:\n\
+            print(e)\n\
+            return str(e) , 400\n\
 \n\
-    @{1}_namespace.marshal_with({1}_model) \n\
     @{1}_namespace.expect({1}_id_parser) \n\
     def delete(self):\n\
-        {1}s = db.session.query({0}).filter({5}).first() \n\
-        db.session.query({0}).filter({5}).delete() \n\
-        db.session.commit() \n\
-        return {1}s , 200    \n\
+        try:\n\
+            {1}s = db.session.query({0}).filter({5}).first() \n\
+            db.session.query({0}).filter({5}).delete() \n\
+            db.session.commit() \n\
+            return {1}s.serialize() , 200 \n\
+        except Exception as e:\n\
+            print(e)\n\
+            return str(e) , 400\n\
 \n\
 '.format(model,model.lower(),model_create_string,parser_create_string,put_filter_primary_keys,delete_filter_primary_keys)
     
@@ -188,6 +201,7 @@ from flask import Flask \n\
 from flask_sqlalchemy import SQLAlchemy \n\
 from sqlalchemy import create_engine \n\
 from decouple import config \n\
+from flask_cors import CORS \n\
 \n\
 user=config("user") \n\
 password=config("password") \n\
@@ -196,6 +210,7 @@ db = SQLAlchemy() \n\
 connection_string = "mysql+mysqlconnector://{0}:{1}@127.0.0.1:3306".format(user, password) \n\
 def create_app(): \n\
     app = Flask(__name__) \n\
+    cors = CORS(app, resources={r"/api/*": {"origins": "*"}})\n\
     settings = dict() \n\
     settings["SQLALCHEMY_DATABASE_URI"] = connection_string+"/{0}".format(database) \n\
     settings["SQLALCHEMY_TRACK_MODIFICATIONS"] = False \n\
@@ -240,6 +255,7 @@ Flask_SQLAlchemy==2.5.1 \n\
 python-decouple==3.5 \n\
 SQLAlchemy==1.4.27 \n\
 mysql-connector \n\
+flask-cors\n\
 '
     def create_app_run(self):
         return ' \n\
@@ -279,6 +295,35 @@ def convert_db_model_to_restx_model(model): \n\
         else: \n\
             fields_dict[column.name] = fields.String() \n\
     return fields_dict \n\
+\n\
+def serialize_result(res):\n\
+    res_dict = res._asdict() if hasattr(res, "_asdict") else res.__dict__ if hasattr(res, "__dict__") else res\n\
+    table = None\n\
+    if res_dict.get("_sa_instance_state"):\n\
+        table = res_dict["_sa_instance_state"].class_.__table__.name+"."\n\
+\n\
+    res_dict.pop("_sa_instance_state", None)\n\
+    serialized_result = res_dict.copy()\n\
+    for attr_key, attr_value in res_dict.items():\n\
+        print(attr_key, attr_value)\n\
+        if hasattr(attr_value, "__dict__"):\n\
+            model_dict = attr_value.serialize()\n\
+            model_dict_updated = {}\n\
+            for key, value in model_dict.items():\n\
+                model_dict_updated[attr_key + "." + key] = value\n\
+            model_dict_updated = serialize_result(model_dict_updated)\n\
+            serialized_result.pop(attr_key)\n\
+            serialized_result.update(model_dict_updated)\n\
+        elif table:\n\
+            serialized_result[table+attr_key] = attr_value\n\
+            serialized_result.pop(attr_key)\n\
+\n\
+    return serialized_result\n\
+\n\
+def serialize(results):\n\
+\n\
+    return [serialize_result(row) for row in results]\n\
+\n\
 '
     def create_api_structure(self,api_name,route_path,models):
         namespaces_imports = 'from .{0}_api import {0}_namespace \n\

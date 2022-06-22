@@ -1,10 +1,10 @@
 from utilities import flattenList
 import random
 
-def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,id, goals,origQuery,bestJoin):
+def constructQuery(testSchema,mappedEntitesDict,mappedEntites,mappedAttributes,coverage,id, goals,origQuery,bestJoin):
     query = {}
     mappedAttributesDict = {}
-    print(mappedAttributes)
+    #print(mappedAttributes)
     for attr in mappedAttributes:
         if attr[1] is not None:
             if attr[0] is None:
@@ -25,7 +25,7 @@ def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,id,
                     mappedAttributesDict.update({
                         attr[4]:(attr[0]+"."+attr[1],attr[5])
                     })
-    print(mappedAttributesDict)
+    #print(mappedAttributesDict)
 
     query["coverage"] = coverage
     query["id"] = id
@@ -81,8 +81,41 @@ def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,id,
             query[key] = list(set(query[key]))
         else:
             query[key] = [list(x) for x in set(tuple(x) for x in query[key])]
+    query = updateQueryGroupBy(query,testSchema)
     return query
-
+def is_agg_in_orderby(aggr_attrs):
+    for attr in aggr_attrs:
+        if attr[1]:
+            return True
+    return False
+def getModelsObj(testSchema):
+    models_obj = {}
+    for model in testSchema.values():
+        models_obj.update({
+            model["TableName"]:model["attributes"].keys()
+        })
+    return models_obj
+def updateQueryGroupBy(query,testSchema):
+    agg_in_orderby = is_agg_in_orderby(query["orderByAttrs"])
+    groupByAttrs = set([attr[0] for attr in query["groupByAttrs"]])
+    models_obj = getModelsObj(testSchema)
+    if len(query["aggrAttrs"]) or agg_in_orderby:
+        selectAttrs = set()
+        for attr in query["selectAttrs"]:
+            if attr[0] == '*':
+                for entity in query["entities"]:
+                    attrs = models_obj[entity]
+                    attrs = [entity+'.'+attr for attr in attrs]
+                    selectAttrs.update(attrs)
+                    #print("attrs: ",attrs)
+                    #print()
+            else:
+                selectAttrs.add(attr[0])
+            #selectAttrs = [attr[0] for attr in query["selectAttrs"] if "*" not in attr[0]]
+        #print("final Attrs: ",selectAttrs)
+        groupByAttrs.update(selectAttrs)
+    query["updatedGroupByAttrs"] = list(groupByAttrs)
+    return query
 def addJoinAttrs(joins,whereAttrs):
     sep = 'and'
     for idx,join in enumerate(joins):

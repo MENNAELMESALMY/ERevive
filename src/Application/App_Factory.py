@@ -1,13 +1,8 @@
-from itertools import groupby
-from urllib import response
 from sklearn import cluster
-from sqlalchemy import inspect
 from Api_Factory import ApiFactory
-import pickle
 import json
 import os
 import stat
-from flask_restx import fields
 from generateModel import createAllModels
 def Create_Directory(directory):
     path = os.path.join(os.getcwd(), directory) 
@@ -54,6 +49,7 @@ def create_api_namespaces(api,clusters):
     namespaces_imports = ""
     inits = ""
     clusters_out= {}
+    errors = []
     for cluster in clusters:
         
         #endoint = create_endpoint(clusters[0])
@@ -74,17 +70,25 @@ def create_api_namespaces(api,clusters):
         # create parser for each query
         for query in cluster:
             #print(query['entities'])
-            resource_model , endpoint_object , db_selects = create_query_ui_endpoint(query,api.modelsObjects)  # return to frontend
+            resource_model , endpoint_object , _ = create_query_ui_endpoint(query,api.modelsObjects)  # return to frontend
             clusters_out[api_name].append(endpoint_object)
-            parse_args , db_query = create_query_api_logic(endpoint_object,query)  
+            parse_args , db_query = create_query_api_logic(endpoint_object,query,api.modelsObjects)  
             #create api logic
-
+            if endpoint_object["endpoint_name"] == "get_awards_players_player_allstar_groupedby__minutes":
+                print("WEWEWE\n")
+                query.pop("origQuery")
+                print(query)
+            if endpoint_object['endpoint_name'] not in errors:
+                errors.append(endpoint_object['endpoint_name'])
+            else:
+                print("ENDPOINT ALREADY EXISTS\n",query,endpoint_object['endpoint_name'])   
             #if "awards_coaches" in query["entities"] and "coaches" in query["entities"]:
-            #    print("\nquery entites: ",query["entities"],"\n")
-            #    print("\nfile name: ",api_file,"\n")
-            #    print("\ncluster entites: ",cluster[0]["entities"],"\n")
-            #    print("\ncluster" , cluster[0])
-            #    print("\nquery" , query)
+            #if "awards_players" in query["entities"] and "player_allstar" in query["entities"]:
+                #print("\nquery entites: ",query["entities"],"\n")
+                #print("\nfile name: ",api_file,"\n")
+                #print("\ncluster entites: ",cluster[0]["entities"],"\n")
+                #print("\ncluster" , cluster[0])
+                #print("\nquery" , query)
 
             create_resource(resource_model, endpoint_object,api_file,namespace_name,parse_args , db_query)
             
@@ -93,10 +97,54 @@ def create_api_namespaces(api,clusters):
     return namespaces_imports , inits ,clusters_out
 
 
-def create_query_api_logic(endpoint_object,query):
+def get_entities_as_select_attr(entities,models_obj):
+    select_attr = ""
+    if len(entities) > 1:
+        select_attr = ", ".join(entities)
+        select_attr += ", "
+    else:
+        entity_name = entities[0]
+        attr = next(iter(models_obj[entity_name]["attributes"])) # O(1)
+        #print("//////////////////////////////////////////////")
+        #print(entity_name)
+        #print(attr)
+        #if primaryKey == "name":print(models_obj[entity_name])
+        select_attr += "{0}, {0}.{1}.label('{0}.{1}'), ".format(entity_name , attr)
+        #print(select_attr)
+    return select_attr
+
+
+def is_agg_in_orderby(aggr_attrs):
+    for attr in aggr_attrs:
+        if attr[1]:
+            return True
+    return False
+
+def get_aggr_attrs(aggr_attrs):
+    count_attrs = []
+    final_aggr_attr = []
+    remove_counts = False
+    for attr in aggr_attrs:
+        attr_aggregation = attr[1]
+        if attr_aggregation != "count":
+            final_aggr_attr.append(attr)
+        else:
+            count_attrs.append(attr)
+            if "*" in attr[0][0]:
+                final_aggr_attr.append(attr)
+                remove_counts = True
+    
+    if not remove_counts:
+        final_aggr_attr.extend(count_attrs)
+    
+    return final_aggr_attr
+
+
+def create_query_api_logic(endpoint_object,query,models_obj):
     #if "awards_coaches" in query["entities"] and "coaches" in query["entities"]:
     #if len(query["entities"])==1 and "coaches" in query["entities"]:
     #print("//////////////////////////////////////////////")
+    #print(models_obj)
     #print("query" , query)
     #print("whereAttrs" , query["whereAttrs"])
     #print("groupByAttrs",query["groupByAttrs"])
@@ -109,6 +157,7 @@ def create_query_api_logic(endpoint_object,query):
 
     #print()
     #print("response" , endpoint_object['response'])
+    #print()
     #print("queryParams" , endpoint_object['queryParams'])
     #print()
     #print("query" , query)
@@ -127,41 +176,84 @@ def create_query_api_logic(endpoint_object,query):
     select_attr = ""
     for attr in query["selectAttrs"]:
         if attr[0] == '*': # get all entities attributes
-            select_attr = ", ".join(query["entities"])
-            select_attr += ", "
+            select_attr += get_entities_as_select_attr(query["entities"],models_obj)
             break
         elif "*" in attr[0]:
-            select_attr += attr[0].split('.')[0] + ", "
+            entity_name = attr[0].split('.')[0]
+            attr_name = models_obj[entity_name]["primaryKey"][0]
+            select_attr += "{0}.{1}.label('{0}.{1}')".format(entity_name , attr_name)           
         else:
+            entity = attr[0].split('.')[0]
+            if entity and entity not in select_attr:
+                select_attr += entity +", "
+                #print("/////////////////////////////////////")
+                #print(select_attr)
+                
             select_attr += attr[0] + ", "
 
-    for attr in query["aggrAttrs"]:      
+    aggr_attrs = get_aggr_attrs(query["aggrAttrs"])
+    if len(query["aggrAttrs"]):
+        pass
+        #print("////////////////////////////////////////////////")
+        #print(query["aggrAttrs"])
+        #print(aggr_attrs)
+    for attr in aggr_attrs:      
         attr_aggregation = attr[1]
         attr_name = attr[0][0] if "*" not in attr[0][0] else ""
         label = 'all' if attr[0][0] == "*" else attr[0][0]
         select_attr += "func.{0}({1}).label('{2}')".format(attr_aggregation,attr_name,attr_aggregation+'_'+label) + ", "
     
-    if select_attr == "":
-        select_attr = ", ".join(query["entities"])
+    #cross product put entities in select
+    if len(query["entities"]) > 1 and len(query["bestJoin"]) == 0:
+        for entity in query["entities"]:
+            if entity not in select_attr:
+                select_attr += entity + ", "
+
+    if select_attr == "" :
+        #select_attr = ", ".join(query["entities"])
+        select_attr += get_entities_as_select_attr(query["entities"],models_obj)
+        select_attr = select_attr[:-2]
     else:
         select_attr = select_attr[:-2]
 
     db_query += select_attr + ')'
 
+
     #join
+    hereJoins = False
     joins = ""
     if len(query["entities"]) > 1:
         #cross product 
+        #no entities in join for cross product
         if len(query["bestJoin"]) == 0:
-            for entity in query["entities"]:
-                joins += "\\\n\t\t\t.join({0})".format(entity)
+            hereJoins = True
+            pass
+            # for entity in query["entities"]:
+            #     joins += "\\\n\t\t\t\t.join({0})".format(entity)
         #joins
         else:
+            hereJoins = True
             for join in query["bestJoin"]:
                 join = join.replace('=','==')
                 entity = join.split('.')[0]
-                entity = entity[1:] # remove space
-                joins += "\\\n\t\t\t.join({0},{1})".format(entity,join)
+                entity1 = entity[1:] # remove space
+                entity2 = join.split('==')[1].split('.')[0][1:]
+                #print(entity1,entity2)
+                entity = entity1
+                if len(query["bestJoin"]) == 1:
+                    substrings = "({0},|({0})| {0},| {0})".format(entity1)
+                    substrings = substrings.split("|")
+                    print("select",db_query)
+                    print(substrings)
+                    print(entity1) 
+                    print(entity2)
+                    print(list(map(db_query.__contains__, substrings)))
+                    if any(map(db_query.__contains__, substrings)):
+                        entity = entity2
+                    else:
+                        entity = entity1
+                    #entity = entity1 if entity1 not in select_attr else entity2
+                joins += "\\\n\t\t\t\t.join({0},{1})".format(entity,join)
        
     db_query += joins if len(joins) else ""
 
@@ -170,12 +262,16 @@ def create_query_api_logic(endpoint_object,query):
     # Note aggregation in where is not valid
     # anding and oring not handled currently
     whereAttr = set()
-    filters = "\\\n\t\t\t.filter(" if len(query["whereAttrs"]) else ""
+    filters = "\\\n\t\t\t\t.filter(" if len(query["whereAttrs"]) else ""
     for attr in query["whereAttrs"]:
         attr_name = attr[0][0]
         attr_opperator = attr[1]
-        attr_opperator = "==" if attr_opperator is "=" else attr_opperator
-
+        attr_opperator = attr_opperator.strip()
+        #print(attr_name,attr_opperator)
+        attr_opperator = "==" if attr_opperator == "=" else attr_opperator
+        attr_opperator = "in_" if attr_opperator == "in" else attr_opperator
+        attr_opperator = "notlike" if attr_opperator == "not like" else attr_opperator
+        #print(attr_name,attr_opperator)
         #removing duplicates for anding and oring
         ##########################
         if attr_name in whereAttr:
@@ -191,7 +287,14 @@ def create_query_api_logic(endpoint_object,query):
         else:
             value = attr[2]
 
-        filters += "{0} {1} {2}, ".format(attr_name,attr_opperator,value) if attr_opperator !="like" else "{0}.{1}({2}), ".format(attr_name,attr_opperator,value)
+        if attr_opperator in ["like","in_","notlike"]:
+            filters += "{0}.{1}({2}), ".format(attr_name,attr_opperator,value)
+
+        elif attr_opperator == "between":
+            filters += "{0}.{1}({2}[0],{2}[1]), ".format(attr_name,attr_opperator,value)
+
+        else:
+            filters += "{0} {1} {2}, ".format(attr_name,attr_opperator,value)
 
     if len(filters):
         filters = filters[:-2] +")"
@@ -200,11 +303,26 @@ def create_query_api_logic(endpoint_object,query):
     
     # group by
     # Note -> assumed if there is aggr then all attrs in select are in group by
+    agg_in_orderby = is_agg_in_orderby(query["orderByAttrs"])
     groupByAttrs = set([attr[0] for attr in query["groupByAttrs"]])
-    if len(query["aggrAttrs"]):
-        selectAttrs = [attr[0] for attr in query["selectAttrs"] if "*" not in attr[0]]
+    is_group_all = False
+    if len(query["aggrAttrs"]) or agg_in_orderby:
+        selectAttrs = set()
+        for attr in query["selectAttrs"]:
+            if attr[0] == '*':
+                is_group_all = True
+                for entity in query["entities"]:
+                    attrs = models_obj[entity]["attributes"].keys()
+                    attrs = [entity+'.'+attr for attr in attrs]
+                    selectAttrs.update(attrs)
+                    #print("attrs: ",attrs)
+                    #print()
+            else:
+                selectAttrs.add(attr[0])
+            #selectAttrs = [attr[0] for attr in query["selectAttrs"] if "*" not in attr[0]]
+        #print("final Attrs: ",selectAttrs)
         groupByAttrs.update(selectAttrs)
-    groupby_attr = "\\\n\t\t\t.group_by(" if len(groupByAttrs) else ""
+    groupby_attr = "\\\n\t\t\t\t.group_by(" if len(groupByAttrs) else ""
     for attr in groupByAttrs:
         groupby_attr += "{0}, ".format(attr)
     if len(groupby_attr):
@@ -215,26 +333,40 @@ def create_query_api_logic(endpoint_object,query):
     # having 
     # Note --> having(count(*)) > having_vale
     # having_value is the count of rows
-    having = "\\\n\t\t\t.having(" if len(query["havingAttrs"]) else ""
+    having = "\\\n\t\t\t\t.having(" if len(query["havingAttrs"]) else ""
     for attr in query["havingAttrs"]:
         attr_name = attr[1][0] if "*" not in attr[1][0] else ""
-        attr_opperator = attr[2]
-        attr_opperator = "==" if attr_opperator is "=" else attr_opperator
         attr_aggregation = attr[0]
-        arg_name = "having_value" if attr_name == "" else attr_name
 
+        attr_opperator = attr[2]
+        attr_opperator = "==" if attr_opperator == "=" else attr_opperator
+        attr_opperator = "in_" if attr_opperator == "in" else attr_opperator
+        attr_opperator = "notlike" if attr_opperator == "not like" else attr_opperator
+
+        arg_name = "having_value" if attr_name == "" else attr_name
         value = "args['{0}']".format(arg_name)
+
         if attr_aggregation:
-            having += "func.{0}({1}) {2} {3}".format(attr_aggregation,attr_name,attr_opperator,value) + ", "
+            having += "func.{0}({1})".format(attr_aggregation,attr_name)
         else:
-            having += "{0} {1} {2}, ".format(attr_name,attr_opperator,value)
+            having += "{0}".format(attr_name)
+
+        if attr_opperator in ["like","in_","notlike"]:  
+            having += ".{0}({1}), ".format(attr_opperator,value)
+
+        elif attr_opperator == "between":
+            having += ".{0}({1}[0],{1}[1]), ".format(attr_opperator,value)
+
+        else:
+            having += " {0} {1}, ".format(attr_opperator,value)
 
     if len(having):
         having = having[:-2] +")"
         db_query += having
 
+
     # order_by
-    orderby_attr = "\\\n\t\t\t.order_by(" if len(query["orderByAttrs"]) else ""
+    orderby_attr = "\\\n\t\t\t\t.order_by(" if len(query["orderByAttrs"]) else ""
     for attr in query["orderByAttrs"]: # [["teams.tmID", "str"], ""]
         if attr[0][0] == "*" and not attr[1] : continue
         attr_name = attr[0][0] if "*" not in attr[0][0] else ""
@@ -251,7 +383,7 @@ def create_query_api_logic(endpoint_object,query):
         parse_args += "\
         {0}direction = desc if args['{1}'] else asc\n".format(variable_name,param_name)
         
-        
+
         if attr_aggregation:
             orderby_attr += "{0}direction(func.{2}({1})), ".format(variable_name,attr_name,attr_aggregation)
         else:
@@ -261,15 +393,28 @@ def create_query_api_logic(endpoint_object,query):
         orderby_attr = orderby_attr[:-2] + ")"
         db_query += orderby_attr
 
-    if len(parse_args):
-        db_logic = parse_args + "\n\t\t" + db_query
-    else:
-        db_logic = db_query
     #print(db_logic)
     #if "awards_coaches" in query["entities"] and "coaches" in query["entities"]:
     #if len(query["entities"])==1 and "coaches" in query["entities"]:
     #print(db_query)
     db_query = db_query+".all()"
+    if hereJoins and len(query["bestJoin"]) == 1:
+        print("//////////////////////////////")
+        print("selectAttrs",query["selectAttrs"])
+        print("aggrAttrs", query["aggrAttrs"])
+        print("groupByAttrs",query["groupByAttrs"])
+        print("entities",query["entities"])
+        print(db_query,"\n")
+    print("groupByAttrsgroupByAttrs",groupByAttrs)
+    endpoint_name,ui_name = query_renaming(query["entities"],query["whereAttrs"],groupByAttrs,query["orderByAttrs"],True,is_group_all)
+    endpoint_url = '/'.join(query["entities"])+'/'+endpoint_name
+    parse_args = parse_args.replace(parser,endpoint_name)
+    endpoint_object.update({
+        "endpoint_name":endpoint_name,
+        "ui_name":ui_name,
+        "url":endpoint_url,
+        }) 
+    
     return parse_args , db_query
 
 
@@ -278,7 +423,7 @@ def create_resource(resource_model, endpoint_object,api_file,namespace_name,pars
     #append to api file
     params = endpoint_object["queryParams"]
     parser = ""
-    except_parser =  "" 
+    except_parser =  "\n" 
     if len(params):
         except_parser =  "@{1}.expect({0}_parser)\n".format(endpoint_object["endpoint_name"],namespace_name)
         parser = endpoint_object["endpoint_name"]+"_parser = reqparse.RequestParser()\n"
@@ -288,16 +433,21 @@ def create_resource(resource_model, endpoint_object,api_file,namespace_name,pars
             else:
                 parser += endpoint_object["endpoint_name"]+"_parser.add_argument('"+param[0]+"', type="+param[1]+", required=True, location='args')\n"
     resource = "\
-{0}_model = {1}.model('{0}_model',{2})\n\
 {4}\n\
 @{1}.route('/{3}', methods=['GET'])\n\
 class {0}_resource(Resource):\n\
-    @{1}.marshal_list_with({0}_model)\n\
-    {5}\n\
+    \n\
+    {5}\
     def get(self):\n\
         {6}\n\
-        {7}\n\
-        return results\n\n".format(endpoint_object["endpoint_name"],namespace_name,resource_model,endpoint_object["endpoint_name"],parser,except_parser,parse_args , db_query)
+        results = None\n\
+        try:\n\
+            {7}\n\n\
+            results = serialize(results)\n\
+            return results , 200\n\
+        except Exception as e:\n\
+            print(e)\n\
+            return str(e) , 400\n\n".format(endpoint_object["endpoint_name"],namespace_name,resource_model,endpoint_object["endpoint_name"],parser,except_parser,parse_args , db_query)
 
     with open(api_file, 'a') as f:
         f.write(resource)
@@ -306,14 +456,7 @@ class {0}_resource(Resource):\n\
     
 
 def create_query_ui_endpoint(query,modelsObjects):
-    #generate object for ui and resource
-    #method
-    #url0 x    
-    #query params
-    #body params
-    #response (primary key is required if len(entities)=1)
-    #ui query name
-
+ 
     endpoint_name,ui_name = query_renaming(query["entities"],query["whereAttrs"],query["groupByAttrs"],query["orderByAttrs"])
     endpoint_url = '/'.join(query["entities"])+'/'+endpoint_name
     endpoint_method = "get"
@@ -355,7 +498,8 @@ def create_query_ui_endpoint(query,modelsObjects):
         queryParams.append((param_name,"bool",None,attr_aggregation))
 
     #print(query["selectAttrs"])
-    response_model , ui_response_model , db_selects = create_response_model(query["selectAttrs"],query["aggrAttrs"],query["entities"],modelsObjects)
+    aggrAttrs = get_aggr_attrs(query["aggrAttrs"])
+    response_model , ui_response_model , db_selects = create_response_model(query["selectAttrs"],aggrAttrs,query["entities"],modelsObjects)
     response_model = "{ "+response_model+" }"
     endpoint = {
         "method": endpoint_method,
@@ -432,9 +576,10 @@ def create_response_model(selectAttrs,aggrAttrs,entities,modelsObject):
     for attr in aggrAttrs:
         attr_aggregation = attr[1]
         attr_name = attr[0][0]
-        attr_type = attr[0][1] if "*" not in attr[0][0] else "int"
+        attr_type = attr[0][1] if ("*" not in attr[0][0] and attr[1] != "count") else "int"
         db_selects.append((attr_name,attr_type,attr_aggregation))
         attr_name = attr_aggregation+"_"+ (attr_name if "*" not in attr_name else "all")
+        if attr_name == "count_awards_players.playerID":print(attr)
         if attr_type in pythondtypes_restmapping:
             response_model+= "'"+attr_name+"' : "+pythondtypes_restmapping[attr_type]+","
             ui_response_model.append((attr_name , attr_type))
@@ -467,25 +612,41 @@ def get_attr_name_type(attrs):
 
     for attr in attrs:
         if type(attr[0])!=str:
-            attr_name = attr[0][0]
+            attr_name = attr[0][0] 
         else:
             attr_name = attr[0]
+        if attr_name.find('*')!=-1:   
+            #replace * with all
+            attr_name = attr_name.replace('*','all')
+
+        if type(attr[0])!=str and len(attr) > 2 and attr[2] != "value":
+            attr_names.append(attr[2])    
         attr_names.append(attr_name)
     return attr_names
 
-def query_renaming(entities,whereAttrs,groupAttrs,orderAttrs):
+def query_renaming(entities,whereAttrs,groupAttrs,orderAttrs,isUpdate=False,is_group_all=False):
     #print("////////////////////////////////////////////")
     where_attr = get_attr_name_type(whereAttrs)
-    group_attr = get_attr_name_type(groupAttrs)
+    if not isUpdate:
+        group_attr = get_attr_name_type(groupAttrs)
+    else:
+        group_attr = groupAttrs
+    if is_group_all:
+        group_attr = ["all"]
     order_attr = get_attr_name_type(orderAttrs)
     #print("orrdderd by before" , order_attr)
-    where_attr = [attr[attr.find(".")+1:] for attr in where_attr if attr != "*"]
-    order_attr = [attr[attr.find(".")+1:] for attr in order_attr if attr != "*"]
-    group_attr = [attr[attr.find(".")+1:] for attr in group_attr if attr != "*"]
+    where_attr = set([attr[attr.find(".")+1:] for attr in where_attr if attr != "*"])
+    order_attr = set([attr[attr.find(".")+1:] for attr in order_attr if attr != "*"])
+    group_attr = set([attr[attr.find(".")+1:] for attr in group_attr if attr != "*"])
     endpoint_name = "get"+"_"+"_".join(entities)
     ui_name = "get "+" ".join(entities)
     #print("orrdderd by after" , order_attr)
     #print()
+    #print("whereAttrs" , whereAttrs)
+
+    #print("where_attr " , where_attr)
+    #print()
+    
     if len(where_attr) != 0:
         endpoint_name += "_filteredby"+"_"+"_".join(where_attr)
         ui_name += " filtered by "+" , ".join(where_attr)
@@ -497,6 +658,7 @@ def query_renaming(entities,whereAttrs,groupAttrs,orderAttrs):
         endpoint_name +="_orderedby"+ "_"+"_".join(order_attr)
         ui_name += " ordered by "+" , ".join(order_attr)
     
+    #print(endpoint_name)
     #print(endpoint_name)
     #print(ui_name)
     #print("////////////////////////////////////////////")
@@ -518,8 +680,6 @@ select aggr() from where group by
 '''
 
 
-def create_endpoint(query):
-    pass
 
 def create_app_utils(api):
     app_utils = api.create_app_utils()
@@ -587,7 +747,7 @@ with open('/home/nada/GP/GP/src/SearchEngine/finalMergedQueries.json','rb') as f
             query.update({"constructed_query":q[1]})
             c.append(query)
         clusters.append(c)
-    print(clusters[0])
+    #print(clusters[0])
 # with open('/home/nada/GP/GP/src/SearchEngine/finalMergedClusters.json','rb') as file:
 #     testSchema = json.load(file)
 #     clusters = [testSchema[cluster]["queries"] for cluster in testSchema.keys()]
@@ -646,7 +806,7 @@ with open('/home/nada/GP/GP/src/SearchEngine/finalMergedQueries.json','rb') as f
             'TableType':'',
             'attributes': {
             'playerID': 'str', 
-            'last_name': 'datetime',
+            'last_name': 'str',
             'first_name': 'str',
             'season_id': 'str',
             'conference': 'str',

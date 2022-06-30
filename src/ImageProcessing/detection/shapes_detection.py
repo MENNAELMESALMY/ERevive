@@ -134,7 +134,7 @@ def detect_shapes(shapes_no):
         img = cv.imread(path)
         gray_img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
         shape = get_features(gray_img)
-        print(i,shape)
+        #print(i,shape)
         shapes.append(shape)
             
     return shapes

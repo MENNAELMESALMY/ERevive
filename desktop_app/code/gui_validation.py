@@ -1,3 +1,4 @@
+from email.policy import default
 from tkinter import Tk,Frame, Canvas, OptionMenu, Variable, Button,Label,Scrollbar,StringVar,IntVar,Checkbutton
 from tkinter import RIGHT,Y,BOTTOM,LEFT,X,TOP,W,E,N,S
 from click import command
@@ -8,7 +9,8 @@ global_schema = {
     11: 
     {'TableName': 'DEPARTMENT', 
     'TableType':'',
-    'attributes': {'name': 'str', 
+    'attributes': {
+    'name': 'str', 
     'start_date': 'datetime',
     'EMPLOYEE_Manages': 'str'}, 
     'primaryKey': ['name'], 
@@ -105,6 +107,7 @@ global_schema = {
     'dataType': 'str'}
     ], 
     'isWeak': False}}
+
 old_keys = list(global_schema.keys())
 for old_key in old_keys:
     new_key = global_schema[old_key]['TableName']
@@ -115,14 +118,57 @@ for old_key in old_keys:
 dataTypes = ['str', 'int', 'float', 'datetime','bool']
 participations = ['full', 'partial']
 
+def addEntity():
+    default_entity_name = 'entity_'+ str(len(global_schema))
+
+    global_schema[default_entity_name] = {'TableName': default_entity_name, 
+    'TableType':'',
+    'attributes': {}, 
+    'primaryKey': [], 
+    'ForgeinKey': [], 
+    'isWeak': False}
+    entities_list.append(entity(default_entity_name,{}, [],[]))
+    expandCanvas()
+    updataAllForeignKeys()
+    # saveButton.pack(fill='both', expand=True,padx=20, pady=20)
+
+
+def expandCanvas():
+    validation_frame.update()
+    height = validation_frame.winfo_height()
+    canvas.itemconfigure("canvas_frame", height=height)
+    canvas.configure(scrollregion=canvas.bbox("all"))
+
+def saveChanges():
+    pass
+
 def getForeignKeys(ForgeinKeys):
     return [f['attributeName'] for f in ForgeinKeys]
 
-def updataAllForeignKeys():
+def updataAllForeignKeys(entityNameOld='',entityNameNew = ''):
     for entity in entities_list:
         for fk in entity.ForgeinKeysUI:
-            fk.update()
+            if fk.removed:continue
+            # print(entityNameOld,fk.entityName.get())
+            if fk.entityName.get() == entityNameOld:
+                # print("updating Name", fk.entityName.get())
+                fk.update(entityNameOld,entityNameNew)
+            else:
+                # print("not updating Name", fk.entityName.get())
+                fk.update()
 
+def removeHangingForeignKeys(entityName='',attributeName = ''):
+    for entity in entities_list:
+        for fk in entity.ForgeinKeysUI:
+            # print(entityNameOld,fk.entityName.get())
+            if fk.removed:continue
+            if fk.entityName.get() == entityName:
+                # Is entity deleted 
+                if entityName not in set(global_schema.keys()):
+                    fk.removeForeignKey()
+                elif attributeName not in set(global_schema[entityName]['attributes'].keys()):
+                    print("hihihi")
+                    fk.removeForeignKey()
 class attribute:
     def __init__(self,wrapperFrame,entityName, name, dataType,isPrimaryKey):
         self.isInitialized = False
@@ -165,22 +211,26 @@ class attribute:
 
 
     def removeAttribute(self):
+        entityName,attributeName = self.entityName,self.name.get()
         global_schema[self.entityName]['attributes'].pop(self.name.get())
+        if self.name.get() in global_schema[self.entityName]['primaryKey']:
+            global_schema[self.entityName]['primaryKey'].remove(self.name.get())
         self.attrName.destroy()
         self.isPrimaryCheckbox.destroy()
         self.dataTypeMenu.destroy()
         self.removeAttrButton.destroy()
         self.removed = True
+        removeHangingForeignKeys(entityName,attributeName)
     
     def editAtrr(self,sv):
         if sv.get() != self.nameStr:
-            print("Allah hallah")
-            # self.ForgeinKey.updateAttributes()
+            # print("Allah hallah")
             global_schema[self.entityName]['attributes'][sv.get()] = self.dataType.get()
             global_schema[self.entityName]['primaryKey'].append(sv.get())
             global_schema[self.entityName]['primaryKey'].remove(self.nameStr)
             global_schema[self.entityName]['attributes'].pop(self.nameStr)
             self.nameStr = sv.get()
+            updataAllForeignKeys()
     
     def isPrimaryKeyCheckbox(self):
         if self.isInitialized:
@@ -188,23 +238,23 @@ class attribute:
                 global_schema[self.entityName]['primaryKey'].append(self.nameStr)
             else:
                 global_schema[self.entityName]['primaryKey'].remove(self.nameStr)
-
-            # self.ForgeinKey.updateAttributes()
             updataAllForeignKeys()
-            print(global_schema[self.entityName]['primaryKey'])
+            # print(global_schema[self.entityName]['primaryKey'])
     
-    def addForeignKey(self,fk):
-        self.ForgeinKey = fk
+    # def addForeignKey(self,fk):
+    # self.ForgeinKey = fk
 
 class foreignKey:
-    def __init__(self,wrapperFrame,name,attributes ,entityName, entityAtrribute, patricipaction):
+    def __init__(self,wrapperFrame,name,belongToEntity,attributes ,entityName, entityAtrribute, patricipaction):
         self.wrapperFrame = wrapperFrame
         self.removed = False
+        self.belongToEntity = belongToEntity
         entitiesList = list(global_schema.keys())
+        self.l = [None]*4
 
         #Table that this foreign key is pointing to
-        Label(wrapperFrame,text ="Table Name")\
-            .pack(fill='both', expand=True,padx=10, pady=10)
+        self.l[0] = Label(wrapperFrame,text ="Table Name")
+        self.l[0].pack(fill='both', expand=True,padx=10, pady=10)
         self.entityName = StringVar(wrapperFrame)
         self.entityName.set(entityName)
         self.entitiesMenu = OptionMenu(wrapperFrame,self.entityName,\
@@ -212,8 +262,8 @@ class foreignKey:
         self.entitiesMenu.pack(fill='both', expand=True,padx=20, pady=20)
 
         #All Attributes of the table that this foreign key is pointing to
-        Label(wrapperFrame,text ="Attributes in Table")\
-            .pack(fill='both', expand=True,padx=10, pady=10)
+        self.l[1]=Label(wrapperFrame,text ="Attributes in Table")
+        self.l[1].pack(fill='both', expand=True,padx=10, pady=10)
         self.entityAttribute = StringVar(wrapperFrame)
         self.entityAttribute.set(entityAtrribute)
         self.entityAttributes = [e for e in global_schema[entityName]['primaryKey']]
@@ -223,15 +273,25 @@ class foreignKey:
         self.entityAttributesMenu.pack(fill='both', expand=True,padx=20, pady=20)
 
         #Attribute name in current entity
-        Label(wrapperFrame,text ="Attributes Name")\
-            .pack(fill='both', expand=True,padx=10, pady=10)
+        # to keep integerity of fk it needs to have the same datatype as 
+        # the attribute it is pointing to
+        # print(belongToEntity,name)
+        # acceptedDataType = global_schema[self.belongToEntity]['attributes'][name]
+        #attributesKeys = [attName for attName,attDataType in attributes.items() if attDataType == acceptedDataType]
+        # # if chosen attribute is not of the same time take nearest accepted attribute
+        # if attributes[name] != acceptedDataType:
+        #     name = attributesKeys[0] if len(attributesKeys)>0 else ''
+
+        attributesKeys = list(attributes.keys())
+        self.l[2] =Label(wrapperFrame,text ="Attributes Name")
+        self.l[2].pack(fill='both', expand=True,padx=10, pady=10)
         self.attrName = StringVar(wrapperFrame)
         self.attrName.set(name)
-        self.attrNameMenu = OptionMenu(wrapperFrame,self.attrName,*attributes)
+        self.attrNameMenu = OptionMenu(wrapperFrame,self.attrName,*attributesKeys)
         self.attrNameMenu.pack(fill='both', expand=True,padx=20, pady=20)
 
-        Label(wrapperFrame,text ="Participation")\
-            .pack(fill='both', expand=True,padx=10, pady=10)
+        self.l[3]=Label(wrapperFrame,text ="Participation")
+        self.l[3].pack(fill='both', expand=True,padx=10, pady=10)
         ##PARTICIPATION
         self.participation = StringVar(wrapperFrame)
         self.participation.set(patricipaction)
@@ -239,50 +299,91 @@ class foreignKey:
         self.participationMenu.pack(fill='both', expand=True,padx=20, pady=20)
 
         self.removeAttrButton = CTkButton(wrapperFrame, \
-            text="Remove Attribute",command=self.removeAttribute)
+            text="Remove Foreign key",command=self.removeForeignKey)
 
         self.removeAttrButton.pack(fill='both', expand=True,padx=20, pady=20)
 
 
-    def removeAttribute(self):
-        # self.attrName.destroy()
-        # self.isPrimaryCheckbox.destroy()
-        # self.dataTypeMenu.destroy()
-        # self.removeAttrButton.destroy()
-        # self.removed = True
-        pass
+    def removeForeignKey(self):
+        if self.removed: print("removing a removed key");return
+        self.attrNameMenu.destroy()
+        self.entityAttributesMenu.destroy()
+        self.participationMenu.destroy()
+        self.entitiesMenu.destroy()
+        self.removeAttrButton.destroy()
+        self.removed = True
+        for i in range(4):
+            self.l[i].destroy()
     
     def updateAttributes(self,entityName= None):
-        if entityName == None:
+        # print("IO")
+        if entityName is not None:
+            self.entityName.set(entityName)
+            # print("pppppppppppppppppppppppppppp",entityName)
+            self.entityAttributes = [e for e in global_schema[entityName]['primaryKey']]
+            if len(self.entityAttributes)>0: self.entityAttribute.set(self.entityAttributes[0])
+            else: self.removeForeignKey();return
+        else:
             entityName = self.entityName.get()
-        print("updateAttributes",self.entityAttribute.get())
-        self.entityAttributes = [e for e in global_schema[entityName]['primaryKey']]
-        self.entityAttribute.set(self.entityAttributes[0])
+            self.entityAttributes = [e for e in global_schema[entityName]['primaryKey']]
+            if self.entityAttribute.get() in self.entityAttributes:
+                self.entityAttribute.set(self.entityAttribute.get())
+            else:
+                if len(self.entityAttributes)>0: self.entityAttribute.set(self.entityAttributes[0])
+                else: self.removeForeignKey();return
+        
         self.entityAttributesMenu["menu"].delete(0, 'end')
+        # print("attr",self.entityAttributes)
         for choice in self.entityAttributes:
             self.entityAttributesMenu["menu"]\
                 .add_command(label=choice, command= lambda a=choice: \
                     self.entityAttribute.set(a))
     
-    def updateEntities(self):
-        self.entitiesMenu["menu"].delete(0, 'end')
+    def updateEntities(self,entityName= None):
+        if entityName is not None:
+            self.entityName.set(entityName)
+        # self.entitiesMenu["menu"].delete(0, 'end')
         entitiesList = list(global_schema.keys())
+        self.entitiesMenu["menu"].delete(0, 'end')
+
         for choice in entitiesList:
             self.entitiesMenu["menu"]\
                 .add_command(label=choice, command= lambda a=choice: \
-                    self.entityName.set(a))
+                   [ self.entityName.set(a),self.updateAttributes(a) ])
+        # for choice in entitiesList:
+        #     self.entitiesMenu["menu"]\
+        #         .add_command(label=choice, command=self.updateAttributes)
 
-    def update(self):
-        self.updateAttributes()
+        #self.entitiesMenu.event_add()
+        #["menu"].add_command(command= self.updateAttributes)
+
+        
+    
+    def updateAttrs(self,entityName= None):
+        if entityName is not None: self.belongToEntity = entityName
+
+        Attrs = list(global_schema[self.belongToEntity]['attributes'].keys()) 
+        self.attrNameMenu["menu"].delete(0, 'end')
+        for choice in Attrs:
+            self.attrNameMenu["menu"]\
+                .add_command(label=choice, command= lambda a=choice: \
+                    self.attrName.set(a))
+
+    def update(self,entityNameOld=None,entityNameNew= None):
+        self.updateEntities(entityNameNew)
+        if self.belongToEntity == entityNameOld: self.updateAttrs(entityNameNew)
+        self.updateAttributes(entityNameNew)
+
+
 
 class entity:
     def __init__(self, name, attributes, \
         primaryKeys, ForgeinKeys):
         self.isInitialized = False
-        self.wrapper = Frame(validation_frame, highlightthickness=2, highlightbackground='black')
+        self.entityCurName = name
+        self.wrapper = Frame(entities_wrapper, highlightthickness=2, highlightbackground='black')
         self.attWrapper = Frame(self.wrapper, highlightthickness=2, highlightbackground='black')
 
-        # self.wrapper.grid(row=row)
         self.attributes = {}
         self.primaryKeys = set(primaryKeys)
         self.ForgeinKeys = ForgeinKeys
@@ -295,14 +396,10 @@ class entity:
              textvariable=self.name, width=120)
         self.entityName.pack(fill='both', expand=True,padx=20, pady=20)
 
-        # self.entityName.grid(row=row+1, column=1)
-        # self.entityName.pack(padx=20, pady=20)
         # Is Weak
         self.isWeak = Variable()
         self.c = CTkCheckBox(self.wrapper, text = "isWeak", variable=self.isWeak,command=self.isWeakChecked)
-        # self.c.grid(row=row+1, column=3)
         self.isWeak.set(int(value['isWeak']))
-        # if isWeak: self.c.select()
         self.c.pack(fill='both', expand=True,padx=20, pady=20)
         # Attributes
         attrLabel = Label(self.wrapper,text ="___Attributes__")
@@ -325,36 +422,69 @@ class entity:
         self.foreignKeyWrapper = Frame(self.wrapper, highlightthickness=2, highlightbackground='black')
 
         self.ForgeinKeysUI = []
-
         for f in ForgeinKeys:
             fk = foreignKey(self.foreignKeyWrapper,f['attributeName']\
-                ,list(attributes.keys()),f['ForignKeyTable'], \
+                ,self.name.get(),attributes,f['ForignKeyTable'], \
                 f['ForignKeyTableAttributeName'], f['patricipaction'])
             self.ForgeinKeysUI.append(fk)
-            self.attributes[f['attributeName']].addForeignKey(fk)
 
         self.foreignKeyWrapper.pack(fill='both', expand=True,padx=20, pady=20)
         self.isInitialized = True
+
+
+        self.newFKButton = CTkButton(self.wrapper, \
+            text="Add Foreign Key",command=self.addForeignKey)
+
+        self.newFKButton.pack(fill='both', expand=True,padx=20, pady=20)
     
     def addAttribute(self):
-        attr_default_name = "attr" + str(len(self.attributes))
-        self.attributes[self.name.get()] = attribute(self.attWrapper,self.name.get(),attr_default_name, "str",False)
+        attr_default_name = "attr" + str(len(self.attributes)+1)
+        self.attributes[attr_default_name] =\
+             attribute(self.attWrapper,self.name.get(),attr_default_name, "str",False)
         global_schema[self.name.get()]['attributes'][attr_default_name] = "str"
+        expandCanvas()
+        updataAllForeignKeys()
 
     def isWeakChecked(self):
         if self.isInitialized:
             global_schema[self.name.get()]['isWeak'] = not self.isWeak.get()
-            print("isWeakChecked",self.name.get(),global_schema[self.name.get()]['isWeak'])
-    
+
     def editEntityName(self,sv):
         if self.isInitialized:
-            return
-            ####################
-            global_schema[self.name.get()]['name'] = sv.get()
-            
-            for attr in self.attributes.values():
-                attr.updateAttributes(sv.get())
+            old_key = self.entityCurName
+            new_key = sv.get()
+            global_schema[old_key]['TableName'] = new_key
+            global_schema[new_key] = global_schema.pop(old_key)#global_schema[old_key]
+            updataAllForeignKeys(old_key,new_key)
+            for attrKey in self.attributes.keys():
+                if self.attributes[attrKey].entityName == old_key:
+                    self.attributes[attrKey].entityName = new_key
+            self.entityCurName = new_key
             ######################
+
+    def addForeignKey(self):
+        # default to first entity and to first primary key
+        attributeName = list(self.attributes.keys())[0]
+        default_participation = 'full'
+        default_table = list(global_schema.keys())[0]
+        default_attribute = global_schema[default_table]['primaryKey'][0]
+        fk = foreignKey(self.foreignKeyWrapper,attributeName\
+                ,self.name.get(),self.attributes,default_table, \
+                default_attribute,default_participation)
+        self.ForgeinKeysUI.append(fk)
+
+        new_fk = { 'attributeName': attributeName, 
+            'ForignKeyTable': default_table, 
+            'ForignKeyTableAttributeName':default_attribute , 
+            'patricipaction': 'full', 
+            'dataType': self.attributes[default_attribute]}
+        
+        global_schema[self.entityCurName]['ForgeinKey'].append(new_fk)
+        expandCanvas()
+        
+        
+
+
 
     
 root = Tk()
@@ -378,6 +508,9 @@ canvas.configure(yscrollcommand=scroll_y.set)
 canvas.bind("<Configure>", lambda event: canvas.configure(scrollregion=canvas.bbox("all")))
 validation_frame = Frame(canvas)
 canvas.create_window((0, 0), window=validation_frame, anchor="nw")
+entities_wrapper = Frame(validation_frame, highlightthickness=2, highlightbackground='black')
+entities_wrapper.pack(fill='both', expand=True,padx=20, pady=20)
+
 
 entities_list = []
 # group of widgets
@@ -385,6 +518,24 @@ for _, value in global_schema.items():
     entities_list.append(entity(value['TableName'],\
          value['attributes'], value['primaryKey'],\
               value['ForgeinKey']))
+
+buttons_wrapper = Frame(validation_frame, highlightthickness=2, highlightbackground='black')
+buttons_wrapper.pack(fill='both', expand=True,padx=20, pady=20)
+
+#add entity
+#add button
+button_wrapper = Frame(validation_frame, highlightthickness=2, highlightbackground='black')
+button_wrapper.pack(fill='both', expand=True,padx=20, pady=20)
+
+addEntityButton = CTkButton(button_wrapper, \
+            text="Add new Entity",command=addEntity)
+addEntityButton.pack(fill='both', expand=True,padx=20, pady=20)
+#save object and add errors if needed
+#save button
+saveButton = CTkButton(button_wrapper, \
+            text="Save Changes",command=saveChanges)
+saveButton.pack(fill='both', expand=True,padx=20, pady=20)
+
 
 # put the frame in the canvas
 # canvas.create_window(0, 0, anchor='nw', window=frame)

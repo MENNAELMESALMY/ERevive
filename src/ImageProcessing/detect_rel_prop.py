@@ -2,8 +2,8 @@ import numpy as np
 import cv2 as cv
 import math
 from skimage.morphology import dilation
-from path_points import *
-from utility import fillHole
+from .path_points import *
+from .utility import fillHole
 import pytesseract
 def check_direct_path(path,entities,orig_entity,relations,orig_relation):
     set_path =set(tuple(x) for x in path)

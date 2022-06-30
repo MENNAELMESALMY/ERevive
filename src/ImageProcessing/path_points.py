@@ -1,7 +1,7 @@
 from collections import deque
 import cv2 as cv
 import numpy as np
-from utility import fillHole
+from .utility import fillHole
 from skimage.morphology import opening,erosion,dilation
 def enhance_contour(img,contour,kernel=10):
     empty_img = np.zeros(img.shape,np.uint8)

@@ -1,5 +1,3 @@
-
-
 import tkinter as tk
 from tkinter import ttk, Tk, Canvas, Entry, Text, Button, PhotoImage,Label,Scrollbar
 from tkinter import *

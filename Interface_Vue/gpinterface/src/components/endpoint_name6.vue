@@ -1,36 +1,36 @@
 <template>
-    <div class="dashboard">
-        <div>		<label>course name</label>
-		<input type="text" :v-model=course name>
-		<label> regex matching (case invariant)</label>
-		<label> max</label><br>
-		<label>course id</label>
-		<input type="number" :v-model=course id>
-		<label> equal to</label>
-		<label> avg</label><br>
+  <div class="dashboard">
+    <div>
+      <label>course name</label>
+      <input type="text" :v-model="course" name />
+      <label> regex matching (case invariant)</label>
+      <label> max</label><br />
+      <label>course id</label>
+      <input type="number" :v-model="course" id />
+      <label> equal to</label>
+      <label> avg</label><br />
 
-        <input type="submit"
-        value="Call endpoint"
-        @click='call_request'>
-        </div>
-        <table>
-        <tr>
-		<th>field1</th>
-		<th>field2</th>
-		<th>field3</th>
-		<th>field4</th>
-		<th>field5</th>
-		<th>field6</th>
-		</tr><tr v-for='(row,i) in dashboard_data' :key='i'>
-			<td>{{row.field1}}</td>
-			<td>{{row.field2}}</td>
-			<td>{{row.field3}}</td>
-			<td>{{row.field4}}</td>
-			<td>{{row.field5}}</td>
-			<td>{{row.field6}}</td>
-		</tr>
-        </table>
+      <input type="submit" value="Call endpoint" @click="call_request" />
     </div>
+    <table>
+      <tr>
+        <th>field1</th>
+        <th>field2</th>
+        <th>field3</th>
+        <th>field4</th>
+        <th>field5</th>
+        <th>field6</th>
+      </tr>
+      <tr v-for="(row, i) in dashboard_data" :key="i">
+        <td>{{ row.field1 }}</td>
+        <td>{{ row.field2 }}</td>
+        <td>{{ row.field3 }}</td>
+        <td>{{ row.field4 }}</td>
+        <td>{{ row.field5 }}</td>
+        <td>{{ row.field6 }}</td>
+      </tr>
+    </table>
+  </div>
 </template>
 
 <style lang="scss" scoped>
@@ -38,30 +38,28 @@
 </style>
 
 <script>
-    import { mapState } from "vuex";
-    export default {
-    name: "dashBoard",
-    props: {},
-    data: function () {
+import { mapState } from "vuex";
+export default {
+  name: "dashBoard",
+  props: {},
+  data: function () {
     return {
-		course_name:"",
-		course_id:"",
-
+      course_name: "",
+      course_id: "",
     };
-    },
-    computed: {
+  },
+  computed: {
     ...mapState({
-    dashboard_data: state => state.c2.endpoint_name6,
-}),},
-    methods: {
+      dashboard_data: (state) => state.c2.endpoint_name6,
+    }),
+  },
+  methods: {
     call_request() {
-    this.$store.dispatch("c2/endpoint_name6",
-		 {course_name: this.course_name,
-		course_id: this.course_id,
-		
+      this.$store.dispatch("c2/endpoint_name6", {
+        course_name: this.course_name,
+        course_id: this.course_id,
       });
-    }
-    }
-    };
+    },
+  },
+};
 </script>
-    

@@ -1,6 +1,6 @@
-from tkinter import Tk,Frame, Canvas, OptionMenu, Variable, Button,Label,Scrollbar,StringVar,IntVar,Checkbutton
-from tkinter import RIGHT,Y,BOTTOM,LEFT,X,TOP,W,E,N,S
-from customtkinter import CTkEntry,CTkFrame,CTkCheckBox,CTkComboBox,CTkLabel,CTkButton
+from tkinter import Tk,Frame, Canvas, OptionMenu, Variable,Label,Scrollbar,StringVar
+from tkinter import RIGHT,Y
+from customtkinter import CTkEntry,CTkFrame,CTkCheckBox,CTkButton
 
 global_schema = {
     11: 
@@ -544,9 +544,6 @@ class entity:
         # remove from object
         global_schema.pop(self.name.get())
         
-
-
-
     
 root = Tk()
 screen_width = root.winfo_screenwidth()

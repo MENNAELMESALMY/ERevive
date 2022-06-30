@@ -329,3 +329,19 @@ def removeContoursRelations(relations):
                 entity.pop('paths')           
         
     return relations
+
+def addDefaultKey(entities , idx):
+    for e in entities:
+        if not e["isWeak"]:
+            hasKey = any([attr["isKey"] for attr in e["attributes"]])
+            if not hasKey:
+                e["attributes"].append({
+                    "idx": idx,
+                    "dataType": "int",
+                    "isKey": not hasKey,
+                    "isMultivalued": hasKey,
+                    "name": "IncrementalKey",
+                    "children": []
+                })
+                idx+=1
+    return entities , idx

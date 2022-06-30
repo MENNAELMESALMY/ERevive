@@ -1,12 +1,12 @@
 import json
 from utils import *
-from create_vue_app.create_form import *
-from create_vue_app.create_routing import *
-from create_vue_app.create_store_idx import *
-from create_vue_app.create_dashboard import *
-from create_vue_app.create_cards import *
-from create_vue_app.create_store import *
-from create_vue_app.create_cards_designs import *
+from CreateVueApp.create_form import *
+from CreateVueApp.create_routing import *
+from CreateVueApp.create_store_idx import *
+from CreateVueApp.create_dashboard import *
+from CreateVueApp.create_cards import *
+from CreateVueApp.create_store import *
+from CreateVueApp.create_cards_designs import *
 
 
 

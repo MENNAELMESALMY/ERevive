@@ -99,6 +99,8 @@ def process_image(img_dir):
         #connectEntities(finalContours,binarizedImg,shapes)
         connectedComponents = removeContours(connectedComponents)
         relations = removeContoursRelations(relations)
+        connectedComponents, shapes_no = addDefaultKey(connectedComponents, shapes_no)
+
         print(connectedComponents,relations)
         print("///////////////////////////////////////////")
         #print(relations)

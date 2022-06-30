@@ -131,4 +131,9 @@ dmypy.json
 .pyre/
 #Pickles
 /src/SearchEngine/OneHotVocab.pickle
-src/SearchEngine/queriesMatrix.pickle
+/src/SearchEngine/queriesMatrix.pickle
+/src/SearchEngine/nGrams/entities.pickle
+/src/SearchEngine/nGrams/ngrams.pickle
+/src/SearchEngine/nGrams/unigram.pickle
+/src/Application/api/
+/src/ImageProcessing/output/

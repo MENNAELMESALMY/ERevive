@@ -72,9 +72,15 @@ def create_api_namespaces(api,clusters):
         # create parser for each query
         for query in cluster:
             #print(query['entities'])
+            cartesian = len(query["entities"]) > 1 and len(query["bestJoin"]) == 0
+            hasGroupBy = len(query["groupByAttrs"]) != 0
+            if cartesian and hasGroupBy:
+                continue
+
             resource_model , endpoint_object , _ = create_query_ui_endpoint(query,api.modelsObjects)  # return to frontend
             clusters_out[api_name].append(endpoint_object)
             parse_args , db_query = create_query_api_logic(endpoint_object,query,api.modelsObjects)  
+
             #create api logic
             if endpoint_object["endpoint_name"] == "get_awards_players_player_allstar_groupedby__minutes":
                 print("WEWEWE\n")
@@ -149,7 +155,7 @@ def get_aggr_attrs(aggr_attrs):
     return final_aggr_attr
 
 
-def oreder_joins(query_joins,db_query):
+def order_joins(query_joins,db_query):
     joins = query_joins.copy()
     best_Joins = []
     best_entities = []
@@ -162,6 +168,7 @@ def oreder_joins(query_joins,db_query):
     entity2 = join.split('=')[1].split('.')[0][1:]
     search_entity = entity2
     first_search = True
+    should_print = False
     while len(joins):
         found = False
         
@@ -175,6 +182,7 @@ def oreder_joins(query_joins,db_query):
                     #best_entities.append(entity2 if entity2 != search_entity else entity1)
                     first_join = False
                 found = True
+                first_search = True
                 best_Joins.append(joins.pop(i).replace('=','=='))
                 #best_entities.append(search_entity)
                 entity1 , entity2 = j_entity1 , j_entity2
@@ -182,12 +190,13 @@ def oreder_joins(query_joins,db_query):
                 break
         
         if not found and not first_search:
+            should_print = True
             first_search = False
             j = joins.pop(0)
-            not_found.append()
-            not_found_entities.append(entity1)
             entity1 = j.split('.')[0][1:] 
             entity2 = j.split('=')[1].split('.')[0][1:]
+            not_found.append(j.replace('=','=='))
+            not_found_entities.append(entity1)
             search_entity = entity2
 
         if not found and first_search:
@@ -203,10 +212,15 @@ def oreder_joins(query_joins,db_query):
     entity2 = best_Joins[-1].split('==')[1].split('.')[0][1:]
     substrings1 = "({0},|({0})| {0},| {0})|({0}.| {0}.".format(entity1).split("|")
     substrings2 = "({0},|({0})| {0},| {0})|({0}.| {0}.".format(entity2).split("|")
-
+    
     if any(map(db_query.__contains__, substrings1)) or any(map(db_query.__contains__, substrings2)):
-        best_entities.reverse()
+        #best_entities.reverse()
         best_Joins.reverse()
+        # print("MMMMMMMMMMMMMMMMMMMMMMM")
+        # print(db_query)
+        # print("origginal", query_joins)
+        # print("joins" , best_Joins)
+        # print("not found" , not_found)
 
     #choose right entity
     best_entities = []
@@ -231,10 +245,12 @@ def oreder_joins(query_joins,db_query):
             best_entities.append(entity1)
         prev_entity = best_entities[-1]
 
+    #print(not_found)
+    #print(not_found_entities)
     best_Joins.extend(not_found)
     best_entities.extend(not_found_entities)
 
-    return best_entities , best_Joins 
+    return best_entities , best_Joins , should_print
 
     
 
@@ -318,7 +334,7 @@ def create_query_api_logic(endpoint_object,query,models_obj):
 
     db_query += select_attr + ')'
 
-
+    should_print = False
     #join
     hereJoins = False
     joins = ""
@@ -351,7 +367,7 @@ def create_query_api_logic(endpoint_object,query,models_obj):
                 joins += "\\\n\t\t\t\t.join({0},{1})".format(entity,join)
         else:
             hereJoins = True
-            entities,best_joins = oreder_joins(query["bestJoin"],db_query)
+            entities,best_joins,should_print = order_joins(query["bestJoin"],db_query)
             for i in range(len(best_joins)):
                 joins += "\\\n\t\t\t\t.join({0},{1})".format(entities[i],best_joins[i])
 
@@ -470,13 +486,14 @@ def create_query_api_logic(endpoint_object,query,models_obj):
             #selectAttrs = [attr[0] for attr in query["selectAttrs"] if "*" not in attr[0]]
         #print("final Attrs: ",selectAttrs)
         groupByAttrs.update(selectAttrs)
+    is_group_by = False
     groupby_attr = "\\\n\t\t\t\t.group_by(" if len(groupByAttrs) else ""
     for attr in groupByAttrs:
         groupby_attr += "{0}, ".format(attr)
     if len(groupby_attr):
+        is_group_by = True
         groupby_attr = groupby_attr[:-2] + ")"
         db_query += groupby_attr
-
 
     # having 
     # Note --> having(count(*)) > having_vale
@@ -514,13 +531,20 @@ def create_query_api_logic(endpoint_object,query,models_obj):
 
 
     # order_by
+    contains_aggr = any(map(db_query.__contains__, "(func.| func.".split("|")))
+    will_print = False
     orderby_attr = "\\\n\t\t\t\t.order_by(" if len(query["orderByAttrs"]) else ""
     for attr in query["orderByAttrs"]: # [["teams.tmID", "str"], ""]
         if attr[0][0] == "*" and not attr[1] : continue
         attr_name = attr[0][0] if "*" not in attr[0][0] else ""
         attr_aggregation = attr[1]
+        if (attr_aggregation and not (is_group_by or contains_aggr)):
+            will_print = True
+            # print("MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM")
+            # print(db_query)
+            # print("MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM")
 
-        aggr = "_"+attr_aggregation +"_" if attr_aggregation else ""
+        aggr = "_"+attr_aggregation +"_" if (attr_aggregation and (is_group_by or contains_aggr)) else ""
         if attr[0][0] == "*":
             param_name = "is_order_of"+aggr+"of_rows_desc"
         else:
@@ -532,7 +556,7 @@ def create_query_api_logic(endpoint_object,query,models_obj):
         {0}direction = desc if args['{1}'] else asc\n".format(variable_name,param_name)
         
 
-        if attr_aggregation:
+        if attr_aggregation and (is_group_by or contains_aggr):
             orderby_attr += "{0}direction(func.{2}({1})), ".format(variable_name,attr_name,attr_aggregation)
         else:
             orderby_attr += "{0}direction({1}), ".format(variable_name,attr_name)
@@ -556,23 +580,30 @@ def create_query_api_logic(endpoint_object,query,models_obj):
         "ui_name":ui_name,
         "url":endpoint_url,
         }) 
-    
+
+    if will_print:
+        print("MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM")
+        print(db_query)
+        print("MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM")
+    #print(db_query)
     #if "results = db.session.query(awards_players.lgID, awards_players.playerID, func.count().label('count_all'))" in db_query:
-    if hereJoins and "db.session.query(teams.rank.label('teams.rank'), teams.name.label('teams.name'), teams.lgID.label('teams.lgID'))" in db_query:
+    #if hereJoins and "db.session.query(teams.rank.label('teams.rank'), teams.name.label('teams.name'), teams.lgID.label('teams.lgID'))" in db_query:
+    #if should_print:
     #if "db.session.query(func.count().label('count_all'), coaches.coachID.label('coaches.coachID'))" in db_query:   
         #print("entites",query["en"])
-        print(select_attr)
-        print()
-        print(joins)
-        print()
-        print(query["bestJoin"])
-        #print(endpoint_object["response"])
-        print("//////////////////////////////")
-        print("selectAttrs",query["selectAttrs"])
-        print("aggrAttrs", query["aggrAttrs"])
-        print("groupByAttrs",query["groupByAttrs"])
+        # print(select_attr)
+        # print()
+        # print(joins)
+        # print()
+        #print(query["origQuery"])
+        #print(query["bestJoin"])
+        # #print(endpoint_object["response"])
+        #print("//////////////////////////////")
+        # print("selectAttrs",query["selectAttrs"])
+        # print("aggrAttrs", query["aggrAttrs"])
+        # print("groupByAttrs",query["groupByAttrs"])
         #print("entities",query["entities"])
-        print(db_query,"\n")
+        #print(db_query,"\n")
     
     return parse_args , db_query
 
@@ -642,12 +673,13 @@ def create_query_ui_endpoint(query,modelsObjects):
     for attr in query["orderByAttrs"]:
         if attr[0][0] == "*" and attr[1] is None:
             continue
-        
+
+        contain_aggr = len(query["aggrAttrs"]) > 0 or len(query["groupByAttrs"]) > 0
         attr_name = attr[0][0]
         attr_type = attr[0][1]
         attr_aggregation = attr[1]
         param_name = ""
-        aggr = "_"+attr_aggregation +"_" if attr_aggregation else ""
+        aggr = "_"+attr_aggregation +"_" if attr_aggregation and contain_aggr else ""
         if attr_name == "*":
             param_name = "is_order_of"+aggr+"of_rows_desc"
         else:

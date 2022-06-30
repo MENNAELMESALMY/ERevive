@@ -67,6 +67,7 @@ def getMappedQueries(finalQueriesIndexs):
         
         coverage = queryCoverage(mappedAttributes)
         query = constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,idx,goals,listOfQueries[idx],bestJoin,testSchema)
+               
         queries.append(query)
         #print("mappedAttributes: ",mappedAttributes)
         #query = constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,compactness)

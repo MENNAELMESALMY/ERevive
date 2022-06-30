@@ -23,7 +23,7 @@ def changeContours(contours, img,idx):
     return  np.array([contour])
 
 ##12,17,40,24,13,14 ,18 are good tests
-img_dirs =["12.png"]#os.listdir("input")
+img_dirs =["13.png"]#os.listdir("input")
 print(img_dirs)
 #dirs = os.listdir('input')
 #for idx,img_dir in enumerate(dirs):
@@ -98,6 +98,8 @@ for idx,img_dir in enumerate(img_dirs):
         #connectEntities(finalContours,binarizedImg,shapes)
         connectedComponents = removeContours(connectedComponents)
         relations = removeContoursRelations(relations)
+        connectedComponents, shapes_no = addDefaultKey(connectedComponents, shapes_no)
+
         print(connectedComponents,relations)
         print("///////////////////////////////////////////")
         #print(relations)

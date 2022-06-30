@@ -249,6 +249,7 @@ def mapToSchema(query,schema,entityDict,schemaEntityNames):
     global takenEntities
     takenEntities = set()
 
+    #goals.update(set(mappedEntitesNames))
     # global bazetCount
     # print("bazetCount",bazetCount)
     return mappedEntities,mappedAttributes,goals,mappedEntitesDict,bestJoin

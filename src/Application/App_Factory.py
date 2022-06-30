@@ -74,7 +74,7 @@ def create_api_namespaces(api,clusters):
             clusters_out[api_name].append(endpoint_object)
             parse_args , db_query = create_query_api_logic(endpoint_object,query,api.modelsObjects)  
             #create api logic
-            if endpoint_object["endpoint_name"] == "get_awards_players_player_allstar_groupedby__minutes":
+            if endpoint_object["endpoint_name"] == "get_players_awards_players_groupedby_playerID_orderedby_all":
                 print("WEWEWE\n")
                 query.pop("origQuery")
                 print(query)
@@ -529,7 +529,7 @@ def create_response_model(selectAttrs,aggrAttrs,entities,modelsObject):
     "datetime":"fields.DateTime"
     }
     response_model = ""
-    ui_response_model = []
+    ui_response_model = {}
     db_selects= []
     #select *
     #enttity.*
@@ -568,10 +568,10 @@ def create_response_model(selectAttrs,aggrAttrs,entities,modelsObject):
 
         if attr_type in pythondtypes_restmapping:
             response_model+= "'"+attr_name+"' : "+pythondtypes_restmapping[attr_type]+","
-            ui_response_model.append((attr_name , attr_type))
+            ui_response_model[attr_name] = attr_type
         else:
             response_model+=  "'"+attr_name+"' : fields.String,"
-            ui_response_model.append((attr_name , "str"))
+            ui_response_model[attr_name] = "str"
             
     for attr in aggrAttrs:
         attr_aggregation = attr[1]
@@ -582,17 +582,17 @@ def create_response_model(selectAttrs,aggrAttrs,entities,modelsObject):
         if attr_name == "count_awards_players.playerID":print(attr)
         if attr_type in pythondtypes_restmapping:
             response_model+= "'"+attr_name+"' : "+pythondtypes_restmapping[attr_type]+","
-            ui_response_model.append((attr_name , attr_type))
+            ui_response_model[attr_name] = attr_type
         else:
             response_model+=  "'"+attr_name+"' : fields.String ,"
-            ui_response_model.append((attr_name , "str"))
+            ui_response_model[attr_name] = "str"
     response_model = response_model[:-1]
     return response_model , ui_response_model ,db_selects
 
 def get_astrisk_models(entities,modelsObjects):
     #print("inside astrisk",entities)
     all_models_response=''
-    all_models_ui_response = []
+    all_models_ui_response = {}
     for entity in entities:
         
         attrs = modelsObjects[entity]['attributes'].items()
@@ -602,7 +602,7 @@ def get_astrisk_models(entities,modelsObjects):
         
         entity_model,entity_ui_model,_ = create_response_model(attrs,[],entities,modelsObjects)
         all_models_response+=entity_model+","
-        all_models_ui_response.extend(entity_ui_model)
+        all_models_ui_response.update(entity_ui_model)
     all_models_response = all_models_response[:-1]
     return all_models_response , all_models_ui_response
 

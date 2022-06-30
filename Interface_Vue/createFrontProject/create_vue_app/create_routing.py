@@ -3,8 +3,11 @@ def generate_routing(clusters,directory):
 import { createWebHistory, createRouter } from "vue-router";
 import home from "../views/home.vue";
 '''
+    imports = []
     for cluster in clusters:
-        routing_string += 'import '+cluster+' from "../views/'+cluster+'_view.vue";\n'
+         imports.append('import '+cluster+' from "../views/'+cluster+'_view.vue";')
+    imports = list(set(imports))
+    routing_string += "\n".join(imports)
     routing_string += '''
 const routes = [
   {

@@ -49,12 +49,12 @@ from utils import convert_db_model_to_restx_model , serialize \n\
         delete_filter_primary_keys = ""
         body_params = []
         query_params = []
-        ui_response_model = []
+        ui_response_model = {}
         self.crud_clusters.update({model:[]})
         for attribute in attributes:
             terminal_command = ','
             type = self.modelsObjects[model]['attributes'][attribute]
-            ui_response_model.append((attribute,type))
+            ui_response_model[attribute]=type
             if attribute == attributes[-1]:
                 terminal_command = ''
             if attribute in primary_keys:
@@ -74,9 +74,9 @@ from utils import convert_db_model_to_restx_model , serialize \n\
             "queryParams": [],
             "bodyParams": [],
             "response": ui_response_model,
-            "ui_name": ui_name,
+            "ui_name": "get_"+ui_name,
             "cluster_name": model,
-            "endpoint_name":endpoint_name,
+            "endpoint_name":"get_"+endpoint_name,
             "is_single_entity":True
         },
         {
@@ -85,33 +85,33 @@ from utils import convert_db_model_to_restx_model , serialize \n\
             "queryParams": [],
             "bodyParams": body_params,
             "response": ui_response_model,
-            "ui_name": ui_name,
+            "ui_name": "create_"+ui_name,
             "cluster_name": model,
-            "endpoint_name":endpoint_name,
+            "endpoint_name":"create_"+endpoint_name,
             "is_single_entity":True
-        },
-        {
-            "method": "put",
-            "url": endpoint_url,
-            "queryParams": [],
-            "bodyParams": body_params,
-            "response": ui_response_model,
-            "ui_name": ui_name,
-            "cluster_name": model,
-            "endpoint_name":endpoint_name,
-            "is_single_entity":True
-        },
-        {
-            "method": "delete",
-            "url": endpoint_url,
-            "queryParams": query_params,
-            "bodyParams": [],
-            "response": ui_response_model,
-            "ui_name": ui_name,
-            "cluster_name": model,
-            "endpoint_name":endpoint_name,
-            "is_single_entity":True
-        },
+         },
+        # {
+        #     "method": "put",
+        #     "url": endpoint_url,
+        #     "queryParams": [],
+        #     "bodyParams": body_params,
+        #     "response": ui_response_model,
+        #     "ui_name": "update_"+ui_name,
+        #     "cluster_name": model,
+        #     "endpoint_name":"update_"+endpoint_name,
+        #     "is_single_entity":True
+        # },
+        # {
+        #     "method": "delete",
+        #     "url": endpoint_url,
+        #     "queryParams": query_params,
+        #     "bodyParams": [],
+        #     "response": ui_response_model,
+        #     "ui_name": "delete_"+ui_name,
+        #     "cluster_name": model,
+        #     "endpoint_name":"delete_"+endpoint_name,
+        #     "is_single_entity":True
+        # },
         ]
         crud_out = {
             model:endpoint_object
@@ -178,7 +178,7 @@ class {0}Api(Resource):\n\
         for model,namespace in self.namespaces.items():
             namespaces_imports+= 'from .{0}_api import {1} \n\
 '.format(model,namespace)
-            namespaces_init+='rest_plus_api.add_namespace({0},path="/{1}s")\n\
+            namespaces_init+='rest_plus_api.add_namespace({0},path="/{1}")\n\
     '.format(namespace,model.lower())
 
         return namespaces_imports,namespaces_init
@@ -329,7 +329,7 @@ def serialize(results):\n\
         namespaces_imports = 'from .{0}_api import {0}_namespace \n\
 '.format(api_name)
         api_init_namespace = '\n\
-    rest_plus_api.add_namespace({0}_namespace,path="/{1}s")'.format(api_name,route_path)
+    rest_plus_api.add_namespace({0}_namespace,path="/{1}")'.format(api_name,route_path)
         api_namespace = self.create_api_header(models)+'\n\
 {0}_namespace = Namespace("{0}", description="{0} Api") \n\
 '.format(api_name)

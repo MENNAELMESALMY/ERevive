@@ -1,22 +1,120 @@
-from tkinter import Tk,Frame, Canvas, OptionMenu, Variable,Label,Scrollbar,StringVar
+from tkinter import NW, Tk,Frame, Canvas, OptionMenu, Variable,Label,Scrollbar,StringVar
 from tkinter import RIGHT,Y
+from turtle import window_height, window_width
 from customtkinter import CTkEntry,CTkFrame,CTkCheckBox,CTkButton
-from numpy import pad
 
-global_schema = {}
+global_schema = {
+    11: 
+    {'TableName': 'DEPARTMENT', 
+    'TableType':'',
+    'attributes': {
+    'name': 'str', 
+    'start_date': 'datetime',
+    'EMPLOYEE_Manages': 'str'}, 
+    'primaryKey': ['name'], 
+    'ForgeinKey': [{'attributeName': 'EMPLOYEE_Manages',
+    'ForignKeyTable': 'EMPLOYEE', 
+    'ForignKeyTableAttributeName': 'ssn', 
+    'patricipaction': 'partial', 
+    'dataType': 'str'}], 
+    'isWeak': False},
+    34: 
+    {'TableName': 'DEPARTMENT_Clocation', 
+    'TableType':'',
+    'attributes': {'Clocation': 'str',
+    'DEPARTMENT_name': 'str'}, 
+    'primaryKey': ['Clocation', 
+    'DEPARTMENT_name'], 
+    'ForgeinKey': [{'attributeName': 'DEPARTMENT_name', 
+    'ForignKeyTable': 'DEPARTMENT', 
+    'ForignKeyTableAttributeName': 'name', 
+    'patricipaction': 'full', 
+    'dataType': 'str'}], 
+    'isWeak': False}, 
+    12: 
+    {'TableName': 'EMPLOYEE',
+    'TableType':'',
+    'attributes': {'last_name': 'str', 
+    'middle_initis': 'str', 
+    'first_name': 'str', 
+    'address': 'str',
+    'salary': 'float',
+    'sex': 'str', 
+    'status': 'str', 
+    'birth_dat': 'str', 
+    'ssn': 'str',
+    'start_date': 'datetime',
+    'DEPARTMENT_Employed_name': 'str',
+    'EMPLOYEE_Supervision_': 'str'},
+    'primaryKey': ['ssn'], 
+    'ForgeinKey': [{'attributeName': 'DEPARTMENT_Employed_name',
+    'ForignKeyTable': 'DEPARTMENT', 'ForignKeyTableAttributeName': 'name',
+    'patricipaction': 'full', 'dataType': 'str'}, 
+    {'attributeName': 'EMPLOYEE_Supervision_', 
+    'ForignKeyTable': 'EMPLOYEE', 
+    'ForignKeyTableAttributeName': 'ssn',
+    'patricipaction': 'partial', 
+    'dataType': 'str'}], 
+    'isWeak': False},
+    24: {'TableName': 'PROJECT', 
+    'TableType':'',
+    'attributes': {'location': 'str',
+    'name': 'str', 
+    'budget': 'float',
+    'DEPARTMENT_Assigned_name': 'str'}, 
+    'primaryKey': ['name'], 
+    'ForgeinKey': [{'attributeName': 'DEPARTMENT_Assigned_name',
+    'ForignKeyTable': 'DEPARTMENT', 
+    'ForignKeyTableAttributeName': 'name',
+    'patricipaction': 'partial', 
+    'dataType': 'str'}], 
+    'isWeak': False}, 
+    25: 
+    {'TableName': 'DEPENDENT',
+    'TableType':'',
+    'attributes': {'sex': 'str', 
+    'relatlonship': 'str',
+    'name': 'str',
+    'birth_date': 'datetime', 
+    'Dependents_EMPLOYEE_': 'str'}, 
+    'primaryKey': ['Dependents_EMPLOYEE_'], 
+    'ForgeinKey': [{'attributeName': 'Dependents_EMPLOYEE_', 
+    'ForignKeyTable': 'EMPLOYEE', 
+    'ForignKeyTableAttributeName': 'ssn', 
+    'patricipaction': 'partial', 
+    'dataType': 'str'}], 
+    'isWeak': True}, 
+    35: 
+    {'TableName': 'Works_EMPLOYEE_PROJECT', 
+    'TableType':'mTm',
+    'attributes': {
+    'start_date': 'datetime', 
+    'hours': 'int', 
+    'EMPLOYEE_': 'str', 
+    'PROJECT_': 'str'}, 
+    'primaryKey': ['EMPLOYEE_', 'PROJECT_'], 
+    'ForgeinKey': [{'attributeName': 'EMPLOYEE_', 
+    'ForignKeyTable': 'EMPLOYEE',
+    'ForignKeyTableAttributeName': 'ssn', 
+    'patricipaction': 'full',
+    'dataType': 'str'}, 
+    {'attributeName': 'PROJECT_',
+    'ForignKeyTable': 'PROJECT', 
+    'ForignKeyTableAttributeName': 'name',
+    'patricipaction': 'full',
+    'dataType': 'str'}
+    ], 
+    'isWeak': False}}
 
-validation_frame = None
-canvas = None
-errors_labels = []
-errors_wrapper = None
-entities_list = []
-# print(global_schema)
+old_keys = list(global_schema.keys())
+for old_key in old_keys:
+    new_key = global_schema[old_key]['TableName']
+    global_schema[new_key] = global_schema.pop(old_key)
 
 dataTypes = ['str', 'int', 'float', 'datetime','bool']
 participations = ['full', 'partial']
 
 def addEntity():
-    global entities_list,row,col,ROWCOUNT,entities_wrapper
     default_entity_name = 'entity_'+ str(len(global_schema))
     global_schema[default_entity_name] = {'TableName': default_entity_name, 
     'TableType':'',
@@ -24,17 +122,11 @@ def addEntity():
     'primaryKey': [], 
     'ForgeinKey': [], 
     'isWeak': False}
-    entities_list.append(entity(default_entity_name,{}, [],[],\
-        entities_wrapper,global_schema[default_entity_name],row,col))
-    if col!=0 and col == ROWCOUNT-1:
-        row +=1
-    col = (col+1)%ROWCOUNT#+3)%12
+    entities_list.append(entity(default_entity_name,{}, [],[]))
     expandCanvas()
     updataAllForeignKeys()
 
 def expandCanvas():
-    global validation_frame
-    global canvas
     validation_frame.update()
     height = validation_frame.winfo_height()
     canvas.itemconfigure("canvas_frame", height=height)
@@ -42,9 +134,7 @@ def expandCanvas():
 
 def saveChanges():
     # destroy errors if exists
-    global errors_labels
-    for err_lb in errors_labels:
-        err_lb.destroy()
+    for err_lb in errors_labels: err_lb.destroy()
     errors=[]
     for entity in global_schema.values():
         entityName = entity['TableName']
@@ -63,7 +153,6 @@ def saveChanges():
         print('------------------------------------------------------')
         print(global_schema)
     # add ui for errors
-    global errors_wrapper
     for err in errors:
         err_lb = Label(errors_wrapper,text =err)
         err_lb.pack(fill='both', expand=True,padx=10, pady=10)
@@ -72,7 +161,6 @@ def saveChanges():
 
 
 def updataAllForeignKeys(entityNameOld='',entityNameNew = ''):
-    global entities_list
     for entity in entities_list:
         for fk in entity.ForgeinKeysUI:
             if fk.removed:continue
@@ -85,7 +173,6 @@ def updataAllForeignKeys(entityNameOld='',entityNameNew = ''):
                 fk.update()
 
 def removeHangingForeignKeys(entityName='',attributeName = ''):
-    global entities_list
     for entity in entities_list:
         for fk in entity.ForgeinKeysUI:
             # print(entityNameOld,fk.entityName.get())
@@ -298,11 +385,9 @@ class foreignKey:
             self.updateAttrs()
         self.updateAttributes(entityNameNew)
 
-
-
 class entity:
     def __init__(self, name, attributes, \
-        primaryKeys, ForgeinKeys,entities_wrapper,value,row,col):
+        primaryKeys, ForgeinKeys,row,col,rowspan):
         self.isInitialized = False
         self.entityCurName = name
         self.wrapper = Frame(entities_wrapper, highlightthickness=2, highlightbackground='black')
@@ -334,8 +419,11 @@ class entity:
                 attributeName, dataType,attributeName in self.primaryKeys)
 
         # self.wrapper.pack(fill='both', expand=True,padx=20, pady=20)
+        #self.wrapper.update()
+        #print(self.wrapper.winfo_height())
         self.wrapper.grid(row=row, column=col,\
             columnspan=1, sticky='news',padx=(10, 10),pady=(10,10))
+
         self.attWrapper.pack(fill='both', expand=True,padx=20, pady=20)
 
         self.newAttrButton = CTkButton(self.wrapper, \
@@ -431,125 +519,90 @@ class entity:
         self.wrapper.destroy()
         # remove from object
         global_schema.pop(self.name.get())
-class ValidationPage(Frame):
-
-    def __init__(self, parent, controller):
-        Frame.__init__(self, parent)
-        global screen_width,screen_height
-
-##
-        # self.geometry(f"{screen_width}x{screen_height}")
-        self.grid_rowconfigure(0, weight=1)
-        self.columnconfigure(0, weight=1)
-
-##
-        frame_main = Frame(self, bg="gray")
-        frame_main.grid(padx=(185,0),sticky='news')
-        frame_main.grid_propagate(0)
-
-        screen_width = frame_main.winfo_screenwidth()
-        screen_height = frame_main.winfo_screenheight()
 
 
-##
-        # Create a frame for the canvas with non-zero row&column weights
-        global validation_frame
-        validation_frame = Frame(frame_main)
-        validation_frame.grid(row=0, column=0, sticky='nw')
-        validation_frame.grid_rowconfigure(0, weight=1)
-        validation_frame.grid_columnconfigure(0, weight=1)
-        # Set grid_propagate to False to allow 5-by-5 buttons resizing later
-        validation_frame.grid_propagate(False)
+root = Tk()
+screen_width = root.winfo_screenwidth()
+screen_height = root.winfo_screenheight()
+root.geometry(f"{screen_width}x{screen_height}")
+root.configure(bg = "#FFFFFF")
 
-        global canvas
+root.grid_rowconfigure(0, weight=1)
+root.columnconfigure(0, weight=1)
 
-##
-        # Add a canvas in that frame
-        canvas = Canvas(validation_frame, bg="yellow")
-        canvas.grid(row=0, column=0, sticky="news")
+frame_main = Frame(root, bg="gray")
+frame_main.grid(sticky='news')
+frame_main.grid_propagate(0)
 
-        # Link a scrollbar to the canvas
-        global vsb
-        vsb = Scrollbar(validation_frame, orient="vertical", command=canvas.yview)
-        vsb.grid(row=0, column=1, sticky='ns')
-        canvas.configure(yscrollcommand=vsb.set)
-##
+# Create a frame for the canvas with non-zero row&column weights
+validation_frame = Frame(frame_main)
+validation_frame.grid(row=0, column=0, sticky='nw')
+validation_frame.grid_rowconfigure(0, weight=1)
+validation_frame.grid_columnconfigure(0, weight=1)
+# Set grid_propagate to False to allow 5-by-5 buttons resizing later
+validation_frame.grid_propagate(False)
 
-##
+# Add a canvas in that frame
+canvas = Canvas(validation_frame, bg="yellow")
+canvas.grid(row=0, column=0, sticky="news")
 
-  
-    @staticmethod
-    def init_schema(initial_schema):
-        old_keys = list(initial_schema.keys())
-        for old_key in old_keys:
-            new_key = initial_schema[old_key]['TableName']
-            initial_schema[new_key] = initial_schema.pop(old_key)
-        global global_schema
-        global_schema = initial_schema
+# Link a scrollbar to the canvas
+vsb = Scrollbar(validation_frame, orient="vertical", command=canvas.yview)
+vsb.grid(row=0, column=1, sticky='ns')
+canvas.configure(yscrollcommand=vsb.set)
 
-    
-        
-    @staticmethod
-    def loadEntitiesFrames():
-        global validation_frame
-        # Create a frame to contain the buttons
-        global entities_wrapper
-        entities_wrapper = Frame(canvas, bg="blue")
-        canvas.create_window((185, 0), window=entities_wrapper, anchor='nw')
+# Create a frame to contain the buttons
+entities_wrapper = Frame(canvas, bg="blue")
+canvas.create_window((10, 10), window=entities_wrapper, anchor='nw')
 
-        global entities_list,row,col,ROWCOUNT
+entities_list = []
+row,col=0,0
+# max_rowspan = 0
+# group of widgets
+for _, value in global_schema.items():
+    rowspan=len(value['attributes'])
+    max_rowspan = max(max_rowspan,rowspan)
+    entities_list.append(entity(value['TableName'],\
+         value['attributes'], value['primaryKey'],\
+              value['ForgeinKey'],row,col,rowspan))
+    if col!=0 and col == 6:
+        row +=max_rowspan
+        max_rowspan=0
+    col = (col+1)%7#+3)%12
 
-        entities_list = []
-        row,col,ROWCOUNT=0,0,4
-        print("global_schema",global_schema)
+# Update buttons frames idle tasks to let tkinter calculate buttons sizes
+entities_wrapper.update_idletasks()
 
-        for _, value in global_schema.items():
-            entities_list.append(entity(value['TableName'],\
-                value['attributes'], value['primaryKey'],\
-                    value['ForgeinKey'],entities_wrapper,value,row,col))
-            if col!=0 and col == ROWCOUNT-1:
-                row +=1
-            col = (col+1)%ROWCOUNT#+3)%12
-        
-        entities_wrapper.update_idletasks()
-
-
-        global errors_wrapper
-        errors_wrapper = Frame(validation_frame, highlightthickness=2, highlightbackground='black')
-        # errors_wrapper.pack(fill='both', expand=True,padx=20, pady=20)
-        errors_wrapper.grid(row=row,column=0, pady=(5, 0), sticky='nw')
-
-        global errors_labels
-        errors_labels=[]
-        #add entity
-        #add button
-        button_wrapper = Frame(validation_frame, highlightthickness=2, highlightbackground='black')
-        # button_wrapper.pack(fill='both', expand=True,padx=20, pady=20)
-
-        button_wrapper.grid(row=row,column=0, pady=(5, 0), sticky='nw')
-        # row+=1
-
-        addEntityButton = CTkButton(button_wrapper, \
-                    text="Add new Entity",command=addEntity)
-        
-
-        addEntityButton.pack(fill='both', expand=True,padx=20, pady=20)
-        #save object and add errors if needed
-        #save button
-        saveButton = CTkButton(button_wrapper, \
-                    text="Save Changes",command=saveChanges)
-        saveButton.pack(fill='both', expand=True,padx=20, pady=20)
+# global errors_wrapper
+errors_wrapper = Frame(validation_frame, highlightthickness=2, highlightbackground='black')
+errors_wrapper.grid(row=row,column=0, pady=(5, 0), sticky='nw')
+row+=1
+# global errors_labels
+errors_labels=[]
+#add entity
+#add button
+button_wrapper = Frame(validation_frame, highlightthickness=2, highlightbackground='black')
+button_wrapper.grid(row=row,column=0, pady=(5, 0), sticky='nw')
+row+=1
+addEntityButton = CTkButton(button_wrapper, \
+            text="Add new Entity",command=addEntity)
+addEntityButton.pack(fill='both', expand=True,padx=20, pady=20)
+#save object and add errors if needed
+#save button
+saveButton = CTkButton(button_wrapper, \
+            text="Save Changes",command=saveChanges)
+saveButton.pack(fill='both', expand=True,padx=20, pady=20)
 
 
-        # put the frame in the canvas
-        # make sure everything is displayed before configuring the scrollregion
-        global vsb,screen_width,screen_height
-        print("WIDTH",screen_width, vsb.winfo_width(),255)
-        width = 1500 #screen_width - vsb.winfo_width() -255#sum([buttons[0][j].winfo_width() for j in range(0, 5)])
-        height = screen_height-70 #sum([buttons[i][0].winfo_height() for i in range(0, 5)])
-        validation_frame.config(width=width ,
-                            height=height)
 
-        # Set the canvas scrolling region
-        canvas.config(scrollregion=canvas.bbox("all"))
-        
+# Resize the canvas frame to show exactly 5-by-5 buttons and the scrollbar
+width = screen_width -vsb.winfo_width() -50#sum([buttons[0][j].winfo_width() for j in range(0, 5)])
+height = screen_height-70 #sum([buttons[i][0].winfo_height() for i in range(0, 5)])
+validation_frame.config(width=width ,
+                    height=height)
+
+# Set the canvas scrolling region
+canvas.config(scrollregion=canvas.bbox("all"))
+
+# Launch the GUI
+root.mainloop()

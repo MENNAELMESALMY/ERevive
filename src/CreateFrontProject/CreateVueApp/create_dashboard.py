@@ -9,7 +9,7 @@ def generate_dashboard(cluster_name,endpoint,directory):
     query_params = [(param,d,o,a) for param,d,o,a in endpoint['queryParams']]
     dashboard_string = '''<template>
     <div class="dashboard">
-        <div>'''
+        <div class="filters">'''
     for param,datatype,operator,aggregate in query_params:
         param = param.replace('.','_')
         print(param,datatype,operator,aggregate)

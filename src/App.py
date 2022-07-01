@@ -11,6 +11,7 @@ import webbrowser
 import cv2
 from ImageProcessing import process_image
 from gui_validation import ValidationPage
+import threading
 
 OUTPUT_PATH = Path(__file__).parent
 ASSETS_PATH = OUTPUT_PATH / Path("./assets")
@@ -31,22 +32,28 @@ def resizeUploadedImage(imagePath):
     cv2.imwrite('./assets/uploadedImage.png',resized)
 
 def open_file(self,screen_width,button):
+    global ERimage
     ERimage = filedialog.askopenfile(mode='r', filetypes=[('Image Files',['*png','*jpeg'])])
     if ERimage is not None:
         resizeUploadedImage(ERimage.name)
+        self.image_dir = ERimage.name
         self.ER_image = tk.PhotoImage(file=relative_to_assets("./uploadedImage.png"))
         Label(self, image=self.ER_image).place(x = screen_width/2, y = 755,width=550,height=260, anchor="center")
         button['state'] = "normal"
-        image_processing(ERimage.name)
         
-def image_processing(img_dir):
-        os.chdir('ImageProcessing')
-        print(os.getcwd())
-        initialSchema = process_image(img_dir)
-        ValidationPage.init_schema(initialSchema)
-        os.chdir('./..')
-        with open(relative_to_assets("./initialSchema.json"), "w") as json_file:
-            json.dump(initialSchema, json_file)
+def image_processing():
+    os.chdir('ImageProcessing')
+    print(os.getcwd())
+    initialSchema = process_image(ERimage.name)
+    ValidationPage.init_schema(initialSchema)
+    os.chdir('./..')
+    with open(relative_to_assets("./initialSchema.json"), "w") as json_file:
+        json.dump(initialSchema, json_file)
+    #send notify to parent thread
+    Page1.finish()
+    
+    
+
         
 def update(self,ind,frameCnt, frames, label):
     frame = frames[ind]
@@ -148,7 +155,8 @@ class tkinterApp(tk.Tk):
             self.schema = tk.PhotoImage(file=relative_to_assets("schema.png"))
             schemaButton = ttk.Button(self, image =self.schema,style='W.TButton', command = lambda: moveToPage(self, Page3))
             schemaButton.place(x = 22, y = 840)
-            
+            #generate ShowFrame event
+
         self.show_frame(StartPage)
   
     # to display the current frame passed as parameter
@@ -156,6 +164,16 @@ class tkinterApp(tk.Tk):
         frame = self.frames[cont]
         frame.tkraise()
 
+    def show_process_page(self):
+        frame = self.frames[Page1]
+        frame.tkraise()
+        thread = threading.Thread(target=image_processing)        
+        thread.start()
+        
+   
+
+
+        
 # first window frame startpage
 class StartPage(tk.Frame):
     def __init__(self, parent, controller):
@@ -196,11 +214,16 @@ class StartPage(tk.Frame):
         upload_button.place(x = screen_width/2-210, y = screen_height-140, width = 350.0, height = 70.0, anchor = "center")
 
         button1 = ttk.Button(self, text ="Move To Next Step ...",style = "W.TButton",
-        command = lambda : controller.show_frame(Page1), state = "disabled")
+        command = lambda : [controller.show_process_page()], state = "disabled")
         button1.place(x = screen_width/2+210, y = screen_height-140, width = 350.0, height = 70.0, anchor = "center")
 
 # second window frame page1
 class Page1(tk.Frame):
+    frame_controller = None
+    width = 0
+    height = 0
+    gif_label = None
+    frame = None
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         screen_width = self.winfo_screenwidth()
@@ -215,18 +238,25 @@ class Page1(tk.Frame):
         label.place(x = 850, y = 200, anchor = "center")
         label.pack()
         self.after(0, update, self,0,frameCnt, frames, label)
-
+        Page1.frame_controller = controller
+        Page1.width = screen_width
+        Page1.height = screen_height
+        Page1.gif_label = label
+        Page1.frame = self
         ### finish preprocessing
         # wait(self,screen_width)
 
         self.uploadedER = tk.PhotoImage(file=relative_to_assets("./uploadedImage.png"))
         Label(self, image=self.uploadedER).place(x = screen_width/2, y = 755,width=550,height=260, anchor="center")
+        #add showframe event
+    @staticmethod    
+    def finish():
+        Page1.frame.gif_label.destroy()
+        button1 = ttk.Button(Page1.frame, text ="Move To Next Step ...",style='W.TButton',
+        command = lambda : [Page1.frame_controller.show_frame(ValidationPage),ValidationPage.loadEntitiesFrames(), enableSideButtons()])
+        button1.place(x = Page1.width/2, y = Page1.height-140, width = 350.0, height = 70.0, anchor = "center")
 
-        ## button for next step
-        button1 = ttk.Button(self, text ="Move To Next Step ...",style='W.TButton',
-        command = lambda : [controller.show_frame(ValidationPage),ValidationPage.loadEntitiesFrames(), enableSideButtons()])
-        button1.place(x = screen_width/2, y = screen_height-140, width = 350.0, height = 70.0, anchor = "center")
-
+    
 
 class Page2(tk.Frame):
     def __init__(self, parent, controller):

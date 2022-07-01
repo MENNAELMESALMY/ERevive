@@ -17,6 +17,7 @@ participations = ['full', 'partial']
 
 def addEntity():
     global entities_list,row,col,ROWCOUNT,entities_wrapper
+    global global_schema
     default_entity_name = 'entity_'+ str(len(global_schema))
     global_schema[default_entity_name] = {'TableName': default_entity_name, 
     'TableType':'',
@@ -43,17 +44,23 @@ def expandCanvas():
 def saveChanges():
     # destroy errors if exists
     global errors_labels
+    global global_schema
     for err_lb in errors_labels:
         err_lb.destroy()
     errors=[]
+    print(global_schema)
     for entity in global_schema.values():
         entityName = entity['TableName']
         if len(entity['attributes'])==0: errors.append(f'{entityName} has no attributes')
         if len(entity['primaryKey'])==0: errors.append(f'{entityName} has no primary keys')
+        print(entity)
         for fk in entity['ForgeinKey']:
+            print("FK: ",fk)
             fkName = fk['attributeName']
             fkTable = fk['ForignKeyTable']
             fkTableAttrName = fk['ForignKeyTableAttributeName']
+            print("entity['attributes']",entity['attributes'])
+            print("global_schema[fkTable]['attributes']",global_schema[fkTable]['attributes'])
             if entity['attributes'][fkName] == global_schema[fkTable]['attributes'][fkTableAttrName]:
                 fk['dataType'] = entity['attributes'][fkName]
             else:
@@ -73,6 +80,7 @@ def saveChanges():
 
 def updataAllForeignKeys(entityNameOld='',entityNameNew = ''):
     global entities_list
+    global global_schema
     for entity in entities_list:
         for fk in entity.ForgeinKeysUI:
             if fk.removed:continue
@@ -86,6 +94,7 @@ def updataAllForeignKeys(entityNameOld='',entityNameNew = ''):
 
 def removeHangingForeignKeys(entityName='',attributeName = ''):
     global entities_list
+    global global_schema
     for entity in entities_list:
         for fk in entity.ForgeinKeysUI:
             # print(entityNameOld,fk.entityName.get())
@@ -99,6 +108,7 @@ def removeHangingForeignKeys(entityName='',attributeName = ''):
                     fk.removeForeignKey() 
 class attribute:
     def __init__(self,wrapperFrame,entityName, name, dataType,isPrimaryKey,row,col):
+        global global_schema
         wrapperFrame = Frame(wrapperFrame, highlightthickness=2, highlightbackground='black')
         wrapperFrame.pack(fill='both', expand=True,padx=20, pady=20)
 
@@ -145,6 +155,7 @@ class attribute:
 
 
     def removeAttribute(self):
+        global global_schema
         entityName,attributeName = self.entityName,self.name.get()
         global_schema[self.entityName]['attributes'].pop(self.name.get())
         if self.name.get() in global_schema[self.entityName]['primaryKey']:
@@ -158,6 +169,7 @@ class attribute:
         removeHangingForeignKeys(entityName,attributeName)
     
     def editAtrr(self,sv):
+        global global_schema
         if sv.get() != self.nameStr:
             # print("Allah hallah")
             # print(self.entityName)
@@ -170,19 +182,21 @@ class attribute:
             updataAllForeignKeys(self.entityName,self.entityName)
     
     def isPrimaryKeyCheckbox(self):
+        global global_schema
         if self.isInitialized:
             if not self.isPrimaryKey.get(): global_schema[self.entityName]['primaryKey'].append(self.nameStr)
             else: global_schema[self.entityName]['primaryKey'].remove(self.nameStr)
             updataAllForeignKeys(self.entityName,self.entityName)
 
     def changeDataType(self,dataType):
+        global global_schema
         global_schema[self.entityName]['attributes'][self.name.get()]=dataType
 
 class foreignKey:
     def __init__(self,wrapperFrame,name,belongToEntity,attributes ,entityName, entityAtrribute, patricipaction):
         wrapperFrame = Frame(wrapperFrame, highlightthickness=2, highlightbackground='black')
         wrapperFrame.pack(fill='both', expand=True,padx=20, pady=20)
-
+        global global_schema
         self.removed = False
         self.belongToEntity = belongToEntity
         entitiesList = list(global_schema.keys())
@@ -231,6 +245,7 @@ class foreignKey:
 
 
     def removeForeignKey(self):
+        global global_schema
         if self.removed:return
         self.attrNameMenu.destroy()
         self.entityAttributesMenu.destroy()
@@ -243,6 +258,7 @@ class foreignKey:
     
     def updateAttributes(self,entityName= None):
         # print("IO")
+        global global_schema
         if entityName is not None:
             self.entityName.set(entityName)
             # print("pppppppppppppppppppppppppppp",entityName)
@@ -266,6 +282,7 @@ class foreignKey:
                     self.entityAttribute.set(a))
     
     def updateEntities(self,entityName= None):
+        global global_schema
         if entityName is not None:
             self.entityName.set(entityName)
         entitiesList = list(global_schema.keys())
@@ -277,6 +294,7 @@ class foreignKey:
                    [ self.entityName.set(a),self.updateAttributes(a) ])
 
     def updateAttrs(self,entityName= None):
+        global global_schema
         print("Update Attrs",entityName,self.belongToEntity)
         if entityName is not None: self.belongToEntity = entityName
         print("Update Attrs",entityName,self.belongToEntity)
@@ -294,6 +312,7 @@ class foreignKey:
 
 
     def update(self,entityNameOld=None,entityNameNew= None):
+        global global_schema
         print("IN UPDATE",entityNameOld,entityNameNew,self.belongToEntity)
         self.updateEntities(entityNameNew)
         if self.belongToEntity == entityNameOld: 
@@ -307,6 +326,7 @@ class foreignKey:
 class entity:
     def __init__(self, name, attributes, \
         primaryKeys, ForgeinKeys,entities_wrapper,value,row,col):
+        global global_schema
         self.isInitialized = False
         self.entityCurName = name
         self.wrapper = Frame(entities_wrapper, highlightthickness=2, highlightbackground='black')
@@ -379,6 +399,7 @@ class entity:
         self.deleteEntityButton.pack(fill='both', expand=True,padx=20, pady=20)
     
     def addAttribute(self):
+        global global_schema
         attr_default_name = "attr" + str(len(self.attributes)+1)
         self.attributes[attr_default_name] =\
              attribute(self.attWrapper,self.name.get(),attr_default_name, "str",False,0,0)
@@ -387,10 +408,12 @@ class entity:
         updataAllForeignKeys(self.entityCurName,self.entityCurName)
 
     def isWeakChecked(self):
+        global global_schema
         if self.isInitialized:
             global_schema[self.name.get()]['isWeak'] = not self.isWeak.get()
 
     def editEntityName(self,sv):
+        global global_schema
         if self.isInitialized:
             old_key = self.entityCurName
             new_key = sv.get()
@@ -405,6 +428,7 @@ class entity:
             ######################
 
     def addForeignKey(self):
+        global global_schema
         # default to first entity and to first primary key
         attributeName = list(self.attributes.keys())[0]
         default_participation = 'full'
@@ -425,6 +449,7 @@ class entity:
         expandCanvas()
         
     def deleteEntity(self):
+        global global_schema
         # delete attributes
         for att in self.attributes.values():att.removeAttribute()
         # delete FK
@@ -445,6 +470,7 @@ class entity:
 class ValidationPage(Frame):
 
     def __init__(self, parent, controller):
+        global global_schema
         Frame.__init__(self, parent)
         global screen_width,screen_height
 
@@ -491,6 +517,7 @@ class ValidationPage(Frame):
   
     @staticmethod
     def init_schema(initial_schema):
+        
         old_keys = list(initial_schema.keys())
         for old_key in old_keys:
             new_key = initial_schema[old_key]['TableName']
@@ -502,6 +529,7 @@ class ValidationPage(Frame):
         
     @staticmethod
     def loadEntitiesFrames():
+        global global_schema
         global validation_frame
         # Create a frame to contain the buttons
         global entities_wrapper

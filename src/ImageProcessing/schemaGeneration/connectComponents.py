@@ -3,7 +3,7 @@ from numpy.core.defchararray import count
 from skimage.morphology import skeletonize
 import numpy as np
 from math import sqrt
-from removeLines import *
+from ..removeLines import *
 neighbors =[
     (0,1),
     (1,0),

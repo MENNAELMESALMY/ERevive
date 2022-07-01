@@ -557,7 +557,7 @@ canvas.create_window((10, 10), window=entities_wrapper, anchor='nw')
 
 entities_list = []
 row,col=0,0
-max_rowspan = 0
+# max_rowspan = 0
 # group of widgets
 for _, value in global_schema.items():
     rowspan=len(value['attributes'])
@@ -572,6 +572,28 @@ for _, value in global_schema.items():
 
 # Update buttons frames idle tasks to let tkinter calculate buttons sizes
 entities_wrapper.update_idletasks()
+
+# global errors_wrapper
+errors_wrapper = Frame(validation_frame, highlightthickness=2, highlightbackground='black')
+errors_wrapper.grid(row=row,column=0, pady=(5, 0), sticky='nw')
+row+=1
+# global errors_labels
+errors_labels=[]
+#add entity
+#add button
+button_wrapper = Frame(validation_frame, highlightthickness=2, highlightbackground='black')
+button_wrapper.grid(row=row,column=0, pady=(5, 0), sticky='nw')
+row+=1
+addEntityButton = CTkButton(button_wrapper, \
+            text="Add new Entity",command=addEntity)
+addEntityButton.pack(fill='both', expand=True,padx=20, pady=20)
+#save object and add errors if needed
+#save button
+saveButton = CTkButton(button_wrapper, \
+            text="Save Changes",command=saveChanges)
+saveButton.pack(fill='both', expand=True,padx=20, pady=20)
+
+
 
 # Resize the canvas frame to show exactly 5-by-5 buttons and the scrollbar
 width = screen_width -vsb.winfo_width() -50#sum([buttons[0][j].winfo_width() for j in range(0, 5)])

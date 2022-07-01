@@ -1,14 +1,14 @@
 import numpy as np
-from preprocessing import *
-from removeLines import *
-from ContourDetection import *
-from detection.shapes_detection import detect_shapes
-from detectWeak import *
-from schemaGeneration.connectComponents import *
-from detect_rel_prop import *
-from OCR import *
-from dataTypesPrediction.scripts.dataTypePrediction import *
-from schemaGeneration.schema_generation import *
+from .preprocessing import *
+from .removeLines import *
+from .ContourDetection import *
+from .detection.shapes_detection import detect_shapes
+from .detectWeak import *
+from .schemaGeneration.connectComponents import *
+from .detect_rel_prop import *
+from .OCR import *
+from .dataTypesPrediction.scripts.dataTypePrediction import *
+from .schemaGeneration.schema_generation import *
 import cv2
 import os
 
@@ -23,17 +23,18 @@ def changeContours(contours, img,idx):
     return  np.array([contour])
 
 ##12,17,40,24,13,14 ,18 are good tests
-img_dirs =["13.png"]#os.listdir("input")
-print(img_dirs)
+#img_dirs =["12.png"]#os.listdir("input")
+#print(img_dirs)
 #dirs = os.listdir('input')
 #for idx,img_dir in enumerate(dirs):
-print("starting..................",img_dirs)
+#print("starting..................",img_dirs)
 #sort the images in the input folder by their name
-img_dirs.sort()
-for idx,img_dir in enumerate(img_dirs):
-    print("processing img"+img_dir)
+#img_dirs.sort()
+def process_image(img_dir):
+    print("starting..................") 
+    print(img_dir)
+    print("processing img:  "+img_dir)
     pre = img_dir.split('.')[0]
-    img_dir = 'input/'+ img_dir
     try:
         adjustPrespective,approxContour,grayImg = GetMaxContour(img_dir)
         warpedImg = grayImg
@@ -111,15 +112,16 @@ for idx,img_dir in enumerate(img_dirs):
 
         print("///////////////////////////////////////////")
         #print(schema)
-        with open("schema"+pre+".json", "w") as json_file:
-            json.dump(schema, json_file)
+        
         #return to the current directory
         os.chdir('./..')
+        return schema
     except Exception as e:
         with open("schema"+pre+".json", "w") as json_file:
             json.dump({"error":str(e)}, json_file)
         os.chdir('./..')
-        continue
+        return False
+        
 
     # #print(shapes)
     # for i,w in enumerate(weak):

@@ -37,6 +37,9 @@ def cleanColName(colName):
     
     #replace _ with space
     colName = colName.replace("_"," ")
+
+    #replace - with space
+    colName = colName.replace("-"," ")
     
     #if all capital cases make it small or if it seperated by spaces
     if colName.isupper() == True or len(colName.split()) > 1:
@@ -84,6 +87,9 @@ def predictWordsTypes(words):
     model , id_to_category = loadModelAndDict(folderPath+"/modelOutput/model.sav",folderPath+"/modelOutput/id_to_category.txt")
 
     cleaned_words = [cleanColName(i) for i in words]
+
+    #print(words)
+    #print(cleaned_words)
 
     features = extractNewWordFeatures(cleaned_words)
     preds = model.predict(features)

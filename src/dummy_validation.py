@@ -1,5 +1,6 @@
-from tkinter import Tk,Frame, Canvas, OptionMenu, Variable,Label,Scrollbar,StringVar
+from tkinter import NW, Tk,Frame, Canvas, OptionMenu, Variable,Label,Scrollbar,StringVar
 from tkinter import RIGHT,Y
+from turtle import window_height, window_width
 from customtkinter import CTkEntry,CTkFrame,CTkCheckBox,CTkButton
 
 global_schema = {
@@ -384,11 +385,9 @@ class foreignKey:
             self.updateAttrs()
         self.updateAttributes(entityNameNew)
 
-
-
 class entity:
     def __init__(self, name, attributes, \
-        primaryKeys, ForgeinKeys):
+        primaryKeys, ForgeinKeys,row,col,rowspan):
         self.isInitialized = False
         self.entityCurName = name
         self.wrapper = Frame(entities_wrapper, highlightthickness=2, highlightbackground='black')
@@ -419,7 +418,12 @@ class entity:
             self.attributes[attributeName] =attribute(self.attWrapper,name,\
                 attributeName, dataType,attributeName in self.primaryKeys)
 
-        self.wrapper.pack(fill='both', expand=True,padx=20, pady=20)
+        # self.wrapper.pack(fill='both', expand=True,padx=20, pady=20)
+        #self.wrapper.update()
+        #print(self.wrapper.winfo_height())
+        self.wrapper.grid(row=row, column=col,\
+            columnspan=1, sticky='news',padx=(10, 10),pady=(10,10))
+
         self.attWrapper.pack(fill='both', expand=True,padx=20, pady=20)
 
         self.newAttrButton = CTkButton(self.wrapper, \
@@ -516,64 +520,67 @@ class entity:
         # remove from object
         global_schema.pop(self.name.get())
 
-class validationPage():
-    def __init__():
-        pass
-        
-    
+
 root = Tk()
 screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
-
 root.geometry(f"{screen_width}x{screen_height}")
 root.configure(bg = "#FFFFFF")
-# create main frame 
-frame = CTkFrame(root)
-frame.pack(fill='both', expand=True)
-frame.configure(bg = "#FFFFFF")
 
-# create canvas
-canvas = Canvas(frame)
-canvas.pack(fill='both', expand=True,side='left')
+root.grid_rowconfigure(0, weight=1)
+root.columnconfigure(0, weight=1)
 
-scroll_y = Scrollbar(frame, orient="vertical", command=canvas.yview)
-scroll_y.pack(fill=Y, side=RIGHT)
-canvas.configure(yscrollcommand=scroll_y.set)
-canvas.bind("<Configure>", lambda event: canvas.configure(scrollregion=canvas.bbox("all")))
-validation_frame = Frame(canvas)
-canvas.create_window((0, 0), window=validation_frame, anchor="nw")
-entities_wrapper = Frame(validation_frame, highlightthickness=2, highlightbackground='black')
-entities_wrapper.pack(fill='both', expand=True,padx=20, pady=20)
+frame_main = Frame(root, bg="gray")
+frame_main.grid(sticky='news')
+frame_main.grid_propagate(0)
 
+# Create a frame for the canvas with non-zero row&column weights
+validation_frame = Frame(frame_main)
+validation_frame.grid(row=0, column=0, sticky='nw')
+validation_frame.grid_rowconfigure(0, weight=1)
+validation_frame.grid_columnconfigure(0, weight=1)
+# Set grid_propagate to False to allow 5-by-5 buttons resizing later
+validation_frame.grid_propagate(False)
+
+# Add a canvas in that frame
+canvas = Canvas(validation_frame, bg="yellow")
+canvas.grid(row=0, column=0, sticky="news")
+
+# Link a scrollbar to the canvas
+vsb = Scrollbar(validation_frame, orient="vertical", command=canvas.yview)
+vsb.grid(row=0, column=1, sticky='ns')
+canvas.configure(yscrollcommand=vsb.set)
+
+# Create a frame to contain the buttons
+entities_wrapper = Frame(canvas, bg="blue")
+canvas.create_window((10, 10), window=entities_wrapper, anchor='nw')
 
 entities_list = []
+row,col=0,0
+max_rowspan = 0
 # group of widgets
 for _, value in global_schema.items():
+    rowspan=len(value['attributes'])
+    max_rowspan = max(max_rowspan,rowspan)
     entities_list.append(entity(value['TableName'],\
          value['attributes'], value['primaryKey'],\
-              value['ForgeinKey']))
+              value['ForgeinKey'],row,col,rowspan))
+    if col!=0 and col == 6:
+        row +=max_rowspan
+        max_rowspan=0
+    col = (col+1)%7#+3)%12
 
-errors_wrapper = Frame(validation_frame, highlightthickness=2, highlightbackground='black')
-errors_wrapper.pack(fill='both', expand=True,padx=20, pady=20)
-errors_labels=[]
-#add entity
-#add button
-button_wrapper = Frame(validation_frame, highlightthickness=2, highlightbackground='black')
-button_wrapper.pack(fill='both', expand=True,padx=20, pady=20)
+# Update buttons frames idle tasks to let tkinter calculate buttons sizes
+entities_wrapper.update_idletasks()
 
-addEntityButton = CTkButton(button_wrapper, \
-            text="Add new Entity",command=addEntity)
-addEntityButton.pack(fill='both', expand=True,padx=20, pady=20)
-#save object and add errors if needed
-#save button
-saveButton = CTkButton(button_wrapper, \
-            text="Save Changes",command=saveChanges)
-saveButton.pack(fill='both', expand=True,padx=20, pady=20)
+# Resize the canvas frame to show exactly 5-by-5 buttons and the scrollbar
+width = screen_width -vsb.winfo_width() -50#sum([buttons[0][j].winfo_width() for j in range(0, 5)])
+height = screen_height-70 #sum([buttons[i][0].winfo_height() for i in range(0, 5)])
+validation_frame.config(width=width ,
+                    height=height)
 
+# Set the canvas scrolling region
+canvas.config(scrollregion=canvas.bbox("all"))
 
-# put the frame in the canvas
-# canvas.create_window(0, 0, anchor='nw', window=frame)
-# make sure everything is displayed before configuring the scrollregion
-canvas.update_idletasks() 
-# scroll_y.config(command=frame.yview)
+# Launch the GUI
 root.mainloop()

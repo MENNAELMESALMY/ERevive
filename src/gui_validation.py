@@ -2,120 +2,20 @@ from tkinter import Tk,Frame, Canvas, OptionMenu, Variable,Label,Scrollbar,Strin
 from tkinter import RIGHT,Y
 from customtkinter import CTkEntry,CTkFrame,CTkCheckBox,CTkButton
 
-global_schema = {
-    11: 
-    {'TableName': 'DEPARTMENT', 
-    'TableType':'',
-    'attributes': {
-    'name': 'str', 
-    'start_date': 'datetime',
-    'EMPLOYEE_Manages': 'str'}, 
-    'primaryKey': ['name'], 
-    'ForgeinKey': [{'attributeName': 'EMPLOYEE_Manages',
-    'ForignKeyTable': 'EMPLOYEE', 
-    'ForignKeyTableAttributeName': 'ssn', 
-    'patricipaction': 'partial', 
-    'dataType': 'str'}], 
-    'isWeak': False},
-    34: 
-    {'TableName': 'DEPARTMENT_Clocation', 
-    'TableType':'',
-    'attributes': {'Clocation': 'str',
-    'DEPARTMENT_name': 'str'}, 
-    'primaryKey': ['Clocation', 
-    'DEPARTMENT_name'], 
-    'ForgeinKey': [{'attributeName': 'DEPARTMENT_name', 
-    'ForignKeyTable': 'DEPARTMENT', 
-    'ForignKeyTableAttributeName': 'name', 
-    'patricipaction': 'full', 
-    'dataType': 'str'}], 
-    'isWeak': False}, 
-    12: 
-    {'TableName': 'EMPLOYEE',
-    'TableType':'',
-    'attributes': {'last_name': 'str', 
-    'middle_initis': 'str', 
-    'first_name': 'str', 
-    'address': 'str',
-    'salary': 'float',
-    'sex': 'str', 
-    'status': 'str', 
-    'birth_dat': 'str', 
-    'ssn': 'str',
-    'start_date': 'datetime',
-    'DEPARTMENT_Employed_name': 'str',
-    'EMPLOYEE_Supervision_': 'str'},
-    'primaryKey': ['ssn'], 
-    'ForgeinKey': [{'attributeName': 'DEPARTMENT_Employed_name',
-    'ForignKeyTable': 'DEPARTMENT', 'ForignKeyTableAttributeName': 'name',
-    'patricipaction': 'full', 'dataType': 'str'}, 
-    {'attributeName': 'EMPLOYEE_Supervision_', 
-    'ForignKeyTable': 'EMPLOYEE', 
-    'ForignKeyTableAttributeName': 'ssn',
-    'patricipaction': 'partial', 
-    'dataType': 'str'}], 
-    'isWeak': False},
-    24: {'TableName': 'PROJECT', 
-    'TableType':'',
-    'attributes': {'location': 'str',
-    'name': 'str', 
-    'budget': 'float',
-    'DEPARTMENT_Assigned_name': 'str'}, 
-    'primaryKey': ['name'], 
-    'ForgeinKey': [{'attributeName': 'DEPARTMENT_Assigned_name',
-    'ForignKeyTable': 'DEPARTMENT', 
-    'ForignKeyTableAttributeName': 'name',
-    'patricipaction': 'partial', 
-    'dataType': 'str'}], 
-    'isWeak': False}, 
-    25: 
-    {'TableName': 'DEPENDENT',
-    'TableType':'',
-    'attributes': {'sex': 'str', 
-    'relatlonship': 'str',
-    'name': 'str',
-    'birth_date': 'datetime', 
-    'Dependents_EMPLOYEE_': 'str'}, 
-    'primaryKey': ['Dependents_EMPLOYEE_'], 
-    'ForgeinKey': [{'attributeName': 'Dependents_EMPLOYEE_', 
-    'ForignKeyTable': 'EMPLOYEE', 
-    'ForignKeyTableAttributeName': 'ssn', 
-    'patricipaction': 'partial', 
-    'dataType': 'str'}], 
-    'isWeak': True}, 
-    35: 
-    {'TableName': 'Works_EMPLOYEE_PROJECT', 
-    'TableType':'mTm',
-    'attributes': {
-    'start_date': 'datetime', 
-    'hours': 'int', 
-    'EMPLOYEE_': 'str', 
-    'PROJECT_': 'str'}, 
-    'primaryKey': ['EMPLOYEE_', 'PROJECT_'], 
-    'ForgeinKey': [{'attributeName': 'EMPLOYEE_', 
-    'ForignKeyTable': 'EMPLOYEE',
-    'ForignKeyTableAttributeName': 'ssn', 
-    'patricipaction': 'full',
-    'dataType': 'str'}, 
-    {'attributeName': 'PROJECT_',
-    'ForignKeyTable': 'PROJECT', 
-    'ForignKeyTableAttributeName': 'name',
-    'patricipaction': 'full',
-    'dataType': 'str'}
-    ], 
-    'isWeak': False}}
+global_schema = {}
 
-old_keys = list(global_schema.keys())
-for old_key in old_keys:
-    new_key = global_schema[old_key]['TableName']
-    global_schema[new_key] = global_schema.pop(old_key)
-
+validation_frame = None
+canvas = None
+errors_labels = []
+errors_wrapper = None
+entities_list = []
 # print(global_schema)
 
 dataTypes = ['str', 'int', 'float', 'datetime','bool']
 participations = ['full', 'partial']
 
 def addEntity():
+    global entities_list
     default_entity_name = 'entity_'+ str(len(global_schema))
 
     global_schema[default_entity_name] = {'TableName': default_entity_name, 
@@ -131,6 +31,8 @@ def addEntity():
 
 
 def expandCanvas():
+    global validation_frame
+    global canvas
     validation_frame.update()
     height = validation_frame.winfo_height()
     canvas.itemconfigure("canvas_frame", height=height)
@@ -139,6 +41,7 @@ def expandCanvas():
 def saveChanges():
     # print(global_schema)
     # destroy errors if exists
+    global errors_labels
     for err_lb in errors_labels:
         err_lb.destroy()
     errors=[]
@@ -160,6 +63,7 @@ def saveChanges():
         print('------------------------------------------------------')
         print(global_schema)
     # add ui for errors
+    global errors_wrapper
     for err in errors:
         err_lb = Label(errors_wrapper,text =err)
         err_lb.pack(fill='both', expand=True,padx=10, pady=10)
@@ -171,6 +75,7 @@ def getForeignKeys(ForgeinKeys):
     return [f['attributeName'] for f in ForgeinKeys]
 
 def updataAllForeignKeys(entityNameOld='',entityNameNew = ''):
+    global entities_list
     for entity in entities_list:
         for fk in entity.ForgeinKeysUI:
             if fk.removed:continue
@@ -183,6 +88,7 @@ def updataAllForeignKeys(entityNameOld='',entityNameNew = ''):
                 fk.update()
 
 def removeHangingForeignKeys(entityName='',attributeName = ''):
+    global entities_list
     for entity in entities_list:
         for fk in entity.ForgeinKeysUI:
             # print(entityNameOld,fk.entityName.get())
@@ -416,7 +322,7 @@ class foreignKey:
 
 class entity:
     def __init__(self, name, attributes, \
-        primaryKeys, ForgeinKeys):
+        primaryKeys, ForgeinKeys,entities_wrapper,value):
         self.isInitialized = False
         self.entityCurName = name
         self.wrapper = Frame(entities_wrapper, highlightthickness=2, highlightbackground='black')
@@ -543,61 +449,137 @@ class entity:
         self.wrapper.destroy()
         # remove from object
         global_schema.pop(self.name.get())
-        
+class ValidationPage(Frame):
+
+    def __init__(self, parent, controller):
+        Frame.__init__(self, parent)
+
+        scroll_y = Scrollbar(self, orient="vertical")
+        scroll_y.pack(side="right", fill="y")
+
+        global canvas
+        canvas = Canvas(self, borderwidth=0, background="#ffffff")
+        canvas.pack(side="left", fill="both", expand=True)
+
+        canvas.configure(yscrollcommand=scroll_y.set)
+        scroll_y.configure(command=canvas.yview)
+
+        self.scrolled_y_frame = Frame(canvas, background=canvas.cget('bg'))
+        canvas.create_window((4, 4), window=self.scrolled_y_frame, anchor="nw")
+
+        self.scrolled_y_frame.bind("<Configure>", self.on_configure_scroll)
+
+    def on_configure_scroll(self, event):
+        global canvas
+        canvas.configure(scrollregion=canvas.bbox("all"))
+  
+    @staticmethod
+    def init_schema(initial_schema):
+        old_keys = list(initial_schema.keys())
+        for old_key in old_keys:
+            new_key = initial_schema[old_key]['TableName']
+            initial_schema[new_key] = initial_schema.pop(old_key)
+        global global_schema
+        global_schema = initial_schema
+
     
-root = Tk()
-screen_width = root.winfo_screenwidth()
-screen_height = root.winfo_screenheight()
+        
+    @staticmethod
+    def loadEntitiesFrames():
+        global validation_frame
+        validation_frame = Frame(canvas)
+        canvas.create_window((0, 0), window=validation_frame, anchor="nw")
+        entities_wrapper = Frame(validation_frame, highlightthickness=2, highlightbackground='black')
+        entities_wrapper.pack(fill='both', expand=True,padx=20, pady=20)
 
-root.geometry(f"{screen_width}x{screen_height}")
-root.configure(bg = "#FFFFFF")
-# create main frame 
-frame = CTkFrame(root)
-frame.pack(fill='both', expand=True)
-frame.configure(bg = "#FFFFFF")
+        global entities_list
 
-# create canvas
-canvas = Canvas(frame)
-canvas.pack(fill='both', expand=True,side='left')
+        entities_list = []
+        # group of widgets
+        print("global_schema",global_schema)
+        for _, value in global_schema.items():
+            entities_list.append(entity(value['TableName'],\
+                value['attributes'], value['primaryKey'],\
+                    value['ForgeinKey'],entities_wrapper,value))
 
-scroll_y = Scrollbar(frame, orient="vertical", command=canvas.yview)
-scroll_y.pack(fill=Y, side=RIGHT)
-canvas.configure(yscrollcommand=scroll_y.set)
-canvas.bind("<Configure>", lambda event: canvas.configure(scrollregion=canvas.bbox("all")))
-validation_frame = Frame(canvas)
-canvas.create_window((0, 0), window=validation_frame, anchor="nw")
-entities_wrapper = Frame(validation_frame, highlightthickness=2, highlightbackground='black')
-entities_wrapper.pack(fill='both', expand=True,padx=20, pady=20)
+        global errors_wrapper
+        errors_wrapper = Frame(validation_frame, highlightthickness=2, highlightbackground='black')
+        errors_wrapper.pack(fill='both', expand=True,padx=20, pady=20)
+        global errors_labels
+        errors_labels=[]
+        #add entity
+        #add button
+        button_wrapper = Frame(validation_frame, highlightthickness=2, highlightbackground='black')
+        button_wrapper.pack(fill='both', expand=True,padx=20, pady=20)
 
-
-entities_list = []
-# group of widgets
-for _, value in global_schema.items():
-    entities_list.append(entity(value['TableName'],\
-         value['attributes'], value['primaryKey'],\
-              value['ForgeinKey']))
-
-errors_wrapper = Frame(validation_frame, highlightthickness=2, highlightbackground='black')
-errors_wrapper.pack(fill='both', expand=True,padx=20, pady=20)
-errors_labels=[]
-#add entity
-#add button
-button_wrapper = Frame(validation_frame, highlightthickness=2, highlightbackground='black')
-button_wrapper.pack(fill='both', expand=True,padx=20, pady=20)
-
-addEntityButton = CTkButton(button_wrapper, \
-            text="Add new Entity",command=addEntity)
-addEntityButton.pack(fill='both', expand=True,padx=20, pady=20)
-#save object and add errors if needed
-#save button
-saveButton = CTkButton(button_wrapper, \
-            text="Save Changes",command=saveChanges)
-saveButton.pack(fill='both', expand=True,padx=20, pady=20)
+        addEntityButton = CTkButton(button_wrapper, \
+                    text="Add new Entity",command=addEntity)
+        addEntityButton.pack(fill='both', expand=True,padx=20, pady=20)
+        #save object and add errors if needed
+        #save button
+        saveButton = CTkButton(button_wrapper, \
+                    text="Save Changes",command=saveChanges)
+        saveButton.pack(fill='both', expand=True,padx=20, pady=20)
 
 
-# put the frame in the canvas
-# canvas.create_window(0, 0, anchor='nw', window=frame)
-# make sure everything is displayed before configuring the scrollregion
-canvas.update_idletasks() 
-# scroll_y.config(command=frame.yview)
-root.mainloop()
+        # put the frame in the canvas
+        # canvas.create_window(0, 0, anchor='nw', window=frame)
+        # make sure everything is displayed before configuring the scrollregion
+        canvas.update_idletasks() 
+        
+# root = Tk()
+# screen_width = root.winfo_screenwidth()
+# screen_height = root.winfo_screenheight()
+
+# root.geometry(f"{screen_width}x{screen_height}")
+# root.configure(bg = "#FFFFFF")
+# # create main frame 
+# frame = CTkFrame(root)
+# frame.pack(fill='both', expand=True)
+# frame.configure(bg = "#FFFFFF")
+
+# # create canvas
+# canvas = Canvas(frame)
+# canvas.pack(fill='both', expand=True,side='left')
+
+# scroll_y = Scrollbar(frame, orient="vertical", command=canvas.yview)
+# scroll_y.pack(fill=Y, side=RIGHT)
+# canvas.configure(yscrollcommand=scroll_y.set)
+# canvas.bind("<Configure>", lambda event: canvas.configure(scrollregion=canvas.bbox("all")))
+# validation_frame = Frame(canvas)
+# canvas.create_window((0, 0), window=validation_frame, anchor="nw")
+# entities_wrapper = Frame(validation_frame, highlightthickness=2, highlightbackground='black')
+# entities_wrapper.pack(fill='both', expand=True,padx=20, pady=20)
+
+
+# entities_list = []
+# # group of widgets
+# for _, value in global_schema.items():
+#     entities_list.append(entity(value['TableName'],\
+#          value['attributes'], value['primaryKey'],\
+#               value['ForgeinKey']))
+
+# errors_wrapper = Frame(validation_frame, highlightthickness=2, highlightbackground='black')
+# errors_wrapper.pack(fill='both', expand=True,padx=20, pady=20)
+# errors_labels=[]
+# #add entity
+# #add button
+# button_wrapper = Frame(validation_frame, highlightthickness=2, highlightbackground='black')
+# button_wrapper.pack(fill='both', expand=True,padx=20, pady=20)
+
+# addEntityButton = CTkButton(button_wrapper, \
+#             text="Add new Entity",command=addEntity)
+# addEntityButton.pack(fill='both', expand=True,padx=20, pady=20)
+# #save object and add errors if needed
+# #save button
+# saveButton = CTkButton(button_wrapper, \
+#             text="Save Changes",command=saveChanges)
+# saveButton.pack(fill='both', expand=True,padx=20, pady=20)
+
+
+# # put the frame in the canvas
+# # canvas.create_window(0, 0, anchor='nw', window=frame)
+# # make sure everything is displayed before configuring the scrollregion
+# canvas.update_idletasks() 
+# # scroll_y.config(command=frame.yview)
+# #root.mainloop()

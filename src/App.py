@@ -1,3 +1,5 @@
+import json
+import os
 import tkinter as tk
 from tkinter import ttk, Tk, Canvas, Entry, Text, Button, PhotoImage,Label,Scrollbar
 from tkinter import *
@@ -7,6 +9,8 @@ from pathlib import Path
 from turtle import bgcolor
 import webbrowser
 import cv2
+from ImageProcessing import process_image
+from gui_validation import ValidationPage
 
 OUTPUT_PATH = Path(__file__).parent
 ASSETS_PATH = OUTPUT_PATH / Path("./assets")
@@ -33,7 +37,17 @@ def open_file(self,screen_width,button):
         self.ER_image = tk.PhotoImage(file=relative_to_assets("./uploadedImage.png"))
         Label(self, image=self.ER_image).place(x = screen_width/2, y = 755,width=550,height=260, anchor="center")
         button['state'] = "normal"
-
+        image_processing(ERimage.name)
+        
+def image_processing(img_dir):
+        os.chdir('ImageProcessing')
+        print(os.getcwd())
+        initialSchema = process_image(img_dir)
+        ValidationPage.init_schema(initialSchema)
+        os.chdir('./..')
+        with open(relative_to_assets("./initialSchema.json"), "w") as json_file:
+            json.dump(initialSchema, json_file)
+        
 def update(self,ind,frameCnt, frames, label):
     frame = frames[ind]
     ind += 1
@@ -78,16 +92,21 @@ def moveToPage(self,page):
 class tkinterApp(tk.Tk):
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
+        #configure scrollbar
+        
+
         container = tk.Frame(self)
         container.pack(side = "top", fill = "both", expand = True)
         container.configure(bg = "#FFFFFF")
         container.grid_rowconfigure(0, weight = 1)
         container.grid_columnconfigure(0, weight = 1)
+
+
         self.maxsize(1950, 1024)
         self.minsize(1750, 1024)
         self.resizable(width=True, height=False)
         self.frames = {} 
-        for F in (StartPage, Page1, Page2, Page3):
+        for F in (StartPage, Page1, ValidationPage, Page3):
   
             frame = F(container, self)
             self.frames[F] = frame
@@ -205,10 +224,10 @@ class Page1(tk.Frame):
 
         ## button for next step
         button1 = ttk.Button(self, text ="Move To Next Step ...",style='W.TButton',
-        command = lambda : [controller.show_frame(Page2), enableSideButtons()])
+        command = lambda : [controller.show_frame(ValidationPage),ValidationPage.loadEntitiesFrames(), enableSideButtons()])
         button1.place(x = screen_width/2, y = screen_height-140, width = 350.0, height = 70.0, anchor = "center")
 
-# third window frame page2
+
 class Page2(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)

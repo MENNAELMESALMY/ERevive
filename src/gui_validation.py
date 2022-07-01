@@ -42,10 +42,25 @@ def expandCanvas():
 
 def saveChanges():
     # destroy errors if exists
-    global errors_labels
-    for err_lb in errors_labels:
-        err_lb.destroy()
+    global errors_labels,entities_list,global_schema
+    for err_lb in errors_labels: err_lb.destroy()
     errors=[]
+    # align Foreign keys in schema to global schema
+    for entity in entities_list:
+        entityName=entity.name.get()
+        global_schema[entityName]['ForgeinKey'] = []
+        for fk in entity.ForgeinKeysUI:
+            if fk.removed: continue
+            fk_obj ={
+            'attributeName':fk.attrName.get()  , 
+            'ForignKeyTable': fk.entityName.get(), 
+            'ForignKeyTableAttributeName': fk.entityAttribute.get(), 
+            'patricipaction': fk.participation.get(), 
+            'dataType': global_schema[entityName]['attributes'][fk.attrName.get()]
+            }
+            global_schema[entityName]['ForgeinKey'].append(fk_obj)
+    print('fff',global_schema)
+            
     for entity in global_schema.values():
         entityName = entity['TableName']
         if len(entity['attributes'])==0: errors.append(f'{entityName} has no attributes')
@@ -54,9 +69,12 @@ def saveChanges():
             fkName = fk['attributeName']
             fkTable = fk['ForignKeyTable']
             fkTableAttrName = fk['ForignKeyTableAttributeName']
-            if entity['attributes'][fkName] == global_schema[fkTable]['attributes'][fkTableAttrName]:
-                fk['dataType'] = entity['attributes'][fkName]
-            else:
+            print(entity['attributes'])
+            print(global_schema[fkTable]['attributes'])
+            print("pppp",fkName,fkTable,fkTableAttrName)
+            if entity['attributes'][fkName] != global_schema[fkTable]['attributes'][fkTableAttrName]:
+            #     fk['dataType'] = entity['attributes'][fkName]
+            # else:
                 errors.append(f'{fkName} foreignkey in {entityName} has type mismatch with attribute it is pointing to')
     if len(errors)>0: errors.append('cannot save changes')
     else: 
@@ -366,8 +384,6 @@ class entity:
 
         self.foreignKeyWrapper.pack(fill='both', expand=True,padx=20, pady=20)
         self.isInitialized = True
-
-
         self.newFKButton = CTkButton(self.wrapper, \
             text="Add Foreign Key",command=self.addForeignKey)
 
@@ -460,8 +476,6 @@ class ValidationPage(Frame):
 
         screen_width = frame_main.winfo_screenwidth()
         screen_height = frame_main.winfo_screenheight()
-
-
 ##
         # Create a frame for the canvas with non-zero row&column weights
         global validation_frame

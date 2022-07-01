@@ -78,10 +78,10 @@ def updataAllForeignKeys(entityNameOld='',entityNameNew = ''):
             if fk.removed:continue
             # print(entityNameOld,fk.entityName.get())
             if fk.entityName.get() == entityNameOld:
-                #print("updating Name", fk.entityName.get())
+                print("updating Name", fk.entityName.get())
                 fk.update(entityNameOld,entityNameNew)
             else:
-                #print("not updating entity Name", fk.entityName.get())
+                print("not updating entity Name", fk.entityName.get())
                 fk.update()
 
 def removeHangingForeignKeys(entityName='',attributeName = ''):
@@ -98,7 +98,12 @@ def removeHangingForeignKeys(entityName='',attributeName = ''):
                     #print("hihihi")
                     fk.removeForeignKey() 
 class attribute:
-    def __init__(self,wrapperFrame,entityName, name, dataType,isPrimaryKey):
+    def __init__(self,wrapperFrame,entityName, name, dataType,isPrimaryKey,row,col):
+        wrapperFrame = Frame(wrapperFrame, highlightthickness=2, highlightbackground='black')
+        wrapperFrame.pack(fill='both', expand=True,padx=20, pady=20)
+
+        # wrapperFrame.grid(row=row,column=col, sticky='news',padx=(10, 10),pady=(10,10))
+
         self.isInitialized = False
         self.entityName = entityName
         self.removed = False
@@ -162,24 +167,22 @@ class attribute:
                 global_schema[self.entityName]['primaryKey'].append(sv.get())
                 global_schema[self.entityName]['primaryKey'].remove(self.nameStr)
             self.nameStr = sv.get()
-            updataAllForeignKeys()
+            updataAllForeignKeys(self.entityName,self.entityName)
     
     def isPrimaryKeyCheckbox(self):
         if self.isInitialized:
-            if not self.isPrimaryKey.get():
-                global_schema[self.entityName]['primaryKey'].append(self.nameStr)
-            else:
-                global_schema[self.entityName]['primaryKey'].remove(self.nameStr)
-            updataAllForeignKeys()
+            if not self.isPrimaryKey.get(): global_schema[self.entityName]['primaryKey'].append(self.nameStr)
+            else: global_schema[self.entityName]['primaryKey'].remove(self.nameStr)
+            updataAllForeignKeys(self.entityName,self.entityName)
 
     def changeDataType(self,dataType):
         global_schema[self.entityName]['attributes'][self.name.get()]=dataType
-        
-
 
 class foreignKey:
     def __init__(self,wrapperFrame,name,belongToEntity,attributes ,entityName, entityAtrribute, patricipaction):
-        self.wrapperFrame = wrapperFrame
+        wrapperFrame = Frame(wrapperFrame, highlightthickness=2, highlightbackground='black')
+        wrapperFrame.pack(fill='both', expand=True,padx=20, pady=20)
+
         self.removed = False
         self.belongToEntity = belongToEntity
         entitiesList = list(global_schema.keys())
@@ -265,7 +268,6 @@ class foreignKey:
     def updateEntities(self,entityName= None):
         if entityName is not None:
             self.entityName.set(entityName)
-        # self.entitiesMenu["menu"].delete(0, 'end')
         entitiesList = list(global_schema.keys())
         self.entitiesMenu["menu"].delete(0, 'end')
 
@@ -275,7 +277,9 @@ class foreignKey:
                    [ self.entityName.set(a),self.updateAttributes(a) ])
 
     def updateAttrs(self,entityName= None):
+        print("Update Attrs",entityName,self.belongToEntity)
         if entityName is not None: self.belongToEntity = entityName
+        print("Update Attrs",entityName,self.belongToEntity)
         Attrs = list(global_schema[self.belongToEntity]['attributes'].keys()) 
         self.attrNameMenu["menu"].delete(0, 'end')
 
@@ -290,12 +294,12 @@ class foreignKey:
 
 
     def update(self,entityNameOld=None,entityNameNew= None):
-
+        print("IN UPDATE",entityNameOld,entityNameNew,self.belongToEntity)
         self.updateEntities(entityNameNew)
         if self.belongToEntity == entityNameOld: 
             self.updateAttrs(entityNameNew)
-        else:
-            self.updateAttrs()
+        # else:
+        #     self.updateAttrs()
         self.updateAttributes(entityNameNew)
 
 
@@ -329,9 +333,15 @@ class entity:
         self.attrLabel = Label(self.wrapper,text ="___Attributes__")
         self.attrLabel.pack(fill='both', expand=True,padx=10, pady=10)
 
+
         for attributeName,dataType in attributes.items():
             self.attributes[attributeName] =attribute(self.attWrapper,name,\
-                attributeName, dataType,attributeName in self.primaryKeys)
+                attributeName, dataType,attributeName in self.primaryKeys,row,col)
+            
+            # if col!=0 and col==5:
+            #     row+=1
+            # col= (col+1)%6
+
 
         # self.wrapper.pack(fill='both', expand=True,padx=20, pady=20)
         self.wrapper.grid(row=row, column=col,\
@@ -371,10 +381,10 @@ class entity:
     def addAttribute(self):
         attr_default_name = "attr" + str(len(self.attributes)+1)
         self.attributes[attr_default_name] =\
-             attribute(self.attWrapper,self.name.get(),attr_default_name, "str",False)
+             attribute(self.attWrapper,self.name.get(),attr_default_name, "str",False,0,0)
         global_schema[self.name.get()]['attributes'][attr_default_name] = "str"
         expandCanvas()
-        updataAllForeignKeys()
+        updataAllForeignKeys(self.entityCurName,self.entityCurName)
 
     def isWeakChecked(self):
         if self.isInitialized:
@@ -384,6 +394,7 @@ class entity:
         if self.isInitialized:
             old_key = self.entityCurName
             new_key = sv.get()
+            print("Edit entity Name",old_key,new_key)
             global_schema[old_key]['TableName'] = new_key
             global_schema[new_key] = global_schema.pop(old_key)#global_schema[old_key]
             updataAllForeignKeys(old_key,new_key)
@@ -516,7 +527,6 @@ class ValidationPage(Frame):
 
         global errors_wrapper
         errors_wrapper = Frame(validation_frame, highlightthickness=2, highlightbackground='black')
-        # errors_wrapper.pack(fill='both', expand=True,padx=20, pady=20)
         errors_wrapper.grid(row=row,column=0, pady=(5, 0), sticky='nw')
 
         global errors_labels
@@ -524,7 +534,6 @@ class ValidationPage(Frame):
         #add entity
         #add button
         button_wrapper = Frame(validation_frame, highlightthickness=2, highlightbackground='black')
-        # button_wrapper.pack(fill='both', expand=True,padx=20, pady=20)
 
         button_wrapper.grid(row=row,column=0, pady=(5, 0), sticky='nw')
         # row+=1
@@ -544,9 +553,8 @@ class ValidationPage(Frame):
         # put the frame in the canvas
         # make sure everything is displayed before configuring the scrollregion
         global vsb,screen_width,screen_height
-        print("WIDTH",screen_width, vsb.winfo_width(),255)
-        width = 1500 #screen_width - vsb.winfo_width() -255#sum([buttons[0][j].winfo_width() for j in range(0, 5)])
-        height = screen_height-70 #sum([buttons[i][0].winfo_height() for i in range(0, 5)])
+        width = 1500 #screen_width - vsb.winfo_width() -255
+        height = screen_height-70 
         validation_frame.config(width=width ,
                             height=height)
 

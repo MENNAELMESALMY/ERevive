@@ -128,20 +128,3 @@ def generate_dashboard(cluster_name,endpoint,directory,
     f = open(directory, "w")
     f.write(dashboard_string)
     f.close()
-
-# test_endpoint = {
-#     'url':'',
-#     'method':'get',
-#     'query_params':[('course_name','str','like','max'),('course_id','int','=','avg')],
-#     'body_params':['name','bday'],
-#     'path_params':['course_path'],
-#     'response':{'field1':'value1', 'field2':'value2'},
-#     'cluster_name':'cluster_name',
-#     'ui_name':'ui_name',
-#     'endpoint_name':'endpoint_name',
-# }
-
-# create_dir = '../gpinterface/src/components/'+test_endpoint['endpoint_name']+'.vue'
-# f = open(create_dir, "w")
-# f.write(generate_dashboard(test_endpoint))
-# f.close()

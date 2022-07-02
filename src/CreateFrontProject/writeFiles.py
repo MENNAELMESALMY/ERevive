@@ -786,18 +786,18 @@ for cluster_name,endpoints in c.items():
         generate_dashboard(cluster_name,endpoint, filePath,is_single_entity,delete_endpoint,put_endpoint,post_endpoint)
  
     elif endpoint["method"] == "post":
-      createForm(requirments,endpoint, filePath)
+      createForm(requirments,cluster_name,endpoint, filePath)
 
     elif endpoint["method"] == "put":
       filePath = componentsRoute + "edit_" +endpoint["endpoint_name"] + ".vue"
-      createForm(requirments,endpoint, filePath)
+      createForm(requirments,cluster_name,endpoint, filePath)
 
 #Index code generation
 with open('FrontCode/src/index.html', 'w') as f:
     f.write('''
 <html>
   <head>
-    <title>Vue Hello World</title>
+    <title>Vue App</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"></link>
   </head>
   <body>

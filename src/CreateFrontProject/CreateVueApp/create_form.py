@@ -1,4 +1,4 @@
-def createForm (requirments,endpoint,filePath):
+def createForm (requirments,cluster_name,endpoint,filePath):
     responsiveList = []
     textinput = False
     textarea = False
@@ -376,7 +376,11 @@ export default {
         ''')
         file.write('''
             }
-            console.log(formData);
+        ''')
+        file.write(f'''
+            this.$store.dispatch("{cluster_name}/{endpoint["endpoint_name"]}", formData);
+        ''')
+        file.write('''
         }
     }
 }

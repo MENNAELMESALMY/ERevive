@@ -62,21 +62,21 @@ def createModelFile(modelsPath,ob):
                 file.write(f'\t{key} = db.Column(db.{value})\n')
 
     ### foreign key relation
-    if ob['TableType'] == "mTm":
-        foreignKeyRelation = {
-            'relationType':"mTm",
-            'table1':foreignTable[0],
-            'table2':foreignTable[1],
-            'secondary':tableName,
-            }
-    elif len(ob['ForgeinKey']) != 0:
-        foreignKeyRelation = {
-            'relationType':"oTm",
-            'table1':foreignTable[0],
-            'table2':tableName,
-            }
-    else:
-        foreignKeyRelation = {}
+    # if ob['TableType'] == "mTm":
+    #     foreignKeyRelation = {
+    #         'relationType':"mTm",
+    #         'table1':foreignTable[0],
+    #         'table2':foreignTable[1],
+    #         'secondary':tableName,
+    #         }
+    # elif len(ob['ForgeinKey']) != 0:
+    #     foreignKeyRelation = {
+    #         'relationType':"oTm",
+    #         'table1':foreignTable[0],
+    #         'table2':tableName,
+    #         }
+    # else:
+    foreignKeyRelation = {}
     return foreignKeyRelation,tableName,attributesList
 
 

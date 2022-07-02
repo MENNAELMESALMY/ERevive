@@ -344,7 +344,8 @@ def rankTopk(ranked_queries,maxNumOfQueries):
     maxClusterScore = 0
     top_ranked_queries = []
     for ranked_query in ranked_queries:
-        if len(ranked_queries)<10:
+        if len(ranked_query)<10:
+            top_ranked_queries.append({'len':len(ranked_query),'score':1,'queries':ranked_query})
             continue
         entities = list(set(ranked_query[0]['entities']))
         cluster_score = 0

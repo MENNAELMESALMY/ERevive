@@ -22,7 +22,6 @@ def getMappedQueries(schemaGraph,finalQueriesIndexs,listOfQueries,testSchema,ent
     start = timeit.default_timer()
     for idx in finalQueriesIndexs:
         mappedEntites, mappedAttributes, goals,mappedEntitesDict,bestJoin =  mapToSchema(schemaGraph,listOfQueries[idx],testSchema,entityDict,schemaEntityNames)
-        print("mappedEntites: ",mappedEntites,mappedAttributes,goals,mappedEntitesDict,bestJoin)
         coverage = queryCoverage(mappedAttributes)
         query = constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,idx,goals,listOfQueries[idx],bestJoin,testSchema)
                
@@ -106,8 +105,8 @@ def suggest_queries(testSchema):
     query = cleanQuery(schemaEntityNames) #Generated Keywords from shcema or KG //Future work
     queryOneHotVector = getKeyWordsVector(query).T
     queryHits = getQueryHits(queryOneHotVector,queriesMatrix)
- 
 
+ 
     nonZeroQueriesIndexs = getNonZeroQueryHits(queryHits)
     tracemalloc.stop()
 

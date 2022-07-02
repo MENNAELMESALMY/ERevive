@@ -358,7 +358,7 @@ class foreignKey:
         # if  entityNameOld is not None and entityNameOld == entityNameNew:
         #     print("my important print",self.belongToEntity, entityNameOld)
 
-        if self.belongToEntity == entityNameOld:self.updateAttrs(entityNameNew)
+        self.updateAttrs(entityNameNew)
         # elif entityNameOld is not None and entityNameOld == entityNameNew:
             # print("H",entityNameNew)
             # self.updateAttrs()

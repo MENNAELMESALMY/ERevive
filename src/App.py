@@ -1,16 +1,11 @@
 import json
 import os
-import tkinter as tk
-from tkinter import ttk, Tk, Canvas, Entry, Text, Button, PhotoImage,Label,Scrollbar
-from tkinter import *
-from tkinter import filedialog
-from tkinter.ttk import *
-from pathlib import Path
+
 from turtle import bgcolor
 import webbrowser
 import cv2
 from ImageProcessing import process_image
-from gui_validation import ValidationPage
+from gui_validation import *
 import threading
 
 OUTPUT_PATH = Path(__file__).parent
@@ -55,15 +50,7 @@ def image_processing():
     
 
         
-def update(self,ind,frameCnt, frames, label):
-    frame = frames[ind]
-    ind += 1
-    if ind == frameCnt:
-        ind = 0
-    
-    label.configure(image=frame)
-    label.place(x=850.0,y=200.0)
-    self.after(40, update, self,ind,frameCnt, frames, label)
+
 
 def showDone(self,screen_width):
     self.ER_image = tk.PhotoImage(file=relative_to_assets("./done.png"))
@@ -79,8 +66,6 @@ def open_back_url():
 def open_front_url():
     webbrowser.open_new("http://localhost:8080/")
 
-def relative_to_assets(path: str) -> Path:
-    return ASSETS_PATH / Path(path)
 
 def enableSideButtons():
     global LASTPAGE
@@ -113,7 +98,7 @@ class tkinterApp(tk.Tk):
         self.minsize(1750, 1024)
         self.resizable(width=True, height=False)
         self.frames = {} 
-        for F in (StartPage, Page1, ValidationPage, Page3):
+        for F in (StartPage, Page1, ValidationPage,SqlQueriesPage,GeneratedSchemaPage):
   
             frame = F(container, self)
             self.frames[F] = frame
@@ -141,7 +126,7 @@ class tkinterApp(tk.Tk):
             homeButton.place(x = 22, y = 50)
 
             self.sql = tk.PhotoImage(file=relative_to_assets("sql.png"))
-            sqlButton = ttk.Button(self, image =self.sql,style='W.TButton', command = lambda: moveToPage(self, Page2))
+            sqlButton = ttk.Button(self, image =self.sql,style='W.TButton', command = lambda: moveToPage(self, SqlQueriesPage))
             sqlButton.place(x = 22, y = 240)
 
             self.api = tk.PhotoImage(file=relative_to_assets("api.png"))
@@ -153,7 +138,7 @@ class tkinterApp(tk.Tk):
             frontButton.place(x = 22, y = 640)
 
             self.schema = tk.PhotoImage(file=relative_to_assets("schema.png"))
-            schemaButton = ttk.Button(self, image =self.schema,style='W.TButton', command = lambda: moveToPage(self, Page3))
+            schemaButton = ttk.Button(self, image =self.schema,style='W.TButton', command = lambda: moveToPage(self, GeneratedSchemaPage))
             schemaButton.place(x = 22, y = 840)
             #generate ShowFrame event
 
@@ -168,6 +153,11 @@ class tkinterApp(tk.Tk):
         frame = self.frames[Page1]
         frame.tkraise()
         thread = threading.Thread(target=image_processing)        
+        thread.start()
+    def show_search_engine_page(self,global_schema):
+        frame = self.frames[SqlQueriesPage]
+        frame.tkraise()
+        thread = threading.Thread(target=start_search_engine,args=(global_schema,))        
         thread.start()
         
    
@@ -251,42 +241,16 @@ class Page1(tk.Frame):
         #add showframe event
     @staticmethod    
     def finish():
-        Page1.frame.gif_label.destroy()
+        #hide gif
+        Page1.gif_label.destroy()
+
         button1 = ttk.Button(Page1.frame, text ="Move To Next Step ...",style='W.TButton',
         command = lambda : [Page1.frame_controller.show_frame(ValidationPage),ValidationPage.loadEntitiesFrames(), enableSideButtons()])
         button1.place(x = Page1.width/2, y = Page1.height-140, width = 350.0, height = 70.0, anchor = "center")
 
     
 
-class Page2(tk.Frame):
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
-        screen_width = self.winfo_screenwidth()
-        label = ttk.Label(self, text ="SQL Queries Page ....", style = 'W.TLabel',font=VERYLARGEFONT)
-        label.place(x = screen_width/2, y = 90, anchor="center")
-
-class Page3(tk.Frame):
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
-        
-        ################### scroll bar not working ###################
-        canvas = Canvas(self,bg = "#FFFFFF")
-        canvas.pack(fill='both', expand=True,side='left')
-        scroll_y = ttk.Scrollbar(self, orient="vertical", command=canvas.yview)
-        scroll_y.pack(fill=Y, side=RIGHT)
-        canvas.configure(yscrollcommand=scroll_y.set)
-        canvas.bind("<Configure>", lambda event: canvas.configure(scrollregion=canvas.bbox("all")))
-        canvas.create_window((300, 0), window=self, anchor="nw")
-        ##############################################################
-        
-        screen_width = self.winfo_screenwidth()
-        label = Label(self, text ="Generated Schema", style = 'W.TLabel', font=VERYLARGEFONT)
-        label.place(x = screen_width/2, y = 90, anchor="center")
-
-        self.finalSchema = tk.PhotoImage(file=relative_to_assets("./generatedSchema.png"))
-        Label(self, image=self.finalSchema).place(x = 970, y = 950, anchor="center")
-
-        canvas.update_idletasks() 
+ 
 
 app = tkinterApp()
 app.mainloop()

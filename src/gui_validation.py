@@ -1,7 +1,9 @@
+from gui_core import *
 from tkinter import Tk,Frame, Canvas, OptionMenu, Variable,Label,Scrollbar,StringVar
 from tkinter import RIGHT,Y
 from customtkinter import CTkEntry,CTkFrame,CTkCheckBox,CTkButton
 from numpy import pad
+
 
 global_schema = {}
 
@@ -480,13 +482,13 @@ class entity:
         # remove from object
         global_schema.pop(self.name.get())
 class ValidationPage(Frame):
-
+    ValidationPageController = None
     def __init__(self, parent, controller):
         global global_schema
         Frame.__init__(self, parent)
         global screen_width,screen_height
 
-##
+##      
         # self.geometry(f"{screen_width}x{screen_height}")
         self.grid_rowconfigure(0, weight=1)
         self.columnconfigure(0, weight=1)
@@ -520,7 +522,7 @@ class ValidationPage(Frame):
         vsb = Scrollbar(validation_frame, orient="vertical", command=canvas.yview)
         vsb.grid(row=0, column=1, sticky='ns')
         canvas.configure(yscrollcommand=vsb.set)
-##
+        ValidationPage.ValidationPageController = controller
 
 ##
 
@@ -584,7 +586,7 @@ class ValidationPage(Frame):
         #save object and add errors if needed
         #save button
         saveButton = CTkButton(button_wrapper, \
-                    text="Save Changes",command=saveChanges)
+                    text="Save Changes",command=lambda: [saveChanges(),ValidationPage.ValidationPageController.show_search_engine_page(global_schema)])
         saveButton.pack(fill='both', expand=True,padx=20, pady=20)
 
 

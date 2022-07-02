@@ -62,7 +62,7 @@ def saveChanges():
             'dataType': global_schema[entityName]['attributes'][fk.attrName.get()]
             }
             global_schema[entityName]['ForgeinKey'].append(fk_obj)
-    print('fff',global_schema)
+    #print('fff',global_schema)
             
     for entity in global_schema.values():
         entityName = entity['TableName']
@@ -74,9 +74,9 @@ def saveChanges():
             fkName = fk['attributeName']
             fkTable = fk['ForignKeyTable']
             fkTableAttrName = fk['ForignKeyTableAttributeName']
-            print(entity['attributes'])
-            print(global_schema[fkTable]['attributes'])
-            print("pppp",fkName,fkTable,fkTableAttrName)
+            #print(entity['attributes'])
+            #print(global_schema[fkTable]['attributes'])
+            #print("pppp",fkName,fkTable,fkTableAttrName)
             if entity['attributes'][fkName] != global_schema[fkTable]['attributes'][fkTableAttrName]:
             #     fk['dataType'] = entity['attributes'][fkName]
             # else:
@@ -93,6 +93,16 @@ def saveChanges():
         errors_labels.append(err_lb)
     expandCanvas()
 
+def updateMykeys(AttrNameOld,AttrNameNew,FKEntity):
+    global entities_list
+    for entity in entities_list:
+        if entity.name.get() == FKEntity:
+            for fk in entity.ForgeinKeysUI:
+                if fk.removed:continue
+                if fk.attrName.get() == AttrNameOld:
+                    fk.attrName.set(AttrNameNew)
+                    # print(global_schema[FKEntity]['attributes'])
+            fk.updateAttrs()
 
 def updataAllForeignKeys(entityNameOld='',entityNameNew = ''):
     global entities_list
@@ -102,10 +112,10 @@ def updataAllForeignKeys(entityNameOld='',entityNameNew = ''):
             if fk.removed:continue
             # print(entityNameOld,fk.entityName.get())
             if fk.entityName.get() == entityNameOld:
-                print("updating Name", fk.entityName.get())
+                #print("updating Name", fk.entityName.get())
                 fk.update(entityNameOld,entityNameNew)
             else:
-                print("not updating entity Name", fk.entityName.get())
+                #print("not updating entity Name", fk.entityName.get())
                 fk.update()
 
 def removeHangingForeignKeys(entityName='',attributeName = ''):
@@ -194,15 +204,20 @@ class attribute:
             if self.nameStr in global_schema[self.entityName]['primaryKey']:
                 global_schema[self.entityName]['primaryKey'].append(sv.get())
                 global_schema[self.entityName]['primaryKey'].remove(self.nameStr)
+            updateMykeys(self.nameStr,sv.get(),self.entityName)
             self.nameStr = sv.get()
-            updataAllForeignKeys(self.entityName,self.entityName)
+            # updataAllForeignKeys(self.entityName,self.entityName)#,isEditAttr=True)
+            updataAllForeignKeys()#,isEditAttr=True)
+            
+
     
     def isPrimaryKeyCheckbox(self):
         global global_schema
         if self.isInitialized:
             if not self.isPrimaryKey.get(): global_schema[self.entityName]['primaryKey'].append(self.nameStr)
             else: global_schema[self.entityName]['primaryKey'].remove(self.nameStr)
-            updataAllForeignKeys(self.entityName,self.entityName)
+            # updataAllForeignKeys(self.entityName,self.entityName)
+            updataAllForeignKeys()
 
     def changeDataType(self,dataType):
         global global_schema
@@ -273,8 +288,8 @@ class foreignKey:
             self.l[i].destroy()
     
     def updateAttributes(self,entityName= None):
-        # print("IO")
-        global global_schema
+        # updating attributes to entity the key is pointing to
+        #print("IO")
         if entityName is not None:
             self.entityName.set(entityName)
             # print("pppppppppppppppppppppppppppp",entityName)
@@ -282,6 +297,7 @@ class foreignKey:
             if len(self.entityAttributes)>0: self.entityAttribute.set(self.entityAttributes[0])
             else: self.removeForeignKey();return
         else:
+            #print("Changing entity",self.entityName.get())
             entityName = self.entityName.get()
             self.entityAttributes = [e for e in global_schema[entityName]['primaryKey']]
             if self.entityAttribute.get() in self.entityAttributes:
@@ -291,7 +307,7 @@ class foreignKey:
                 else: self.removeForeignKey();return
         
         self.entityAttributesMenu["menu"].delete(0, 'end')
-        # print("attr",self.entityAttributes)
+        #print("attr",self.entityAttributes)
         for choice in self.entityAttributes:
             self.entityAttributesMenu["menu"]\
                 .add_command(label=choice, command= lambda a=choice: \
@@ -310,14 +326,16 @@ class foreignKey:
                    [ self.entityName.set(a),self.updateAttributes(a) ])
 
     def updateAttrs(self,entityName= None):
-        global global_schema
+        # updata attributes of table that this foreign key is pointing to
         print("Update Attrs",entityName,self.belongToEntity)
         if entityName is not None: self.belongToEntity = entityName
         print("Update Attrs",entityName,self.belongToEntity)
         Attrs = list(global_schema[self.belongToEntity]['attributes'].keys()) 
+        print("Attrs",Attrs)
         self.attrNameMenu["menu"].delete(0, 'end')
 
         if self.attrName.get() not in Attrs:
+            print("Not in Attrs")
             if len(Attrs)==0:self.attrName.set('')
             else:self.attrName.set(Attrs[0])
 
@@ -328,13 +346,23 @@ class foreignKey:
 
 
     def update(self,entityNameOld=None,entityNameNew= None):
-        global global_schema
-        print("IN UPDATE",entityNameOld,entityNameNew,self.belongToEntity)
-        self.updateEntities(entityNameNew)
-        if self.belongToEntity == entityNameOld: 
-            self.updateAttrs(entityNameNew)
+        #print("IN UPDATE",entityNameOld,entityNameNew,self.belongToEntity)
+        
+        # if entityNameOld is not None and entityNameOld == entityNameNew:self.updateEntities()
         # else:
-        #     self.updateAttrs()
+        self.updateEntities(entityNameNew)
+
+        # if  entityNameOld is not None and entityNameOld == entityNameNew:
+        #     print("my important print",self.belongToEntity, entityNameOld)
+
+        if self.belongToEntity == entityNameOld:self.updateAttrs(entityNameNew)
+        # elif entityNameOld is not None and entityNameOld == entityNameNew:
+            # print("H",entityNameNew)
+            # self.updateAttrs()
+
+
+        # if entityNameOld is not None and entityNameOld == entityNameNew:self.updateAttributes()
+        # else:
         self.updateAttributes(entityNameNew)
 
 
@@ -419,7 +447,9 @@ class entity:
              attribute(self.attWrapper,self.name.get(),attr_default_name, "str",False,0,0)
         global_schema[self.name.get()]['attributes'][attr_default_name] = "str"
         expandCanvas()
-        updataAllForeignKeys(self.entityCurName,self.entityCurName)
+        # updataAllForeignKeys(self.entityCurName,self.entityCurName)
+
+        updataAllForeignKeys()
 
     def isWeakChecked(self):
         global global_schema
@@ -431,7 +461,7 @@ class entity:
         if self.isInitialized:
             old_key = self.entityCurName
             new_key = sv.get()
-            print("Edit entity Name",old_key,new_key)
+            #print("Edit entity Name",old_key,new_key)
             global_schema[old_key]['TableName'] = new_key
             global_schema[new_key] = global_schema.pop(old_key)#global_schema[old_key]
             updataAllForeignKeys(old_key,new_key)
@@ -552,7 +582,7 @@ class ValidationPage(Frame):
 
         entities_list = []
         row,col,ROWCOUNT=0,0,4
-        print("global_schema",global_schema)
+        #print("global_schema",global_schema)
 
         for _, value in global_schema.items():
             entities_list.append(entity(value['TableName'],\

@@ -1,22 +1,120 @@
-from tkinter import Tk,Frame, Canvas, OptionMenu, Variable,Label,Scrollbar,StringVar
+from tkinter import NW, Tk,Frame, Canvas, OptionMenu, Variable,Label,Scrollbar,StringVar
 from tkinter import RIGHT,Y
+from turtle import window_height, window_width
 from customtkinter import CTkEntry,CTkFrame,CTkCheckBox,CTkButton
-from numpy import pad
 
-global_schema = {}
+global_schema = {
+    11: 
+    {'TableName': 'DEPARTMENT', 
+    'TableType':'',
+    'attributes': {
+    'name': 'str', 
+    'start_date': 'datetime',
+    'EMPLOYEE_Manages': 'str'}, 
+    'primaryKey': ['name'], 
+    'ForgeinKey': [{'attributeName': 'EMPLOYEE_Manages',
+    'ForignKeyTable': 'EMPLOYEE', 
+    'ForignKeyTableAttributeName': 'ssn', 
+    'patricipaction': 'partial', 
+    'dataType': 'str'}], 
+    'isWeak': False},
+    34: 
+    {'TableName': 'DEPARTMENT_Clocation', 
+    'TableType':'',
+    'attributes': {'Clocation': 'str',
+    'DEPARTMENT_name': 'str'}, 
+    'primaryKey': ['Clocation', 
+    'DEPARTMENT_name'], 
+    'ForgeinKey': [{'attributeName': 'DEPARTMENT_name', 
+    'ForignKeyTable': 'DEPARTMENT', 
+    'ForignKeyTableAttributeName': 'name', 
+    'patricipaction': 'full', 
+    'dataType': 'str'}], 
+    'isWeak': False}, 
+    12: 
+    {'TableName': 'EMPLOYEE',
+    'TableType':'',
+    'attributes': {'last_name': 'str', 
+    'middle_initis': 'str', 
+    'first_name': 'str', 
+    'address': 'str',
+    'salary': 'float',
+    'sex': 'str', 
+    'status': 'str', 
+    'birth_dat': 'str', 
+    'ssn': 'str',
+    'start_date': 'datetime',
+    'DEPARTMENT_Employed_name': 'str',
+    'EMPLOYEE_Supervision_': 'str'},
+    'primaryKey': ['ssn'], 
+    'ForgeinKey': [{'attributeName': 'DEPARTMENT_Employed_name',
+    'ForignKeyTable': 'DEPARTMENT', 'ForignKeyTableAttributeName': 'name',
+    'patricipaction': 'full', 'dataType': 'str'}, 
+    {'attributeName': 'EMPLOYEE_Supervision_', 
+    'ForignKeyTable': 'EMPLOYEE', 
+    'ForignKeyTableAttributeName': 'ssn',
+    'patricipaction': 'partial', 
+    'dataType': 'str'}], 
+    'isWeak': False},
+    24: {'TableName': 'PROJECT', 
+    'TableType':'',
+    'attributes': {'location': 'str',
+    'name': 'str', 
+    'budget': 'float',
+    'DEPARTMENT_Assigned_name': 'str'}, 
+    'primaryKey': ['name'], 
+    'ForgeinKey': [{'attributeName': 'DEPARTMENT_Assigned_name',
+    'ForignKeyTable': 'DEPARTMENT', 
+    'ForignKeyTableAttributeName': 'name',
+    'patricipaction': 'partial', 
+    'dataType': 'str'}], 
+    'isWeak': False}, 
+    25: 
+    {'TableName': 'DEPENDENT',
+    'TableType':'',
+    'attributes': {'sex': 'str', 
+    'relatlonship': 'str',
+    'name': 'str',
+    'birth_date': 'datetime', 
+    'Dependents_EMPLOYEE_': 'str'}, 
+    'primaryKey': ['Dependents_EMPLOYEE_'], 
+    'ForgeinKey': [{'attributeName': 'Dependents_EMPLOYEE_', 
+    'ForignKeyTable': 'EMPLOYEE', 
+    'ForignKeyTableAttributeName': 'ssn', 
+    'patricipaction': 'partial', 
+    'dataType': 'str'}], 
+    'isWeak': True}, 
+    35: 
+    {'TableName': 'Works_EMPLOYEE_PROJECT', 
+    'TableType':'mTm',
+    'attributes': {
+    'start_date': 'datetime', 
+    'hours': 'int', 
+    'EMPLOYEE_': 'str', 
+    'PROJECT_': 'str'}, 
+    'primaryKey': ['EMPLOYEE_', 'PROJECT_'], 
+    'ForgeinKey': [{'attributeName': 'EMPLOYEE_', 
+    'ForignKeyTable': 'EMPLOYEE',
+    'ForignKeyTableAttributeName': 'ssn', 
+    'patricipaction': 'full',
+    'dataType': 'str'}, 
+    {'attributeName': 'PROJECT_',
+    'ForignKeyTable': 'PROJECT', 
+    'ForignKeyTableAttributeName': 'name',
+    'patricipaction': 'full',
+    'dataType': 'str'}
+    ], 
+    'isWeak': False}}
 
-validation_frame = None
-canvas = None
-errors_labels = []
-errors_wrapper = None
-entities_list = []
-# print(global_schema)
+old_keys = list(global_schema.keys())
+for old_key in old_keys:
+    new_key = global_schema[old_key]['TableName']
+    global_schema[new_key] = global_schema.pop(old_key)
 
 dataTypes = ['str', 'int', 'float', 'datetime','bool']
 participations = ['full', 'partial']
 
 def addEntity():
-    global entities_list,row,col,ROWCOUNT,entities_wrapper
     default_entity_name = 'entity_'+ str(len(global_schema))
     global_schema[default_entity_name] = {'TableName': default_entity_name, 
     'TableType':'',
@@ -24,17 +122,11 @@ def addEntity():
     'primaryKey': [], 
     'ForgeinKey': [], 
     'isWeak': False}
-    entities_list.append(entity(default_entity_name,{}, [],[],\
-        entities_wrapper,global_schema[default_entity_name],row,col))
-    if col!=0 and col == ROWCOUNT-1:
-        row +=1
-    col = (col+1)%ROWCOUNT#+3)%12
+    entities_list.append(entity(default_entity_name,{}, [],[]))
     expandCanvas()
     updataAllForeignKeys()
 
 def expandCanvas():
-    global validation_frame
-    global canvas
     validation_frame.update()
     height = validation_frame.winfo_height()
     canvas.itemconfigure("canvas_frame", height=height)
@@ -42,25 +134,8 @@ def expandCanvas():
 
 def saveChanges():
     # destroy errors if exists
-    global errors_labels,entities_list,global_schema
     for err_lb in errors_labels: err_lb.destroy()
     errors=[]
-    # align Foreign keys in schema to global schema
-    for entity in entities_list:
-        entityName=entity.name.get()
-        global_schema[entityName]['ForgeinKey'] = []
-        for fk in entity.ForgeinKeysUI:
-            if fk.removed: continue
-            fk_obj ={
-            'attributeName':fk.attrName.get()  , 
-            'ForignKeyTable': fk.entityName.get(), 
-            'ForignKeyTableAttributeName': fk.entityAttribute.get(), 
-            'patricipaction': fk.participation.get(), 
-            'dataType': global_schema[entityName]['attributes'][fk.attrName.get()]
-            }
-            global_schema[entityName]['ForgeinKey'].append(fk_obj)
-    #print('fff',global_schema)
-            
     for entity in global_schema.values():
         entityName = entity['TableName']
         if len(entity['attributes'])==0: errors.append(f'{entityName} has no attributes')
@@ -69,38 +144,23 @@ def saveChanges():
             fkName = fk['attributeName']
             fkTable = fk['ForignKeyTable']
             fkTableAttrName = fk['ForignKeyTableAttributeName']
-            #print(entity['attributes'])
-            #print(global_schema[fkTable]['attributes'])
-            #print("pppp",fkName,fkTable,fkTableAttrName)
-            if entity['attributes'][fkName] != global_schema[fkTable]['attributes'][fkTableAttrName]:
-            #     fk['dataType'] = entity['attributes'][fkName]
-            # else:
+            if entity['attributes'][fkName] == global_schema[fkTable]['attributes'][fkTableAttrName]:
+                fk['dataType'] = entity['attributes'][fkName]
+            else:
                 errors.append(f'{fkName} foreignkey in {entityName} has type mismatch with attribute it is pointing to')
     if len(errors)>0: errors.append('cannot save changes')
     else: 
         print('------------------------------------------------------')
         print(global_schema)
     # add ui for errors
-    global errors_wrapper
     for err in errors:
         err_lb = Label(errors_wrapper,text =err)
         err_lb.pack(fill='both', expand=True,padx=10, pady=10)
         errors_labels.append(err_lb)
     expandCanvas()
 
-def updateMykeys(AttrNameOld,AttrNameNew,FKEntity):
-    global entities_list
-    for entity in entities_list:
-        if entity.name.get() == FKEntity:
-            for fk in entity.ForgeinKeysUI:
-                if fk.removed:continue
-                if fk.attrName.get() == AttrNameOld:
-                    fk.attrName.set(AttrNameNew)
-                    # print(global_schema[FKEntity]['attributes'])
-            fk.updateAttrs()
 
 def updataAllForeignKeys(entityNameOld='',entityNameNew = ''):
-    global entities_list
     for entity in entities_list:
         for fk in entity.ForgeinKeysUI:
             if fk.removed:continue
@@ -113,7 +173,6 @@ def updataAllForeignKeys(entityNameOld='',entityNameNew = ''):
                 fk.update()
 
 def removeHangingForeignKeys(entityName='',attributeName = ''):
-    global entities_list
     for entity in entities_list:
         for fk in entity.ForgeinKeysUI:
             # print(entityNameOld,fk.entityName.get())
@@ -126,12 +185,7 @@ def removeHangingForeignKeys(entityName='',attributeName = ''):
                     #print("hihihi")
                     fk.removeForeignKey() 
 class attribute:
-    def __init__(self,wrapperFrame,entityName, name, dataType,isPrimaryKey,row,col):
-        wrapperFrame = Frame(wrapperFrame, highlightthickness=2, highlightbackground='black')
-        wrapperFrame.pack(fill='both', expand=True,padx=20, pady=20)
-
-        # wrapperFrame.grid(row=row,column=col, sticky='news',padx=(10, 10),pady=(10,10))
-
+    def __init__(self,wrapperFrame,entityName, name, dataType,isPrimaryKey):
         self.isInitialized = False
         self.entityName = entityName
         self.removed = False
@@ -194,28 +248,25 @@ class attribute:
             if self.nameStr in global_schema[self.entityName]['primaryKey']:
                 global_schema[self.entityName]['primaryKey'].append(sv.get())
                 global_schema[self.entityName]['primaryKey'].remove(self.nameStr)
-            updateMykeys(self.nameStr,sv.get(),self.entityName)
             self.nameStr = sv.get()
-            # updataAllForeignKeys(self.entityName,self.entityName)#,isEditAttr=True)
-            updataAllForeignKeys()#,isEditAttr=True)
-            
-
+            updataAllForeignKeys()
     
     def isPrimaryKeyCheckbox(self):
         if self.isInitialized:
-            if not self.isPrimaryKey.get(): global_schema[self.entityName]['primaryKey'].append(self.nameStr)
-            else: global_schema[self.entityName]['primaryKey'].remove(self.nameStr)
-            # updataAllForeignKeys(self.entityName,self.entityName)
+            if not self.isPrimaryKey.get():
+                global_schema[self.entityName]['primaryKey'].append(self.nameStr)
+            else:
+                global_schema[self.entityName]['primaryKey'].remove(self.nameStr)
             updataAllForeignKeys()
 
     def changeDataType(self,dataType):
         global_schema[self.entityName]['attributes'][self.name.get()]=dataType
+        
+
 
 class foreignKey:
     def __init__(self,wrapperFrame,name,belongToEntity,attributes ,entityName, entityAtrribute, patricipaction):
-        wrapperFrame = Frame(wrapperFrame, highlightthickness=2, highlightbackground='black')
-        wrapperFrame.pack(fill='both', expand=True,padx=20, pady=20)
-
+        self.wrapperFrame = wrapperFrame
         self.removed = False
         self.belongToEntity = belongToEntity
         entitiesList = list(global_schema.keys())
@@ -275,8 +326,7 @@ class foreignKey:
             self.l[i].destroy()
     
     def updateAttributes(self,entityName= None):
-        # updating attributes to entity the key is pointing to
-        #print("IO")
+        # print("IO")
         if entityName is not None:
             self.entityName.set(entityName)
             # print("pppppppppppppppppppppppppppp",entityName)
@@ -284,7 +334,6 @@ class foreignKey:
             if len(self.entityAttributes)>0: self.entityAttribute.set(self.entityAttributes[0])
             else: self.removeForeignKey();return
         else:
-            #print("Changing entity",self.entityName.get())
             entityName = self.entityName.get()
             self.entityAttributes = [e for e in global_schema[entityName]['primaryKey']]
             if self.entityAttribute.get() in self.entityAttributes:
@@ -294,7 +343,7 @@ class foreignKey:
                 else: self.removeForeignKey();return
         
         self.entityAttributesMenu["menu"].delete(0, 'end')
-        #print("attr",self.entityAttributes)
+        # print("attr",self.entityAttributes)
         for choice in self.entityAttributes:
             self.entityAttributesMenu["menu"]\
                 .add_command(label=choice, command= lambda a=choice: \
@@ -303,6 +352,7 @@ class foreignKey:
     def updateEntities(self,entityName= None):
         if entityName is not None:
             self.entityName.set(entityName)
+        # self.entitiesMenu["menu"].delete(0, 'end')
         entitiesList = list(global_schema.keys())
         self.entitiesMenu["menu"].delete(0, 'end')
 
@@ -312,16 +362,11 @@ class foreignKey:
                    [ self.entityName.set(a),self.updateAttributes(a) ])
 
     def updateAttrs(self,entityName= None):
-        # updata attributes of table that this foreign key is pointing to
-        print("Update Attrs",entityName,self.belongToEntity)
         if entityName is not None: self.belongToEntity = entityName
-        print("Update Attrs",entityName,self.belongToEntity)
         Attrs = list(global_schema[self.belongToEntity]['attributes'].keys()) 
-        print("Attrs",Attrs)
         self.attrNameMenu["menu"].delete(0, 'end')
 
         if self.attrName.get() not in Attrs:
-            print("Not in Attrs")
             if len(Attrs)==0:self.attrName.set('')
             else:self.attrName.set(Attrs[0])
 
@@ -332,30 +377,17 @@ class foreignKey:
 
 
     def update(self,entityNameOld=None,entityNameNew= None):
-        #print("IN UPDATE",entityNameOld,entityNameNew,self.belongToEntity)
-        
-        # if entityNameOld is not None and entityNameOld == entityNameNew:self.updateEntities()
-        # else:
+
         self.updateEntities(entityNameNew)
-
-        # if  entityNameOld is not None and entityNameOld == entityNameNew:
-        #     print("my important print",self.belongToEntity, entityNameOld)
-
-        if self.belongToEntity == entityNameOld:self.updateAttrs(entityNameNew)
-        # elif entityNameOld is not None and entityNameOld == entityNameNew:
-            # print("H",entityNameNew)
-            # self.updateAttrs()
-
-
-        # if entityNameOld is not None and entityNameOld == entityNameNew:self.updateAttributes()
-        # else:
+        if self.belongToEntity == entityNameOld: 
+            self.updateAttrs(entityNameNew)
+        else:
+            self.updateAttrs()
         self.updateAttributes(entityNameNew)
-
-
 
 class entity:
     def __init__(self, name, attributes, \
-        primaryKeys, ForgeinKeys,entities_wrapper,value,row,col):
+        primaryKeys, ForgeinKeys,row,col,rowspan):
         self.isInitialized = False
         self.entityCurName = name
         self.wrapper = Frame(entities_wrapper, highlightthickness=2, highlightbackground='black')
@@ -382,19 +414,16 @@ class entity:
         self.attrLabel = Label(self.wrapper,text ="___Attributes__")
         self.attrLabel.pack(fill='both', expand=True,padx=10, pady=10)
 
-
         for attributeName,dataType in attributes.items():
             self.attributes[attributeName] =attribute(self.attWrapper,name,\
-                attributeName, dataType,attributeName in self.primaryKeys,row,col)
-            
-            # if col!=0 and col==5:
-            #     row+=1
-            # col= (col+1)%6
-
+                attributeName, dataType,attributeName in self.primaryKeys)
 
         # self.wrapper.pack(fill='both', expand=True,padx=20, pady=20)
+        #self.wrapper.update()
+        #print(self.wrapper.winfo_height())
         self.wrapper.grid(row=row, column=col,\
             columnspan=1, sticky='news',padx=(10, 10),pady=(10,10))
+
         self.attWrapper.pack(fill='both', expand=True,padx=20, pady=20)
 
         self.newAttrButton = CTkButton(self.wrapper, \
@@ -415,6 +444,8 @@ class entity:
 
         self.foreignKeyWrapper.pack(fill='both', expand=True,padx=20, pady=20)
         self.isInitialized = True
+
+
         self.newFKButton = CTkButton(self.wrapper, \
             text="Add Foreign Key",command=self.addForeignKey)
 
@@ -428,11 +459,9 @@ class entity:
     def addAttribute(self):
         attr_default_name = "attr" + str(len(self.attributes)+1)
         self.attributes[attr_default_name] =\
-             attribute(self.attWrapper,self.name.get(),attr_default_name, "str",False,0,0)
+             attribute(self.attWrapper,self.name.get(),attr_default_name, "str",False)
         global_schema[self.name.get()]['attributes'][attr_default_name] = "str"
         expandCanvas()
-        # updataAllForeignKeys(self.entityCurName,self.entityCurName)
-
         updataAllForeignKeys()
 
     def isWeakChecked(self):
@@ -443,7 +472,6 @@ class entity:
         if self.isInitialized:
             old_key = self.entityCurName
             new_key = sv.get()
-            #print("Edit entity Name",old_key,new_key)
             global_schema[old_key]['TableName'] = new_key
             global_schema[new_key] = global_schema.pop(old_key)#global_schema[old_key]
             updataAllForeignKeys(old_key,new_key)
@@ -491,120 +519,90 @@ class entity:
         self.wrapper.destroy()
         # remove from object
         global_schema.pop(self.name.get())
-class ValidationPage(Frame):
-
-    def __init__(self, parent, controller):
-        Frame.__init__(self, parent)
-        global screen_width,screen_height
-
-##
-        # self.geometry(f"{screen_width}x{screen_height}")
-        self.grid_rowconfigure(0, weight=1)
-        self.columnconfigure(0, weight=1)
-
-##
-        frame_main = Frame(self, bg="gray")
-        frame_main.grid(padx=(185,0),sticky='news')
-        frame_main.grid_propagate(0)
-
-        screen_width = frame_main.winfo_screenwidth()
-        screen_height = frame_main.winfo_screenheight()
-##
-        # Create a frame for the canvas with non-zero row&column weights
-        global validation_frame
-        validation_frame = Frame(frame_main)
-        validation_frame.grid(row=0, column=0, sticky='nw')
-        validation_frame.grid_rowconfigure(0, weight=1)
-        validation_frame.grid_columnconfigure(0, weight=1)
-        # Set grid_propagate to False to allow 5-by-5 buttons resizing later
-        validation_frame.grid_propagate(False)
-
-        global canvas
-
-##
-        # Add a canvas in that frame
-        canvas = Canvas(validation_frame, bg="yellow")
-        canvas.grid(row=0, column=0, sticky="news")
-
-        # Link a scrollbar to the canvas
-        global vsb
-        vsb = Scrollbar(validation_frame, orient="vertical", command=canvas.yview)
-        vsb.grid(row=0, column=1, sticky='ns')
-        canvas.configure(yscrollcommand=vsb.set)
-##
-
-##
-
-  
-    @staticmethod
-    def init_schema(initial_schema):
-        old_keys = list(initial_schema.keys())
-        for old_key in old_keys:
-            new_key = initial_schema[old_key]['TableName']
-            initial_schema[new_key] = initial_schema.pop(old_key)
-        global global_schema
-        global_schema = initial_schema
-
-    
-        
-    @staticmethod
-    def loadEntitiesFrames():
-        global validation_frame
-        # Create a frame to contain the buttons
-        global entities_wrapper
-        entities_wrapper = Frame(canvas, bg="blue")
-        canvas.create_window((185, 0), window=entities_wrapper, anchor='nw')
-
-        global entities_list,row,col,ROWCOUNT
-
-        entities_list = []
-        row,col,ROWCOUNT=0,0,4
-        #print("global_schema",global_schema)
-
-        for _, value in global_schema.items():
-            entities_list.append(entity(value['TableName'],\
-                value['attributes'], value['primaryKey'],\
-                    value['ForgeinKey'],entities_wrapper,value,row,col))
-            if col!=0 and col == ROWCOUNT-1:
-                row +=1
-            col = (col+1)%ROWCOUNT#+3)%12
-        
-        entities_wrapper.update_idletasks()
 
 
-        global errors_wrapper
-        errors_wrapper = Frame(validation_frame, highlightthickness=2, highlightbackground='black')
-        errors_wrapper.grid(row=row,column=0, pady=(5, 0), sticky='nw')
+root = Tk()
+screen_width = root.winfo_screenwidth()
+screen_height = root.winfo_screenheight()
+root.geometry(f"{screen_width}x{screen_height}")
+root.configure(bg = "#FFFFFF")
 
-        global errors_labels
-        errors_labels=[]
-        #add entity
-        #add button
-        button_wrapper = Frame(validation_frame, highlightthickness=2, highlightbackground='black')
+root.grid_rowconfigure(0, weight=1)
+root.columnconfigure(0, weight=1)
 
-        button_wrapper.grid(row=row,column=0, pady=(5, 0), sticky='nw')
-        # row+=1
+frame_main = Frame(root, bg="gray")
+frame_main.grid(sticky='news')
+frame_main.grid_propagate(0)
 
-        addEntityButton = CTkButton(button_wrapper, \
-                    text="Add new Entity",command=addEntity)
-        
+# Create a frame for the canvas with non-zero row&column weights
+validation_frame = Frame(frame_main)
+validation_frame.grid(row=0, column=0, sticky='nw')
+validation_frame.grid_rowconfigure(0, weight=1)
+validation_frame.grid_columnconfigure(0, weight=1)
+# Set grid_propagate to False to allow 5-by-5 buttons resizing later
+validation_frame.grid_propagate(False)
 
-        addEntityButton.pack(fill='both', expand=True,padx=20, pady=20)
-        #save object and add errors if needed
-        #save button
-        saveButton = CTkButton(button_wrapper, \
-                    text="Save Changes",command=saveChanges)
-        saveButton.pack(fill='both', expand=True,padx=20, pady=20)
+# Add a canvas in that frame
+canvas = Canvas(validation_frame, bg="yellow")
+canvas.grid(row=0, column=0, sticky="news")
+
+# Link a scrollbar to the canvas
+vsb = Scrollbar(validation_frame, orient="vertical", command=canvas.yview)
+vsb.grid(row=0, column=1, sticky='ns')
+canvas.configure(yscrollcommand=vsb.set)
+
+# Create a frame to contain the buttons
+entities_wrapper = Frame(canvas, bg="blue")
+canvas.create_window((10, 10), window=entities_wrapper, anchor='nw')
+
+entities_list = []
+row,col=0,0
+# max_rowspan = 0
+# group of widgets
+for _, value in global_schema.items():
+    rowspan=len(value['attributes'])
+    max_rowspan = max(max_rowspan,rowspan)
+    entities_list.append(entity(value['TableName'],\
+         value['attributes'], value['primaryKey'],\
+              value['ForgeinKey'],row,col,rowspan))
+    if col!=0 and col == 6:
+        row +=max_rowspan
+        max_rowspan=0
+    col = (col+1)%7#+3)%12
+
+# Update buttons frames idle tasks to let tkinter calculate buttons sizes
+entities_wrapper.update_idletasks()
+
+# global errors_wrapper
+errors_wrapper = Frame(validation_frame, highlightthickness=2, highlightbackground='black')
+errors_wrapper.grid(row=row,column=0, pady=(5, 0), sticky='nw')
+row+=1
+# global errors_labels
+errors_labels=[]
+#add entity
+#add button
+button_wrapper = Frame(validation_frame, highlightthickness=2, highlightbackground='black')
+button_wrapper.grid(row=row,column=0, pady=(5, 0), sticky='nw')
+row+=1
+addEntityButton = CTkButton(button_wrapper, \
+            text="Add new Entity",command=addEntity)
+addEntityButton.pack(fill='both', expand=True,padx=20, pady=20)
+#save object and add errors if needed
+#save button
+saveButton = CTkButton(button_wrapper, \
+            text="Save Changes",command=saveChanges)
+saveButton.pack(fill='both', expand=True,padx=20, pady=20)
 
 
-        # put the frame in the canvas
-        # make sure everything is displayed before configuring the scrollregion
-        global vsb,screen_width,screen_height
-        width = 1500 #screen_width - vsb.winfo_width() -255
-        height = screen_height-70 
-        validation_frame.config(width=width ,
-                            height=height)
 
-        # Set the canvas scrolling region
-        canvas.config(scrollregion=canvas.bbox("all"))
-        
+# Resize the canvas frame to show exactly 5-by-5 buttons and the scrollbar
+width = screen_width -vsb.winfo_width() -50#sum([buttons[0][j].winfo_width() for j in range(0, 5)])
+height = screen_height-70 #sum([buttons[i][0].winfo_height() for i in range(0, 5)])
+validation_frame.config(width=width ,
+                    height=height)
+
+# Set the canvas scrolling region
+canvas.config(scrollregion=canvas.bbox("all"))
+
+# Launch the GUI
+root.mainloop()

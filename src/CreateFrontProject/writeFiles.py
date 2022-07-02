@@ -170,7 +170,7 @@ systemInfoObject = {
         type specimen book. It has survived not only five centuries.'''
 }
 c={}
-with open('../Application/api/clusters.json') as f:
+with open('../Application/clusters.json') as f:
     c = json.load(f)
 
 cluster_names = list(c.keys())

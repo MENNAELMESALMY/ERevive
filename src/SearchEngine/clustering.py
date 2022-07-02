@@ -1,7 +1,6 @@
-from utilities import flattenList
-from searchIndexer import *
-from joiner import *
-from globalVars import *    
+from .utilities import flattenList
+from .searchIndexer import *
+from .joiner import *
 
 def getClusteredQueries(queries):
     clusteredQueries = {}

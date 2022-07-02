@@ -1,9 +1,8 @@
 from collections import deque
 import copy
-import globalVars
 from functools import lru_cache
 # import pickle
-
+schemaGraph = {}
 class pathEdge():
     def __init__(self,edge,hasGoal):
         self.edge = edge
@@ -111,6 +110,9 @@ def constructGraph(schema):
             
     return graph
 
+def initSchemaGraph(schema_graph):
+    global schemaGraph
+    schemaGraph = schema_graph
 
 
 #Best Joins 
@@ -125,7 +127,7 @@ def connectEntities(mappedEntities):
     
     for entity in mappedEntities:
         ###BFS from entity if entities in mapped entites that can be reached from entity
-        paths.append(findPathsBFS(entity,mappedEntities,globalVars.schemaGraph))
+        paths.append(findPathsBFS(entity,mappedEntities,schemaGraph))
     #print("////////////////////////////////////////////")
     #print(mappedEntities)
     #print(paths)

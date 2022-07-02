@@ -378,6 +378,7 @@ with open(viewsRoute + "main_page.vue", 'w') as f:
             <sideBar />
           </div>
           <div class="rightContent">
+          <router-view />
           </div>
         </div>
     </div>
@@ -397,7 +398,7 @@ export default {
 .content{
     display: flex;
     flex-direction: row;
-    justify-content: space-around;
+    justify-content: space-between;
 }
 </style>
   ''')
@@ -419,7 +420,7 @@ with open(componentsRoute + "sideBar.vue", 'w') as f:
         </div>
         <ul class="queries" :id="'queriesID' + i">
           <li v-for="(item, j) in clusters[i]" :key="j" class="query">
-            <router-link :to="item">
+            <router-link :to="'/App/' + card + '/' + item">
               <span class="queryName" :title="item">{{ item.substring(0, 19) + "..."}}</span>
             </router-link>
           </li>

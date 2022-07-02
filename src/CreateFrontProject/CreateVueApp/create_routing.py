@@ -30,7 +30,7 @@ const routes = [
         {
         '''
         routing_string += f'''
-        path: "/{cluster}/{query}",
+        path: "{cluster}/{query}",
         name: "{query}",
         component: {query},
         '''

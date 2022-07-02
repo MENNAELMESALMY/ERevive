@@ -1,4 +1,4 @@
-def generate_dashboard(cluster_name,endpoint,directory,\
+def generate_dashboard(cluster_name,endpoint,directory,
     is_single_entity=False,delete_route='',put_route='',post_route=''):
 
     table_headers_orig = list(endpoint['response'].keys())

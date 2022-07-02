@@ -1,4 +1,6 @@
 import json
+
+from sklearn import cluster
 from utils import *
 from CreateVueApp.create_form import *
 from CreateVueApp.create_routing import *
@@ -400,6 +402,11 @@ export default {
     flex-direction: row;
     justify-content: space-between;
 }
+.rightContent{
+    padding-top: 20px;
+    padding-bottom: 20px;
+    width: calc(100% - 265px);
+}
 </style>
   ''')
 
@@ -760,10 +767,12 @@ for cluster_name,endpoints in c.items():
   post_endpoint=''
   get_endpoint=''
   delete_endpoint=''
+  put_endpoint=''
   for endpoint in endpoints:
-    if endpoint["method"] == "post":post_endpoint = '/'+endpoint["endpoint_name"]
-    elif endpoint["method"] == "get":get_endpoint = '/'+endpoint["endpoint_name"]
-    elif endpoint["method"] == "delete": delete_endpoint ='/'+endpoint["endpoint_name"]
+    if endpoint["method"] == "post":post_endpoint = '/App/' + cluster_name + '/' + endpoint["endpoint_name"]
+    elif endpoint["method"] == "get":get_endpoint = '/App/' + cluster_name + '/' + endpoint["endpoint_name"]
+    elif endpoint["method"] == "delete": delete_endpoint ='/App/' + cluster_name + '/' + endpoint["endpoint_name"]
+    elif endpoint["method"] == "put": put_endpoint = '/App/' + cluster_name + '/' + endpoint["endpoint_name"]
 
   for endpoint in endpoints:
     is_single_entity = endpoint['is_single_entity']
@@ -772,11 +781,15 @@ for cluster_name,endpoints in c.items():
       if len(endpoint["response"])<5:
         generate_cards(endpoint, filePath)
       elif 5<len(endpoint["response"]) < 9:
-        generate_dashboard(cluster_name,endpoint, filePath,is_single_entity)
+        generate_dashboard(cluster_name,endpoint, filePath,is_single_entity,delete_endpoint,put_endpoint,post_endpoint)
       else:
-        generate_dashboard(cluster_name,endpoint, filePath,is_single_entity)
+        generate_dashboard(cluster_name,endpoint, filePath,is_single_entity,delete_endpoint,put_endpoint,post_endpoint)
  
     elif endpoint["method"] == "post":
+      createForm(requirments,endpoint, filePath)
+
+    elif endpoint["method"] == "put":
+      filePath = componentsRoute + "edit_" +endpoint["endpoint_name"] + ".vue"
       createForm(requirments,endpoint, filePath)
 
 #Index code generation

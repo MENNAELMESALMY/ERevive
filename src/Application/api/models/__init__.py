@@ -1,9 +1,5 @@
-from .awards_coaches import awards_coaches
-from .awards_players import awards_players
-from .player_allstar import player_allstar
-from .players import players
-from .coaches import coaches
-from .players_teams import players_teams
-from .draft import draft
-from .series_post import series_post
-from .teams import teams
+from .comments, import comments,
+from . import 
+from .posts_comments,_ import posts_comments,_
+from ._comments,_ import _comments,_
+from .writes__ import writes__

@@ -117,8 +117,9 @@ def process_image(img_dir):
         os.chdir('./..')
         return schema
     except Exception as e:
-        with open("schema"+pre+".json", "w") as json_file:
-            json.dump({"error":str(e)}, json_file)
+        # with open("schema"+pre+".json", "w") as json_file:
+        #     json.dump({"error":str(e)}, json_file)
+        print(e)
         os.chdir('./..')
         return False
         

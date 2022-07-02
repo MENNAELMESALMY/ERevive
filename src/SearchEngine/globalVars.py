@@ -1,18 +1,18 @@
 import json
 import pickle
-from searchIndexer import oneHotVocabEncoding
-from joiner import constructGraph
-path = "/home/hager/college/GP/GP/src"
-def init():
+from .searchIndexer import oneHotVocabEncoding
+from .joiner import constructGraph
+OneHotVocab = {}
+schemaGraph = {}
+def init(testSchema):
     global OneHotVocab
     global schemaGraph
 
-    with open('/home/hager/college/GP/GP/notebooks/preparingDatasets/finalOutputs/synonyms.json', 'rb') as file:
+    with open('../../notebooks/preparingDatasets/finalOutputs/synonyms.json', 'rb') as file:
         vocab_words = json.load(file)
         print("loading data done")
         OneHotVocab = oneHotVocabEncoding(vocab_words)
 
-    with open(path+'/TestSchemas/sportsSchema.pickle','rb') as file:
-        schema = pickle.load(file)
-        schemaGraph = constructGraph(schema)
+    schemaGraph = constructGraph(testSchema)
+    return OneHotVocab ,schemaGraph
     

@@ -170,7 +170,7 @@ systemInfoObject = {
         type specimen book. It has survived not only five centuries.'''
 }
 c={}
-with open('../Application/api/clusters.json') as f:
+with open('../Application/clusters.json') as f:
     c = json.load(f)
 
 cluster_names = list(c.keys())
@@ -403,9 +403,8 @@ export default {
     justify-content: space-between;
 }
 .rightContent{
-    padding-top: 20px;
-    padding-bottom: 20px;
-    width: calc(100% - 265px);
+    width: calc(100% - 250px);
+    height:100vh;
 }
 </style>
   ''')

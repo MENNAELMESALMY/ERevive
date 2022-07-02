@@ -1,4 +1,3 @@
-from utilities import flattenList
 import random
 
 def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,id, goals,origQuery,bestJoin,testSchema):

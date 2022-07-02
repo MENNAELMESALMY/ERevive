@@ -2,14 +2,14 @@ import itertools
 from re import L
 import sys
 # import threading
-from searchIndexer import *
-from joiner import *
+from .searchIndexer import *
+from .joiner import *
 # import globalVars
 import os
 import json
 import timeit
 import pickle
-from utilities import *
+from .utilities import *
 
 from functools import lru_cache
 global takenAttrs 
@@ -19,7 +19,7 @@ takenEntities = set()
 
 def getListQueries():
     listOfQueries=[]
-    datapath = "/home/hager/college/GP/GP/notebooks/preparingDatasets/finalOutputs"
+    datapath = "../../notebooks/preparingDatasets/finalOutputs"
     files = os.listdir(datapath)
     for queryFile in files:
         if queryFile.find("synonyms")!=-1:
@@ -144,12 +144,12 @@ def getAllAttributes(query):
     return attributes
 
 
-def mapToSchema(query,schema,entityDict,schemaEntityNames):
+def mapToSchema(schemaGraph,query,schema,entityDict,schemaEntityNames):
     ##################Remember mapped Entities
+    initSchemaGraph(schemaGraph)
     mappedEntitesDict,mappedEntities = mapEntities(tuple(query['entities']),tuple(schemaEntityNames))
    
     mappedEntitesNames = [ v for k,v in mappedEntitesDict.items()]
-    
     #mappedEntitesNames = ["players","teams","coaches","awards_coaches"]
     start = timeit.default_timer()
     bestJoin , goals = connectEntities(tuple(mappedEntitesNames))
@@ -280,13 +280,13 @@ def flatten_query_entities(listOfQueries):
     return flattened_query_entities
 
 def loadNgramsPickle():
-    with open('/home/hager/college/GP/GP/src/SearchEngine/nGrams/ngrams.pickle', 'rb') as handle:
+    with open('nGrams/ngrams.pickle', 'rb') as handle:
         ngrams = pickle.load(handle)
-    with open('/home/hager/college/GP/GP/src/SearchEngine/nGrams/unigram.pickle', 'rb') as handle:
+    with open('nGrams/unigram.pickle', 'rb') as handle:
         unigram = pickle.load(handle)
     return ngrams,unigram
 def loadEntitiesGrams():
-    with open('/home/hager/college/GP/GP/src/SearchEngine/nGrams/entities.pickle', 'rb') as handle:
+    with open('nGrams/entities.pickle', 'rb') as handle:
         entitiesGrams = pickle.load(handle)
     return entitiesGrams
 def getBestCombination(ngrams,entities):
@@ -344,7 +344,8 @@ def rankTopk(ranked_queries,maxNumOfQueries):
     maxClusterScore = 0
     top_ranked_queries = []
     for ranked_query in ranked_queries:
-        if len(ranked_queries)<10:
+        if len(ranked_query)<10:
+            top_ranked_queries.append({'len':len(ranked_query),'score':1,'queries':ranked_query})
             continue
         entities = list(set(ranked_query[0]['entities']))
         cluster_score = 0

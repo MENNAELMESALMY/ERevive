@@ -1,11 +1,8 @@
-from audioop import reverse
-from numpy import append
-from sklearn import cluster
-from Api_Factory import ApiFactory
+from .Api_Factory import ApiFactory
 import json
 import os
 import stat
-from generateModel import createAllModels
+from .generateModel import createAllModels
 def Create_Directory(directory):
     path = os.path.join(os.getcwd(), directory) 
     os.umask(0)
@@ -13,18 +10,33 @@ def Create_Directory(directory):
         os.mkdir(path)
     except Exception as e:
         pass
-Create_Directory('api')
-os.chdir('api')
-  
+
+
 # TODO
 # for select * ()
 # crud
 # db logic
 # create parser for query paramters
 
-
+def get_clusters():
+    clusters = []
+    with open('../SearchEngine/finalMergedQueries.json','rb') as file:
+        testSchema = json.load(file)
+        for cluster in testSchema.keys():
+            c = []
+            for q in testSchema[cluster]:
+                query = q[0]
+                query.update({"constructed_query":q[1]})
+                c.append(query)
+            clusters.append(c)
+    return clusters
+    
 # Create Models method
-def Create_Application(schema,clusters,user="root",password = "admin<3Super",db="default"):
+def Create_Application(schema,user="nada",password = "Ringmybells5",db="default"):
+    print("Creating Application: ",schema)
+    clusters = get_clusters()
+    Create_Directory('api')
+    os.chdir('api')
     models,modelsObjects = createAllModels(schema)  #should be replaced with nihal's models 
       
     api = ApiFactory(models,user,password,db,modelsObjects)
@@ -34,7 +46,7 @@ def Create_Application(schema,clusters,user="root",password = "admin<3Super",db=
     clusters_out.update(crud_ui_out)
     #dump clusters_out to file
     json_clusters = json.dumps(clusters_out)
-    with open('clusters.json','w') as f:
+    with open('../clusters.json','w') as f:
         f.write(json_clusters)
 
     create_api_init(api,namespaces_imports,inits)
@@ -45,6 +57,8 @@ def Create_Application(schema,clusters,user="root",password = "admin<3Super",db=
     create_app_setup(api)
     create_app_env(api)
     create_app_utils(api) 
+
+    os.chdir('./..')
 
 
 def create_api_namespaces(api,clusters):
@@ -57,6 +71,7 @@ def create_api_namespaces(api,clusters):
         #endoint = create_endpoint(clusters[0])
         entities = cluster[0]["entities"]
         api_name = '_'.join(entities)
+        api_name = api_name.lower()
         clusters_out[api_name] = []
         api_file  = 'apis/'+api_name+'_api.py'
         namespace_name = api_name+"_namespace"
@@ -280,7 +295,7 @@ def create_query_api_logic(endpoint_object,query,models_obj):
     
 
     params = endpoint_object["queryParams"]
-    parser = endpoint_object["endpoint_name"]
+    parser = endpoint_object["endpoint_name"].lower()
     parse_args=""
     if len(params):
         parse_args = "args = {0}_parser.parse_args()\n".format(parser)
@@ -574,11 +589,11 @@ def create_query_api_logic(endpoint_object,query,models_obj):
 
     endpoint_name,ui_name = query_renaming(query["entities"],query["whereAttrs"],groupByAttrs,query["orderByAttrs"],True,is_group_all)
     endpoint_url = '/'.join(query["entities"])+'/'+endpoint_name
-    parse_args = parse_args.replace(parser,endpoint_name)
+    parse_args = parse_args.replace(parser,endpoint_name.lower())
     endpoint_object.update({
-        "endpoint_name":endpoint_name,
-        "ui_name":ui_name,
-        "url":endpoint_url,
+        "endpoint_name":endpoint_name.lower(),
+        "ui_name":ui_name.lower(),
+        "url":endpoint_url.lower(),
         }) 
 
     if will_print:
@@ -615,13 +630,13 @@ def create_resource(resource_model, endpoint_object,api_file,namespace_name,pars
     parser = ""
     except_parser =  "\n" 
     if len(params):
-        except_parser =  "@{1}.expect({0}_parser)\n".format(endpoint_object["endpoint_name"],namespace_name)
-        parser = endpoint_object["endpoint_name"]+"_parser = reqparse.RequestParser()\n"
+        except_parser =  "@{1}.expect({0}_parser)\n".format(endpoint_object["endpoint_name"].lower(),namespace_name)
+        parser = endpoint_object["endpoint_name"].lower()+"_parser = reqparse.RequestParser()\n"
         for param in params:
             if param[2] in ["in","between"]:
-                parser += endpoint_object["endpoint_name"]+"_parser.add_argument('"+param[0]+"', type="+param[1]+", required=True,action='append', location='args')\n"
+                parser += endpoint_object["endpoint_name"].lower()+"_parser.add_argument('"+param[0]+"', type="+param[1]+", required=True,action='append', location='args')\n"
             else:
-                parser += endpoint_object["endpoint_name"]+"_parser.add_argument('"+param[0]+"', type="+param[1]+", required=True, location='args')\n"
+                parser += endpoint_object["endpoint_name"].lower()+"_parser.add_argument('"+param[0]+"', type="+param[1]+", required=True, location='args')\n"
     resource = "\
 {4}\n\
 @{1}.route('/{3}', methods=['GET'])\n\
@@ -694,13 +709,13 @@ def create_query_ui_endpoint(query,modelsObjects):
     response_model = "{ "+response_model+" }"
     endpoint = {
         "method": endpoint_method,
-        "url": endpoint_url,
+        "url": endpoint_url.lower(),
         "queryParams": queryParams,
         "bodyParams": [],
         "response": ui_response_model,
-        "ui_name": ui_name,
-        "cluster_name": "_".join(query["entities"]),
-        "endpoint_name":endpoint_name,
+        "ui_name": ui_name.lower(),
+        "cluster_name": ("_".join(query["entities"])).lower(),
+        "endpoint_name":endpoint_name.lower(),
         "is_single_entity":len(query["entities"])==1
     }
 
@@ -928,426 +943,4 @@ def create_api_init(api,cluster_imports,clusters_init):
 
         
 
-with open('/home/hager/college/GP/GP/src/SearchEngine/finalMergedQueries.json','rb') as file:
-    testSchema = json.load(file)
-    clusters = []
-    for cluster in testSchema.keys():
-        c = []
-        for q in testSchema[cluster]:
-            query = q[0]
-            query.update({"constructed_query":q[1]})
-            c.append(query)
-        clusters.append(c)
-    #print(clusters[0])
-# with open('/home/nada/GP/GP/src/SearchEngine/finalMergedClusters.json','rb') as file:
-#     testSchema = json.load(file)
-#     clusters = [testSchema[cluster]["queries"] for cluster in testSchema.keys()]
 
-    Create_Application({
-        1: 
-        {'TableName': 'awards_coaches', 
-            'TableType':'',
-            'attributes': {
-            'id': 'str', 
-            'coachID': 'str',
-            'award': 'str',
-            'lgID': 'str',
-            'note': 'str',
-            }, 
-            'primaryKey': ['id'], 
-            'ForgeinKey': [
-            {
-            'attributeName': 'coachID',
-            'ForignKeyTable': 'coaches', 
-            'ForignKeyTableAttributeName': 'coachID', 
-            'patricipaction': 'partial', 
-            'dataType': 'str'},
-            ], 
-            'isWeak': False
-        },
-        2: 
-        {
-            'TableName': 'awards_players', 
-            'TableType':'',
-            'attributes': {
-            'playerID': 'str', 
-            'award': 'str',
-            'year': 'int',
-            'lgID': 'str',
-            'note': 'str',
-            'pos': 'str'
-            }
-            , 
-            'primaryKey': ['name','year','lgID']
-            , 
-            'ForgeinKey': [
-            {
-            'attributeName': 'playerID',
-            'ForignKeyTable': 'players', 
-            'ForignKeyTableAttributeName': 'playerID', 
-            'patricipaction': 'partial', 
-            'dataType': 'str'
-            }
-            ], 
-            'isWeak': False
-        },
-        5:
-        {
-            'TableName': 'player_allstar', 
-            'TableType':'',
-            'attributes': {
-            'playerID': 'str', 
-            'last_name': 'str',
-            'first_name': 'str',
-            'season_id': 'str',
-            'conference': 'str',
-            'league_id': 'str',
-            'games_played': 'str',
-            'minutes': 'str',
-            'points': 'str',
-            'o_rebounds': 'str',
-            'd_rebounds': 'str',
-            'rebounds': 'str',
-            'assists': 'str',
-            'steals': 'str',
-            'blocks': 'str',
-            'turnovers': 'str',
-            'personal_fouls': 'str',
-            'fg_attempted': 'str',
-            'fg_made': 'str',
-            'ft_attempted': 'str',
-            'ft_made': 'str',
-            'three_attempted':  'str',
-            'three_made': 'str',
-            }, 
-            'primaryKey': ['playerID'], 
-            'ForgeinKey': [
-            {
-            'attributeName': 'playerID',
-            'ForignKeyTable': 'players', 
-            'ForignKeyTableAttributeName': 'playerID', 
-            'patricipaction': 'partial', 
-            'dataType': 'str'},
-            ], 
-            'isWeak': False
-        },
-        3:
-        {
-            'TableName': 'players', 
-            'TableType':'',
-            'attributes': {
-            'playerID' : 'str',
-            'useFirst' : 'str',
-            'firstName' : 'str',
-            'middleName' : 'str',
-            'lastName' : 'str',
-            'nameGiven' : 'str',
-            'fullGivenName' : 'str',
-            'nameSuffix' : 'str',
-            'nameNick' : 'str',
-            'pos' : 'str',
-            'firstseason' : 'int',
-            'lastseason' : 'int',
-            'height' :'float',
-            'weight' : 'int',
-            'college' : 'str',
-            'collegeOther' : 'str',
-            'birthDate': 'datetime',
-            'birthCity' : 'str',
-            'birthState' : 'str',
-            'birthCountry' : 'str',
-            'highSchool' : 'str',
-            'hsCity' : 'str',
-            'hsState' : 'str',
-            'hsCountry' : 'str',
-            'deathDate': 'datetime',
-            'race' : 'str',
-            }
-            , 
-            'primaryKey': ['playerID']
-            , 
-            'ForgeinKey': [], 
-            'isWeak': False
-        },
-        4:{
-            'TableName': 'coaches',
-            'TableType':'',
-            'attributes': {
-            'coachID': 'str', 
-            'year': 'int',
-            'tmID': 'str',
-            'lgID': 'str',
-            'stint': 'int',
-            'won': 'int',
-            'lost': 'int',
-            'post_wins': 'int',
-            'post_losses': 'int'},
-            'primaryKey': ['coachID','year','tmID','stint'],
-            'ForgeinKey': [
-            # {
-            # 'attributeName': 'tmID',
-            # 'ForignKeyTable': 'teams', 
-            # 'ForignKeyTableAttributeName': 'tmID', 
-            # 'patricipaction': 'partial', 
-            # 'dataType': 'str'}
-            ]
-        },
-        6: 
-        {
-            'TableName': 'players_teams', 
-            'TableType':'',
-            'attributes': {
-            'id' : 'int',
-            'playerID' : 'str',
-            'year' : 'int',
-            'stint' : 'int',
-            'tmID' : 'str',
-            'lgID' : 'str',
-            'GP' : 'int',
-            'GS' : 'int',
-            'minutes' : 'int',
-            'points' : 'int',
-            'oRebounds' : 'int',
-            'dRebounds' : 'int',
-            'rebounds' : 'int',
-            'assists' : 'int',
-            'steals' : 'int',
-            'blocks' : 'int',
-            'turnovers' : 'int',
-            'PF' : 'int',
-            'fgAttempted' : 'int',
-            'fgMade' : 'int',
-            'ftAttempted' : 'int',
-            'ftMade' : 'int',
-            'threeAttempted' : 'int',
-            'threeMade' : 'int',
-            'PostGP' : 'int',
-            'PostGS' : 'int',
-            'PostMinutes' : 'int',
-            'PostPoints' : 'int',
-            'PostoRebounds' : 'int',
-            'PostdRebounds' : 'int',
-            'PostRebounds' : 'int',
-            'PostAssists' : 'int',
-            'PostSteals' : 'int',
-            'PostBlocks' : 'int',
-            'PostTurnovers' : 'int',
-            'PostPF' : 'int',
-            'PostfgAttempted' : 'int',
-            'PostfgMade' : 'int',
-            'PostftAttempted' : 'int',
-            'PostftMade' : 'int',
-            'PostthreeAttempted' : 'int',
-            'PostthreeMade' : 'int',
-            'note' : 'str',
-                }
-                , 
-                'primaryKey': ['id']
-                , 
-                'ForgeinKey': [
-                {
-                'attributeName': 'playerID',
-                'ForignKeyTable': 'players', 
-                'ForignKeyTableAttributeName': 'playerID', 
-                'patricipaction': 'partial', 
-                'dataType': 'str'
-                },
-                {
-                'attributeName': 'tmID',
-                'ForignKeyTable': 'teams', 
-                'ForignKeyTableAttributeName': 'tmID',
-                'patricipaction': 'partial', 
-                'dataType': 'str'
-                }
-                ], 
-                'isWeak': False
-        },
-        7: 
-        {
-            'TableName': 'draft', 
-            'TableType':'',
-            'attributes': 
-            {'id': 'str', 
-            'draftYear': 'int',
-            'draftRound': 'str',
-            'draftSelection':'str',
-            'draftOverall': 'datetime',
-            'tmID': 'str',
-            'firstName':'str',
-            'lastName':'str',
-            'suffixName':'str',
-            'playerID':'str',
-            'draftForm':'str',
-            'lgID':'str',
-            }, 
-            'primaryKey': ['id'], 
-            'ForgeinKey': 
-                [{'attributeName': 'tmID',
-                'ForignKeyTable': 'teams', 
-                'ForignKeyTableAttributeName': 'tmID', 
-                'patricipaction': 'partial', 
-                'dataType': 'str'},
-                {'attributeName': 'draftYear',
-                'ForignKeyTable': 'teams', 
-                'ForignKeyTableAttributeName': 'year', 
-                'patricipaction': 'partial', 
-                'dataType': 'int'}
-                ], 
-            'isWeak': False
-        },
-        8: 
-        {
-            'TableName': 'series_post', 
-            'TableType':'',
-            'attributes': 
-                {'id': 'str',
-                'year': 'int',
-                'round': 'str',
-                'series': 'str',
-                'tmIDWinner': 'str',
-                'lgIDWinner': 'str',
-                'tmIDLoser': 'str',
-                'lgIDLoser': 'str',
-                'w': 'str',
-                'L': 'str',}, 
-            'primaryKey': ['id'], 
-            'ForgeinKey': 
-                [{'attributeName': 'tmIDWinner', 
-                'ForignKeyTable': 'teams', 
-                'ForignKeyTableAttributeName': 'tmID', 
-                'patricipaction': 'full', 
-                'dataType': 'str'},
-                {'attributeName': 'tmIDLoser', 
-                'ForignKeyTable': 'teams', 
-                'ForignKeyTableAttributeName': 'tmID', 
-                'patricipaction': 'full', 
-                'dataType': 'str'},
-                {'attributeName': 'year', 
-                'ForignKeyTable': 'teams', 
-                'ForignKeyTableAttributeName': 'year', 
-                'patricipaction': 'full', 
-                'dataType': 'int'},
-                ], 
-            'isWeak': False
-        },
-        9:{
-            'TableName': 'teams',
-            'TableType':'',
-            'attributes': {
-                'year': 'int',
-            'lgID' :'str',
-            'tmID' : 'str',
-            'franchID' : 'str',
-            'confID': 'str',
-            'divID': 'str',
-            'rank' :'int',
-            'confRank': 'int',
-            'playoff': 'str',
-            'name' : 'str',
-                    },
-                    'primaryKey': ['year','tmID'],
-                    'ForgeinKey': []
-        }
-
-    },clusters)
-    '''
-    Create_Application({
-        11: 
-        {'TableName': 'DEPARTMENT', 
-        'TableType':'',
-        'attributes': {'name': 'str', 
-        'start_date': 'datetime',
-        'EMPLOYEE_Manages': 'str'}, 
-        'primaryKey': ['name'], 
-        'ForgeinKey': [{'attributeName': 'EMPLOYEE_Manages',
-        'ForignKeyTable': 'EMPLOYEE', 
-        'ForignKeyTableAttributeName': 'ssn', 
-        'patricipaction': 'partial', 
-        'dataType': 'str'}], 
-        'isWeak': False},
-        34: 
-        {'TableName': 'DEPARTMENT_Clocation', 
-        'TableType':'',
-        'attributes': {'Clocation': 'str',
-        'DEPARTMENT_name': 'str'}, 
-        'primaryKey': ['Clocation', 
-        'DEPARTMENT_name'], 
-        'ForgeinKey': [{'attributeName': 'DEPARTMENT_name', 
-        'ForignKeyTable': 'DEPARTMENT', 
-        'ForignKeyTableAttributeName': 'name', 
-        'patricipaction': 'full', 
-        'dataType': 'str'}], 
-        'isWeak': False}, 
-        12: 
-        {'TableName': 'EMPLOYEE',
-        'TableType':'',
-        'attributes': {'last_name': 'str', 
-        'middle_initis': 'str', 
-        'first_name': 'str', 
-        'address': 'str',
-        'salary': 'float',
-        'sex': 'str', 
-        'status': 'str', 
-        'birth_dat': 'str', 
-        'ssn': 'str',
-        'start_date': 'datetime',
-        'DEPARTMENT_Employed_name': 'str',
-        'EMPLOYEE_Supervision_': 'str'},
-        'primaryKey': ['ssn'], 
-        'ForgeinKey': [{'attributeName': 'DEPARTMENT_Employed_name',
-        'ForignKeyTable': 'DEPARTMENT', 'ForignKeyTableAttributeName': 'name',
-        'patricipaction': 'full', 'dataType': 'str'}, 
-        {'attributeName': 'EMPLOYEE_Supervision_', 
-        'ForignKeyTable': 'EMPLOYEE', 
-        'ForignKeyTableAttributeName': 'ssn',
-        'patricipaction': 'partial', 
-        'dataType': 'str'}], 
-        'isWeak': False},
-        24: {'TableName': 'PROJECT', 
-        'TableType':'',
-        'attributes': {'location': 'str',
-        'name': 'str', 
-        'budget': 'float',
-        'DEPARTMENT_Assigned_name': 'str'}, 
-        'primaryKey': ['name'], 
-        'ForgeinKey': [{'attributeName': 'DEPARTMENT_Assigned_name',
-        'ForignKeyTable': 'DEPARTMENT', 
-        'ForignKeyTableAttributeName': 'name',
-        'patricipaction': 'partial', 
-        'dataType': 'str'}], 
-        'isWeak': False}, 
-        25: 
-        {'TableName': 'DEPENDENT',
-        'TableType':'',
-        'attributes': {'sex': 'str', 
-        'relatlonship': 'str',
-        'name': 'str',
-        'birth_date': 'datetime', 
-        'Dependents_EMPLOYEE_': 'str'}, 
-        'primaryKey': ['Dependents_EMPLOYEE_'], 
-        'ForgeinKey': [{'attributeName': 'Dependents_EMPLOYEE_', 
-        'ForignKeyTable': 'EMPLOYEE', 
-        'ForignKeyTableAttributeName': 'ssn', 
-        'patricipaction': 'partial', 
-        'dataType': 'str'}], 
-        'isWeak': True}, 
-        35: 
-        {'TableName': 'Works_EMPLOYEE_PROJECT', 
-        'TableType':'mTm',
-        'attributes': {'start_date': 'datetime', 
-        'hours': 'int', 
-        'EMPLOYEE_': 'str', 
-        'PROJECT_': 'str'}, 
-        'primaryKey': ['EMPLOYEE_', 'PROJECT_'], 
-        'ForgeinKey': [{'attributeName': 'EMPLOYEE_', 
-        'ForignKeyTable': 'EMPLOYEE',
-        'ForignKeyTableAttributeName': 'ssn', 
-        'patricipaction': 'full',
-        'dataType': 'str'}, 
-        {'attributeName': 'PROJECT_',
-        'ForignKeyTable': 'PROJECT', 
-        'ForignKeyTableAttributeName': 'name',
-        'patricipaction': 'full',
-        'dataType': 'str'}], 
-        'isWeak': False}})
-    '''

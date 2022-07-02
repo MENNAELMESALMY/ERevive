@@ -13,7 +13,9 @@ def generate_dashboard(cluster_name,endpoint,directory,
     <div class="dashboard">
         <div class="sidebar">'''
         
-    dashboard_string += '\t\t<p>Filters</p>\n'
+    if len(query_params)>0:
+        dashboard_string += '\t\t<p>Filters</p>\n'
+    dashboard_string += '\t\t<form>\n'
     dashboard_string += '\t\t<div class="filters">\n'
     for param,datatype,operator,aggregate in query_params:
         param = param.replace('.','_')
@@ -33,14 +35,16 @@ def generate_dashboard(cluster_name,endpoint,directory,
         elif datatype == 'date':datatype = 'date'
         else: datatype = 'text'
 
-        dashboard_string += '\t\t<div>\n'
+        dashboard_string += '\t\t<div class="labels">\n'
         if aggregate: dashboard_string += '\t\t<label> '+ aggregate+'</label><br>\n'
         dashboard_string += '\t\t<label> '+ operator +'</label>\n'
         dashboard_string += '\t\t<label>'+ param +'</label>\n'
         dashboard_string += '\t\t</div>\n'
 
         dashboard_string += '\t\t<div>\n'
-        dashboard_string += '\t\t<input type="'+datatype+'" v-model="'+param+'">\n'
+        dashboard_string += f'\t\t<input type="{datatype}" v-model="{param}" class="{datatype}" required>\n'
+        if datatype == 'checkbox':
+            dashboard_string += '\t\t<label>Set Value</label>\n'
         dashboard_string += '\t\t</div>\n'
 
     dashboard_string += '\t\t</div>\n'  
@@ -50,8 +54,10 @@ def generate_dashboard(cluster_name,endpoint,directory,
         value="Call endpoint"
         class="button"
         @click='call_request'>
+        </form>
         </div>
 
+<div class="content">
         <div class="table_nav">
         '''
     dashboard_string += '<h2>'+cluster_name+'</h2>'
@@ -67,7 +73,7 @@ def generate_dashboard(cluster_name,endpoint,directory,
     </div>
     <div>
         <table class="dashboard_table">
-        <tr>\n'''
+        <tr v-if='dashboard_data.length>0'>\n'''
     for header in table_headers:
         dashboard_string += '\t\t<th>' + header + '</th>\n'
     dashboard_string += '\t\t</tr>'
@@ -77,6 +83,7 @@ def generate_dashboard(cluster_name,endpoint,directory,
     dashboard_string += '\t\t</tr>'
     dashboard_string += '''
         </table>
+        </div>
         </div>
     </div>
 </template>
@@ -121,20 +128,3 @@ def generate_dashboard(cluster_name,endpoint,directory,
     f = open(directory, "w")
     f.write(dashboard_string)
     f.close()
-
-# test_endpoint = {
-#     'url':'',
-#     'method':'get',
-#     'query_params':[('course_name','str','like','max'),('course_id','int','=','avg')],
-#     'body_params':['name','bday'],
-#     'path_params':['course_path'],
-#     'response':{'field1':'value1', 'field2':'value2'},
-#     'cluster_name':'cluster_name',
-#     'ui_name':'ui_name',
-#     'endpoint_name':'endpoint_name',
-# }
-
-# create_dir = '../gpinterface/src/components/'+test_endpoint['endpoint_name']+'.vue'
-# f = open(create_dir, "w")
-# f.write(generate_dashboard(test_endpoint))
-# f.close()

@@ -2,6 +2,7 @@ def generate_routing(clusters,directory):
     routing_string = '''
 import { createWebHistory, createRouter } from "vue-router";
 import home from "../views/home.vue";
+import main_page from "../views/main_page.vue";
 '''
     imports = []
     for cluster in clusters:
@@ -15,6 +16,11 @@ const routes = [
     name: "home",
     component: home,
   },
+  {
+    path: "/App",
+    name: "App",
+    component: main_page
+	},
 '''
     for cluster in clusters:
         routing_string += '\n\t\t{\n\t\tpath: "/'+cluster\

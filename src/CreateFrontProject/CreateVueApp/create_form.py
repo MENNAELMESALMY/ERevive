@@ -207,7 +207,7 @@ h2 {
 }
 #submitbuttonId {
   width: 20%;
-  background-color: #649790;
+  background-color: #0f1136;
   color: white;
   font-size: 18px;
   padding: 14px 20px;
@@ -218,7 +218,7 @@ h2 {
   transition: all 0.3s ease-in-out;
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
   &:hover {
-    background-color: #05a38e;
+    background-color: #ffc809;
     transform: scale(1.05);
   }
 }

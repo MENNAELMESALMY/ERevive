@@ -197,7 +197,7 @@ with open(viewsRoute + "home.vue", 'w') as f:
 <template>
   <div id="home">
    <div class="mainContent">
-      <h2>Welcome to ERvive</h2>
+      <h2>Welcome to ERevive</h2>
       <h3>Learning Management System</h3>
       <p>
         sum is simply dummy text of the printing and typesetting industry. Lorem
@@ -205,7 +205,7 @@ with open(viewsRoute + "home.vue", 'w') as f:
         when an unknown printer took a galley of type and scrambled it to make a
         type specimen book. It has survived not only five centuries.
       </p>
-      <button>CONTINUE</button>
+      <router-link to="/App"><button>CONTINUE</button></router-link>
     </div>
 
     <div class="animation-area">
@@ -222,6 +222,9 @@ with open(viewsRoute + "home.vue", 'w') as f:
 </template>
 
 <script>
+export default {
+  name: "home"
+};
 </script>
 
 <style lang='scss' scoped >

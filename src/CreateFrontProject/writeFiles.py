@@ -410,13 +410,13 @@ with open(componentsRoute + "sideBar.vue", 'w') as f:
   f.write('''
     <ul class="clutsers">
       <li v-for="(card, i) in clustersNames" :key="i" class="cluster">
-        <div class="clusterName" :id="'clustersID' + i" @click="openClusterQueries('clustersID' + i,'queriesID' + i)">
+        <div class="clusterName" :title="card" :id="'clustersID' + i" @click="openClusterQueries('clustersID' + i,'queriesID' + i)">
            {{ card.substring(0, 19) + "..." }}
         </div>
         <ul class="queries" :id="'queriesID' + i">
           <li v-for="(item, j) in clusters[i]" :key="j" class="query">
             <router-link :to="item">
-              <span class="queryName">{{ item.substring(0, 19) + "..."}}</span>
+              <span class="queryName" :title="item">{{ item.substring(0, 19) + "..."}}</span>
             </router-link>
           </li>
         </ul>
@@ -648,47 +648,6 @@ for clusterName,endpoints in c.items():
   generate_store(endpoints,storeRoute+clusterName+'.js')
 
 
-# create views
-for cluster_name,endpoints in c.items():
-  with open(f"{viewsRoute}/{cluster_name}_view.vue", 'w') as f:
-    f.write('''
-<template>
-    <div>
-    ''')
-    for endpoint in endpoints:
-      f.write(f'''
-      <{endpoint["endpoint_name"].replace('_','-')}/>
-      ''')
-    f.write('''
-    </div>
-</template>
-
-    <style lang="scss" scoped>
-    .home {
-    padding: 30px;
-    }
-    </style>
-
-    <script>
-    ''')
-    for i in endpoints:
-      f.write(f'''
-      import {convertToCamelCase(i['endpoint_name'])} from '../components/{i['endpoint_name']}.vue'
-      ''')
-    f.write('''
-export default {
-  components: {
-    ''')
-    for i in endpoints:
-      f.write(f'''
-      {convertToCamelCase(i['endpoint_name'])},
-      ''')
-    f.write('''
-  },
-};
-</script>
-    ''')
-  
 #### to be deleted ####
 requirments = [
     {

@@ -7,6 +7,8 @@ from CreateVueApp.create_dashboard import *
 from CreateVueApp.create_cards import *
 from CreateVueApp.create_store import *
 from CreateVueApp.create_cards_designs import *
+from CreateVueApp.create_dashboard_style import *
+
 
 
 
@@ -16,6 +18,8 @@ storeRouteIdx = 'FrontCode/src/store/index.js'
 routerRoute = 'FrontCode/src/router/index.js'
 viewsRoute = 'FrontCode/src/views/'
 componentsRoute = 'FrontCode/src/components/'
+styleRoute = 'FrontCode/src/scss/'
+
 
 # appRoute = '../gpinterface/src/App.vue'
 # storeRoute = '../gpinterface/src/store/modules/'
@@ -506,13 +510,26 @@ requirments = [
 
 # create components
 for cluster_name,endpoints in c.items():
+
+  post_endpoint=''
+  get_endpoint=''
+  delete_endpoint=''
   for endpoint in endpoints:
+    if endpoint["method"] == "post":post_endpoint = '/'+endpoint["endpoint_name"]
+    elif endpoint["method"] == "get":get_endpoint = '/'+endpoint["endpoint_name"]
+    elif endpoint["method"] == "delete": delete_endpoint ='/'+endpoint["endpoint_name"]
+
+  for endpoint in endpoints:
+    is_single_entity = endpoint['is_single_entity']
     filePath = componentsRoute + endpoint["endpoint_name"] + ".vue"
     if endpoint["method"] == "get":
-      if len(endpoint["response"]) > 5:
-        generate_dashboard(cluster_name,endpoint, filePath)
-      else:
+      if len(endpoint["response"])<5:
         generate_cards(endpoint, filePath)
+      elif 5<len(endpoint["response"]) < 9:
+        generate_dashboard(cluster_name,endpoint, filePath,is_single_entity)
+      else:
+        generate_dashboard(cluster_name,endpoint, filePath,is_single_entity)
+ 
     elif endpoint["method"] == "post":
       createForm(requirments,endpoint, filePath)
 
@@ -612,6 +629,7 @@ create_card_design3(componentsRoute + "cardDesign3.vue")
 create_card_design4(componentsRoute + "cardDesign4.vue")
 create_color_pallete(componentsRoute + "colorPallete.vue")
 create_color_pallete_module(storeRoute + "color_pallete.js")
+create_dashboard_style(styleRoute+'_dashboard.scss')
 
 # '''
 # list of apis:

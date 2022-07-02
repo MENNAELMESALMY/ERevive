@@ -111,8 +111,11 @@ def updataAllForeignKeys(entityNameOld='',entityNameNew = ''):
         for fk in entity.ForgeinKeysUI:
             if fk.removed:continue
             # print(entityNameOld,fk.entityName.get())
+            if fk.belongToEntity == entityNameOld:
+                fk.belongToEntity = entityNameNew
+                #fk.updateAttrs()
             if fk.entityName.get() == entityNameOld:
-                #print("updating Name", fk.entityName.get())
+                print("updating Name", fk.entityName.get(),entityNameNew,fk.belongToEntity)
                 fk.update(entityNameOld,entityNameNew)
             else:
                 #print("not updating entity Name", fk.entityName.get())
@@ -328,8 +331,8 @@ class foreignKey:
     def updateAttrs(self,entityName= None):
         # updata attributes of table that this foreign key is pointing to
         print("Update Attrs",entityName,self.belongToEntity)
-        if entityName is not None: self.belongToEntity = entityName
-        print("Update Attrs",entityName,self.belongToEntity)
+        # if entityName is not None: self.belongToEntity = entityName
+        # print("Update Attrs",entityName,self.belongToEntity)
         Attrs = list(global_schema[self.belongToEntity]['attributes'].keys()) 
         print("Attrs",Attrs)
         self.attrNameMenu["menu"].delete(0, 'end')

@@ -154,6 +154,14 @@ class tkinterApp(tk.Tk):
         frame.tkraise()
         thread = threading.Thread(target=image_processing)        
         thread.start()
+
+        # global_schema={}
+        # frame = self.frames[SqlQueriesPage]
+        # frame.tkraise()
+        # thread = threading.Thread(target=start_search_engine,args=(global_schema,))        
+        # thread.start()
+
+        
     def show_search_engine_page(self,global_schema):
         frame = self.frames[SqlQueriesPage]
         frame.tkraise()
@@ -247,9 +255,6 @@ class Page1(tk.Frame):
         button1 = ttk.Button(Page1.frame, text ="Move To Next Step ...",style='W.TButton',
         command = lambda : [Page1.frame_controller.show_frame(ValidationPage),ValidationPage.loadEntitiesFrames(), enableSideButtons()])
         button1.place(x = Page1.width/2, y = Page1.height-140, width = 350.0, height = 70.0, anchor = "center")
-
-    
-
  
 
 app = tkinterApp()

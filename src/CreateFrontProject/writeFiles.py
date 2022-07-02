@@ -403,9 +403,8 @@ export default {
     justify-content: space-between;
 }
 .rightContent{
-    padding-top: 20px;
-    padding-bottom: 20px;
-    width: calc(100% - 265px);
+    width: calc(100% - 250px);
+    height:100vh;
 }
 </style>
   ''')

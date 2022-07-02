@@ -4,7 +4,6 @@ from tkinter import *
 from tkinter import filedialog
 from tkinter.ttk import *
 from pathlib import Path
-from turtle import bgcolor
 import webbrowser
 import cv2
 

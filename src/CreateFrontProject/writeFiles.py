@@ -168,6 +168,18 @@ with open('/home/nihal/Desktop/uploadgp/GP/src/Application/api/clusters.json') a
     c = json.load(f)
 
 cluster_names = list(c.keys())
+clustersAndQueries = []
+AllQueries = []
+for name in cluster_names:
+  tempListGet = []
+  templistAllQueries = []
+  for query in c[name]:
+    if (query["method"]) == "get":
+      tempListGet.append(query["endpoint_name"])
+    templistAllQueries.append(query["endpoint_name"])
+  clustersAndQueries.append(tempListGet)
+  AllQueries.append(templistAllQueries)
+
 
 #create application
 with open (appRoute, 'w') as f:
@@ -193,19 +205,16 @@ with open (appRoute, 'w') as f:
 
 #create home
 with open(viewsRoute + "home.vue", 'w') as f:
-  f.write('''
+  f.write(f'''
 <template>
   <div id="home">
    <div class="mainContent">
-      <h2>Welcome to ERvive</h2>
-      <h3>Learning Management System</h3>
+      <h2>Welcome to ERevive</h2>
+      <h3>{systemInfoObject["system_name"]}</h3>
       <p>
-        sum is simply dummy text of the printing and typesetting industry. Lorem
-        Ipsum has been the industry's standard dummy text ever since the 1500s,
-        when an unknown printer took a galley of type and scrambled it to make a
-        type specimen book. It has survived not only five centuries.
+        {systemInfoObject["system_description"]}
       </p>
-      <button>CONTINUE</button>
+      <router-link to="/App"><button>CONTINUE</button></router-link>
     </div>
 
     <div class="animation-area">
@@ -220,8 +229,12 @@ with open(viewsRoute + "home.vue", 'w') as f:
     </div>
   </div>
 </template>
-
+''')
+  f.write('''
 <script>
+export default {
+  name: "home"
+};
 </script>
 
 <style lang='scss' scoped >
@@ -351,8 +364,281 @@ p {
 </style>
     ''')
 
+#creating the main page
+with open(viewsRoute + "main_page.vue", 'w') as f:
+  f.write('''
+<template>
+    <div class="mainPage">
+        <div class="content">
+          <div class="sidebar">
+            <sideBar />
+          </div>
+          <div class="rightContent">
+          </div>
+        </div>
+    </div>
+</template>
+
+<script>
+import sideBar from '../components/sideBar.vue';
+export default {
+    name: "mainPage",
+    components: {
+        sideBar,
+    }
+};
+</script>
+
+<style lang="scss" scoped>
+.content{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+}
+</style>
+  ''')
+
+#create SideBar
+with open(componentsRoute + "sideBar.vue", 'w') as f:
+  f.write(f'''
+<template>
+  <div class="sideBar">
+    <div class="header">
+      <h4>{systemInfoObject["system_name"]}</h4>
+    </div>
+  ''')
+  f.write('''
+    <ul class="clutsers">
+      <li v-for="(card, i) in clustersNames" :key="i" class="cluster">
+        <div class="clusterName" :id="'clustersID' + i" @click="openClusterQueries('clustersID' + i,'queriesID' + i)">
+           {{ card.substring(0, 19) + "..." }}
+        </div>
+        <ul class="queries" :id="'queriesID' + i">
+          <li v-for="(item, j) in clusters[i]" :key="j" class="query">
+            <router-link :to="item">
+              <span class="queryName">{{ item.substring(0, 19) + "..."}}</span>
+            </router-link>
+          </li>
+        </ul>
+      </li>
+    </ul>
+    <div class="footer">
+      <h5>ERevive 2022</h5>
+    </div>
+  </div>
+</template>
+
+<script>
+export default{
+    data() {
+        return {
+''')
+  f.write(f'''
+        clustersNames: {cluster_names},
+        clusters: {clustersAndQueries},
+        ''')
+  f.write('''
+        };
+    },
+    methods: {
+    openClusterQueries(clusterid,queryid) {
+      if (document.getElementById(queryid).style.display == "none"){
+        document.getElementById(queryid).style.display = "block";
+        document.getElementById(clusterid).style.backgroundColor = "rgba(200,206,206,0.1)";
+        document.getElementById(clusterid).onmouseover = function() {
+          document.getElementById(clusterid).style.backgroundColor = "rgba(200,206,206,0.1)";
+        }
+        document.getElementById(clusterid).onmouseout = function() {
+          document.getElementById(clusterid).style.backgroundColor = "rgba(200,206,206,0.1)";
+        }
+      }else{
+        document.getElementById(queryid).style.display = "none";
+        document.getElementById(clusterid).style.backgroundColor = "#0f1136";
+        document.getElementById(clusterid).onmouseover = function() {
+          document.getElementById(clusterid).style.backgroundColor = "rgba(200,206,206,0.1)";
+        }
+        document.getElementById(clusterid).onmouseout = function() {
+          document.getElementById(clusterid).style.backgroundColor = "#0f1136";
+        }
+      }
+    },
+  },
+};
+</script>
+
+<style lang="scss" scoped>
+.sideBar {
+  color: white;
+  background-color: #0f1136;
+  float: left;
+  width: 230px;
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  padding: 0.5em;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #0f1136 #0f1136;
+  &::-webkit-scrollbar {
+    width: 1px;
+  }
+  &::-webkit-scrollbar-track {
+    background-color: #0f1136;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: #0f1136;
+  }
+}
+.header,
+.footer {
+  text-align: center;
+  font-weight: 700;
+}
+.clutsers,
+.queries {
+  margin: 0;
+  padding: 0;
+}
+.clutsers {
+  padding-top: 20px;
+}
+.queries {
+  margin-top: 15px;
+  margin-bottom: 15px;
+  display: none;
+  transition: all 0.4s ease;
+}
+.cluster,
+.query {
+  margin: 0;
+  padding: 0;
+  padding-left: 5px;
+  list-style: none;
+  padding-top: 5px;
+  padding-bottom: 10px;
+  a {
+    color: white;
+    text-decoration: none;
+    padding-left: 10px;
+  }
+}
+.clusterName {
+  font-size: 16px;
+  font-weight: 700;
+  color: white;
+  padding-top: 15px;
+  padding-bottom: 15px;
+  padding-left: 5px;
+  padding-right: 5px;
+  width: 90%;
+  cursor: pointer;
+  &:hover {
+    background-color: rgb(200, 206, 206, 0.1);
+    border-radius: 7px;
+  }
+}
+.query {
+  padding-top: 12px;
+  width: 90%;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  &:hover {
+    background-color: rgb(200, 206, 206, 0.1);
+  }
+}
+</style>
+  ''')
+
+#create navbar
+with open(componentsRoute + "navBar.vue", 'w') as f:
+  f.write('''
+<template>
+  <div class="navBar">
+      <div class="trashIcon">
+          <i class="fa fa-trash" aria-hidden="true"></i>
+      </div>
+      <div class="editIcon">
+          <i class="fa fa-edit"></i>
+      </div>
+      <div class="postButton">
+          <button>+ POST</button>
+      </div>
+  </div>    
+</template>
+
+<script>
+export default {
+    name:"navBar"
+}
+</script>
+
+<style lang="scss" scoped>
+.navBar{
+    display:flex;
+    justify-content:space-between;
+    width: 100%;
+    padding-left: 35px;
+    padding-top: 35px;
+}
+.postButton{
+    padding-top: 3px;
+    button{
+        background-color: #ffc809;
+        width: 100px;
+        color: #0f1136;
+        border: none;
+        border-radius: 5px;
+        padding: 10px;
+        font-size: 20px;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 0 2px rgba(0,0,0,0.5);
+        transition: all 0.3s ease 0s;
+        &:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+            background-color: #0f1136;
+            color: #ffc809;
+        }
+    }
+}
+.trashIcon, .editIcon{
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: #0f1136;
+    color: #ffc809;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+    transition: all 0.3s ease 0s;
+    &:hover{
+        transform: translateY(-3px);
+        background-color: #ffc809;
+    }
+    i{
+        font-size: 30px;
+        padding: 9px;
+        color: #ffc809;
+        cursor: pointer;
+        &:hover{
+            color: #0f1136;
+        }
+    }
+}
+.trashIcon{
+    i{
+        padding: 9px;
+        padding-left: 12px;
+    }
+}
+</style>
+  ''')
+
 #create router
-generate_routing(cluster_names,routerRoute)
+generate_routing(cluster_names,AllQueries,routerRoute)
 
 #create store idx
 generate_store_idx(cluster_names,storeRouteIdx)
@@ -522,6 +808,7 @@ with open('FrontCode/src/index.html', 'w') as f:
 <html>
   <head>
     <title>Vue Hello World</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"></link>
   </head>
   <body>
     <div id="app"></div>

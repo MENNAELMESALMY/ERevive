@@ -43,14 +43,14 @@ from utils import convert_db_model_to_restx_model , serialize \n\
 
     def create_api(self,model,attributes): 
         model_create_string=''
-        parser_create_string='{0}_id_parser = reqparse.RequestParser() \n'.format(model)
+        parser_create_string='{0}_id_parser = reqparse.RequestParser() \n'.format(model.lower())
         primary_keys = self.modelsObjects[model]['primaryKey']
         put_filter_primary_keys = ""
         delete_filter_primary_keys = ""
         body_params = []
         query_params = []
         ui_response_model = {}
-        self.crud_clusters.update({model:[]})
+        self.crud_clusters.update({model.lower():[]})
         for attribute in attributes:
             terminal_command = ','
             type = self.modelsObjects[model]['attributes'][attribute]
@@ -58,10 +58,10 @@ from utils import convert_db_model_to_restx_model , serialize \n\
             if attribute == attributes[-1]:
                 terminal_command = ''
             if attribute in primary_keys:
-                parser_create_string+= "{0}_id_parser.add_argument('{1}',type={2})\n".format(model,attribute,type)
+                parser_create_string+= "{0}_id_parser.add_argument('{1}',type={2})\n".format(model.lower(),attribute,type)
                 query_params.append((attribute,type))
                 put_filter_primary_keys+="{0}.{1}==request.json.get('{1}') and ".format(model,attribute)
-                delete_filter_primary_keys+="{0}.{1}=={0}_id_parser.parse_args().get('{1}') and ".format(model,attribute)
+                delete_filter_primary_keys+="{0}.{1}=={2}_id_parser.parse_args().get('{1}') and ".format(model,attribute,model.lower())
             body_params.append((attribute,type))
             model_create_string+='{0} = request.json.get("{0}")'.format(attribute)+terminal_command   
         endpoint_name,ui_name = model,model
@@ -70,24 +70,24 @@ from utils import convert_db_model_to_restx_model , serialize \n\
         delete_filter_primary_keys = delete_filter_primary_keys[:-4]
         endpoint_object = [{
             "method": "get",
-            "url": endpoint_url,
+            "url": endpoint_url.lower(),
             "queryParams": [],
             "bodyParams": [],
             "response": ui_response_model,
-            "ui_name": "get_"+ui_name,
-            "cluster_name": model,
-            "endpoint_name":"get_"+endpoint_name,
+            "ui_name": "get_"+ui_name.lower(),
+            "cluster_name": model.lower(),
+            "endpoint_name":"get_"+endpoint_name.lower(),
             "is_single_entity":True
         },
         {
             "method": "post",
-            "url": endpoint_url,
+            "url": endpoint_url.lower(),
             "queryParams": [],
             "bodyParams": body_params,
             "response": ui_response_model,
-            "ui_name": "create_"+ui_name,
-            "cluster_name": model,
-            "endpoint_name":"create_"+endpoint_name,
+            "ui_name": "create_"+ui_name.lower(),
+            "cluster_name": model.lower(),
+            "endpoint_name":"create_"+endpoint_name.lower(),
             "is_single_entity":True
          },
         # {
@@ -114,7 +114,7 @@ from utils import convert_db_model_to_restx_model , serialize \n\
         # },
         ]
         crud_out = {
-            model:endpoint_object
+            model.lower():endpoint_object
         }
         self.namespaces[model] = '{0}_namespace'.format(model.lower())
         return crud_out,self.create_api_header([model])+'\n\
@@ -177,7 +177,7 @@ class {0}Api(Resource):\n\
         namespaces_init=''  
         for model,namespace in self.namespaces.items():
             namespaces_imports+= 'from .{0}_api import {1} \n\
-'.format(model,namespace)
+'.format(model.lower(),namespace)
             namespaces_init+='rest_plus_api.add_namespace({0},path="/{1}")\n\
     '.format(namespace,model.lower())
 
@@ -262,7 +262,7 @@ flask-cors\n\
 export PYTHONPATH=$PWD \n\
 export FLASK_APP=__init__.py \n\
 export FLASK_DEBUG=1 \n\
-source venv/bin/activate \n\
+. venv/bin/activate \n\
 \n\
 python -m flask run --host=localhost --port=3000 \n\
 '
@@ -270,7 +270,7 @@ python -m flask run --host=localhost --port=3000 \n\
         return ' \n\
 pip install virtualenv \n\
 virtualenv venv \n\
-source venv/bin/activate \n\
+. venv/bin/activate \n\
 pip install -r requirements.txt \n\
 '
     def create_app_utils(self):
@@ -327,9 +327,9 @@ def serialize(results):\n\
 '
     def create_api_structure(self,api_name,route_path,models):
         namespaces_imports = 'from .{0}_api import {0}_namespace \n\
-'.format(api_name)
+'.format(api_name.lower())
         api_init_namespace = '\n\
-    rest_plus_api.add_namespace({0}_namespace,path="/{1}")'.format(api_name,route_path)
+    rest_plus_api.add_namespace({0}_namespace,path="/{1}")'.format(api_name.lower(),route_path.lower())
         api_namespace = self.create_api_header(models)+'\n\
 {0}_namespace = Namespace("{0}", description="{0} Api") \n\
 '.format(api_name)

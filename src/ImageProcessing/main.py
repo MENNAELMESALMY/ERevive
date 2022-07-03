@@ -84,9 +84,13 @@ def process_image(img_dir):
         #print(textArr)
         #print(isKey)
         print("######### Start Types Prediction #########")
-        dataTypesDic , dataTypesArr = predictWordsTypes(textArr)
+        dataTypesArr = predictWordsTypes(textArr)
         #print(dataTypesDic)
-        print("######### Start Connecting Entities #########")
+        #print(textArr)
+        textArr, dataTypesArr = addDefaultNames(shapes, textArr, dataTypesArr)
+        #print(textArr)
+        #print("????????????????????//")
+        print("######### Start Connecting EntdataTypesArrities #########")
         scaled_contours = scale_contours(finalContours[:],1.17)
         connectedComponents,skeleton = connectEntities(scaled_contours,finalContours,binarizedImg,shapes,textArr,weak,isKey,dataTypesArr)
         print("///////////////////////////////////////////")
@@ -112,7 +116,8 @@ def process_image(img_dir):
 
         print("///////////////////////////////////////////")
         #print(schema)
-        
+        with open("1.json", "w") as json_file:
+             json.dump(schema, json_file)
         #return to the current directory
         os.chdir('./..')
         return schema

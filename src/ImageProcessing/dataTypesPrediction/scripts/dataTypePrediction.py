@@ -95,8 +95,8 @@ def predictWordsTypes(words):
     preds = model.predict(features)
 
     outTypes = [id_to_category[str(i)] for i in preds]
-    dic = dict(zip(words,outTypes))
-    return dic,outTypes
+    #dic = dict(zip(words,outTypes))
+    return outTypes
 
 
 

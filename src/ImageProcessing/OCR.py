@@ -67,3 +67,23 @@ def OCR():
             textArr.append(extractedText)
             
     return textArr,isKey
+
+def addDefaultNames(shapes,textArr,dataTypesArr):
+    entityCounter, relationCounter, attrCounter = 1,1 ,1
+
+    for i in range(len(shapes)):
+        if not textArr[i]:
+            if shapes[i] == "rectangle":
+                textArr[i] = "entity#" + str(entityCounter)
+                entityCounter += 1
+            elif shapes[i] == "diamond":
+                textArr[i] = "relation#" + str(relationCounter)
+                relationCounter += 1
+            else:
+                textArr[i] = "attr#" + str(attrCounter)
+                attrCounter += 1
+            dataTypesArr[i] = "str"
+    
+    return textArr , dataTypesArr
+                
+

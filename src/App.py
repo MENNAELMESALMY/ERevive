@@ -177,6 +177,14 @@ class tkinterApp(tk.Tk):
         frame.tkraise()
         thread = threading.Thread(target=image_processing)        
         thread.start()
+
+        # global_schema={}
+        # frame = self.frames[SqlQueriesPage]
+        # frame.tkraise()
+        # thread = threading.Thread(target=start_search_engine,args=(global_schema,))        
+        # thread.start()
+
+        
     def show_search_engine_page(self,global_schema):
         frame = self.frames[SqlQueriesPage]
         frame.tkraise()

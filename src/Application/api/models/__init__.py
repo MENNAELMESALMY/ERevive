@@ -1,5 +1,6 @@
-from .comments, import comments,
-from . import 
-from .posts_comments,_ import posts_comments,_
-from ._comments,_ import _comments,_
-from .writes__ import writes__
+from .DEPARTMENT import DEPARTMENT
+from .EMPLOYEE import EMPLOYEE
+from .PROJECT import PROJECT
+from .DEPENDENT import DEPENDENT
+from .Works_EMPLOYEE_PROJECT import Works_EMPLOYEE_PROJECT
+from .DEPARTMENT_location import DEPARTMENT_location

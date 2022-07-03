@@ -10,6 +10,9 @@ from CreateVueApp.create_cards import *
 from CreateVueApp.create_store import *
 from CreateVueApp.create_cards_designs import *
 from CreateVueApp.create_dashboard_style import *
+from CreateVueApp.create_large_cards import *
+from CreateVueApp.create_large_card_style import *
+
 
 
 
@@ -777,12 +780,13 @@ for cluster_name,endpoints in c.items():
     is_single_entity = endpoint['is_single_entity']
     filePath = componentsRoute + endpoint["endpoint_name"] + ".vue"
     if endpoint["method"] == "get":
-      if len(endpoint["response"])<5:
-        generate_cards(endpoint, filePath)
-      elif 5<len(endpoint["response"]) < 9:
+      # if len(endpoint["response"])<5:
+      #   generate_cards(endpoint, filePath)
+      # elif 5<=len(endpoint["response"]) < 9:
+      if len(endpoint["response"]) < 9:
         generate_dashboard(cluster_name,endpoint, filePath,is_single_entity,delete_endpoint,put_endpoint,post_endpoint)
       else:
-        generate_dashboard(cluster_name,endpoint, filePath,is_single_entity,delete_endpoint,put_endpoint,post_endpoint)
+        generate_large_cards(cluster_name,endpoint, filePath,is_single_entity,delete_endpoint,put_endpoint,post_endpoint)
  
     elif endpoint["method"] == "post":
       createForm(requirments,cluster_name,endpoint, filePath)
@@ -889,6 +893,8 @@ create_card_design4(componentsRoute + "cardDesign4.vue")
 create_color_pallete(componentsRoute + "colorPallete.vue")
 create_color_pallete_module(storeRoute + "color_pallete.js")
 create_dashboard_style(styleRoute+'_dashboard.scss')
+create_dashboard_style(styleRoute+'_big_card.scss')
+
 
 # '''
 # list of apis:

@@ -102,7 +102,7 @@ def updateMykeys(AttrNameOld,AttrNameNew,FKEntity):
                 if fk.attrName.get() == AttrNameOld:
                     fk.attrName.set(AttrNameNew)
                     # print(global_schema[FKEntity]['attributes'])
-            fk.updateAttrs()
+                fk.updateAttrs()
 
 def updataAllForeignKeys(entityNameOld='',entityNameNew = ''):
     global entities_list
@@ -329,7 +329,6 @@ class foreignKey:
                    [ self.entityName.set(a),self.updateAttributes(a) ])
 
     def updateAttrs(self,entityName= None):
-        # updata attributes of table that this foreign key is pointing to
         print("Update Attrs",entityName,self.belongToEntity)
         # if entityName is not None: self.belongToEntity = entityName
         # print("Update Attrs",entityName,self.belongToEntity)
@@ -477,12 +476,13 @@ class entity:
     def addForeignKey(self):
         global global_schema
         # default to first entity and to first primary key
-        attributeName = list(self.attributes.keys())[0]
         default_participation = 'full'
         default_table = list(global_schema.keys())[0]
         default_attribute = global_schema[default_table]['primaryKey'][0]
+        attributes = global_schema[self.name.get()]['attributes']
+        attributeName = list(attributes.keys())[0]
         fk = foreignKey(self.foreignKeyWrapper,attributeName\
-                ,self.name.get(),self.attributes,default_table, \
+                ,self.name.get(),attributes,default_table, \
                 default_attribute,default_participation)
         self.ForgeinKeysUI.append(fk)
 
@@ -576,6 +576,9 @@ class ValidationPage(Frame):
     def loadEntitiesFrames():
         global global_schema
         global validation_frame
+        print("-----------------------------")
+        print("global_schema",global_schema)
+        print("-----------------------------")
         # Create a frame to contain the buttons
         global entities_wrapper
         entities_wrapper = Frame(canvas, bg="blue")

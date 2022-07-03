@@ -4,7 +4,7 @@ import os
 from turtle import bgcolor
 import webbrowser
 import cv2
-from tables import Description
+# from tables import Description
 from ImageProcessing import process_image
 from gui_validation import *
 import threading

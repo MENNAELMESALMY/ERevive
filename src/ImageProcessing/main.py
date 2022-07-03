@@ -116,8 +116,10 @@ def process_image(img_dir):
 
         print("///////////////////////////////////////////")
         #print(schema)
-        with open("1.json", "w") as json_file:
+        with open("schema.json", "w") as json_file:
              json.dump(schema, json_file)
+        with open("relations.json", "w") as json_file:
+             json.dump(relations, json_file)
         #return to the current directory
         os.chdir('./..')
         return schema

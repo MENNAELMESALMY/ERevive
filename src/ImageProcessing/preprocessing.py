@@ -107,14 +107,14 @@ def RemoveShadow(img_gray,debug=False):
     _, thr_img = cv2.threshold(norm_img, 230, 0, cv2.THRESH_TRUNC)
     cv2.normalize(thr_img, thr_img, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8UC1)
     if(debug):
-        cv2.imwrite("shadowOut.png",norm_img)
-        cv2.imwrite("thres.png",thr_img)
+        cv2.imwrite("debugOutput/shadowOut.png",norm_img)
+        cv2.imwrite("debugOutput/thres.png",thr_img)
     return thr_img
 
 def Binarize(img_gray,debug=False):
     thres = threshold_yen(img_gray)
     final = (img_gray >thres)*255
     if(debug):
-        cv2.imwrite("final.png",final)
+        cv2.imwrite("debugOutput/final.png",final)
         #fig, ax = try_all_threshold(thr_img, figsize=(20, 30), verbose=False)
     return final

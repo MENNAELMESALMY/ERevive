@@ -137,3 +137,5 @@ dmypy.json
 /src/SearchEngine/nGrams/unigram.pickle
 /src/Application/api/
 /src/ImageProcessing/output/
+/src/ImageProcessing/debugOutput/
+/src/CreateFrontProject/FrontCode/

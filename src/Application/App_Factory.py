@@ -33,7 +33,7 @@ def get_clusters():
     
 # Create Models method
 # def Create_Application(schema,user="nada",password = "Ringmybells5",db="default"):
-def Create_Application(schema,user="root",password = "Qq_55660904",db="default"):
+def Create_Application(schema,user="root",password = "admin<3Super",db="default"):
     print("Creating Application: ",schema)
     clusters = get_clusters()
     Create_Directory('api')

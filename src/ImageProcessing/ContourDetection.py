@@ -111,11 +111,11 @@ def testContour(text_img,c):
 def seperateShapes(contours ,cnt_img ,binary_img):
    
     text_img = 255 - 255*np.ones((cnt_img.shape[0],cnt_img.shape[1],3), np.uint8)
-    cv2.imwrite('text_img_test.png',text_img)
+    cv2.imwrite('debugOutput/text_img_test.png',text_img)
     binary_img = 255 - binary_img
     binary_img = np.uint8(binary_img)
     img = cv2.cvtColor(binary_img,cv2.COLOR_GRAY2RGB)
-    cv2.imwrite('text_img_2_test.png',img)
+    cv2.imwrite('debugOutput/text_img_2_test.png',img)
     
     count = 0
     for cnt in contours:
@@ -136,7 +136,7 @@ def seperateShapes(contours ,cnt_img ,binary_img):
         count+=1
 
    
-    cv2.imwrite("text_img.png",text_img)
+    cv2.imwrite("debugOutput/text_img.png",text_img)
     return count
 
 def checkInside(contours ,binary_img):

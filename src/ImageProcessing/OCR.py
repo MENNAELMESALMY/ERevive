@@ -74,15 +74,17 @@ def addDefaultNames(shapes,textArr,dataTypesArr):
     for i in range(len(shapes)):
         if not textArr[i]:
             if shapes[i] == "rectangle":
-                textArr[i] = "entity#" + str(entityCounter)
+                textArr[i] = "entity_" + str(entityCounter)
                 entityCounter += 1
             elif shapes[i] == "diamond":
-                textArr[i] = "relation#" + str(relationCounter)
+                textArr[i] = "relation_" + str(relationCounter)
                 relationCounter += 1
             else:
-                textArr[i] = "attr#" + str(attrCounter)
+                textArr[i] = "attr_" + str(attrCounter)
                 attrCounter += 1
             dataTypesArr[i] = "str"
+        elif textArr[i][-1] == "#":
+            textArr[i] = textArr[i][:-1]
     
     return textArr , dataTypesArr
                 

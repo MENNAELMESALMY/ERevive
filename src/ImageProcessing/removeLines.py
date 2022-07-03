@@ -16,7 +16,7 @@ def FloodFromCorners(im_th,debug=False):
     # Invert floodfilled image
     im_floodfill_inv = cv2.bitwise_not(im_floodfill)
     if(debug):
-        cv2.imwrite("Inverted_Floodfilled_Image.png", im_floodfill_inv)
+        cv2.imwrite("debugOutput/Inverted_Floodfilled_Image.png", im_floodfill_inv)
         #cv2.imwrite("Floodfilled_Image.png", im_floodfill)
     return im_floodfill_inv
 
@@ -87,9 +87,9 @@ def getClosedShapes(im_filled,debug=False):
     cv2.drawContours(im_empty3, cnt_filtered, -1,0, 1)
 
     if(debug):
-        cv2.imwrite("hulled.png", im_empty)
-        cv2.imwrite("contoured.png", im_empty3)
-        cv2.imwrite("notFiltered.png", im_empty2)
+        cv2.imwrite("debugOutput/hulled.png", im_empty)
+        cv2.imwrite("debugOutput/contoured.png", im_empty3)
+        cv2.imwrite("debugOutput/notFiltered.png", im_empty2)
 
     return im_empty , cnt_filtered
 
@@ -195,13 +195,13 @@ def getOpenedContours(img,closed_contours=[],debug = False):
 
     cv2.drawContours(opened_contours,contours,-1, 0, 1 )
     if(debug):
-        cv2.imwrite("openedContoursDebug/1contoured_img.png",img_all)
-        cv2.imwrite("openedContoursDebug/2img_parent.png",img_parent)
-        cv2.imwrite("openedContoursDebug/3dilated.png",dilated)
-        cv2.imwrite("openedContoursDebug/4img_inner_contour.png",img_inner_contour)
-        cv2.imwrite("openedContoursDebug/5eroded.png",eroded)
-        cv2.imwrite("openedContoursDebug/6filled.png",flooded)
-        cv2.imwrite("openedContoursDebug/7opened_contours.png",opened_contours)
+        cv2.imwrite("debugOutput/1contoured_img.png",img_all)
+        cv2.imwrite("debugOutput/2img_parent.png",img_parent)
+        cv2.imwrite("debugOutput/3dilated.png",dilated)
+        cv2.imwrite("debugOutput/4img_inner_contour.png",img_inner_contour)
+        cv2.imwrite("debugOutput/5eroded.png",eroded)
+        cv2.imwrite("debugOutput/6filled.png",flooded)
+        cv2.imwrite("debugOutput/7opened_contours.png",opened_contours)
     return opened_contours,contours
 
 def getDerived(img,contours):
@@ -227,5 +227,5 @@ def getDerived(img,contours):
         if dashedFound > 5:
             #print(dashedFound,"found dashed")
             cv2.drawContours(im_dashes,[cnt],-1, 0, 1 )
-    cv2.imwrite("im_scaled_down.png",im_scaled_down)
-    cv2.imwrite("im_dashes.png",im_dashes)
+    cv2.imwrite("debugOutput/im_scaled_down.png",im_scaled_down)
+    cv2.imwrite("debugOutput/im_dashes.png",im_dashes)

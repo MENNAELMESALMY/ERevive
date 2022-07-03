@@ -46,7 +46,7 @@ def start_search_engine(final_schema):
     print("start search engine")
     print(os.getcwd())
     os.chdir('SearchEngine')
-    # suggest_queries(final_schema.copy())
+    suggest_queries(final_schema.copy())
     os.chdir('./..')
     SqlQueriesPage.finish_search_engine()
     start_creating_application(final_schema.copy())

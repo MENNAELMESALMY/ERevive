@@ -20,6 +20,14 @@ ASSETS_PATH = OUTPUT_PATH / Path("./assets")
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
 
+def showDone(self,screen_width):
+    self.ER_image = tk.PhotoImage(file=relative_to_assets("./done.png"))
+    Label(self, image=self.ER_image, background="#FFFFFF").place(x = 980, y = 300,width=300,height=300, anchor="center")
+    label = ttk.Label(self, text ="", style = 'W.TLabel',background="#FFFFFF")
+    label.place(x = screen_width/2, y = 550, width=500, anchor="center")
+    label = ttk.Label(self, text ="Done Successfully!", style = 'W.TLabel', foreground="#338855")
+    label.place(x = screen_width/2, y = 550, anchor="center")
+
 def update(self,ind,frameCnt, frames, label):
     try:
         frame = frames[ind]
@@ -107,6 +115,7 @@ class SqlQueriesPage(tk.Frame):
         SqlQueriesPage.gif_label.destroy()
         SqlQueriesPage.queries_label.configure(text = "Good To Go!")
         SqlQueriesPage.queries_label.place(x = SqlQueriesPage.width/2, y = 100, anchor="center")
+        showDone(SqlQueriesPage.frame,SqlQueriesPage.width)
 
 
 

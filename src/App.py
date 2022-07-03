@@ -4,6 +4,7 @@ import os
 from turtle import bgcolor
 import webbrowser
 import cv2
+from tables import Description
 from ImageProcessing import process_image
 from gui_validation import *
 import threading
@@ -15,6 +16,11 @@ VERYLARGEFONT =("Verdana", 40)
 LASTPAGE = False
 NEXTPAGEBUTTON = False
 ERimage = None
+system_info = {
+    'name': "",
+    'description': "",
+    'username': ""
+}
 
 ############################## mimic to the processing time ###############################
 def wait(self, screen_width):
@@ -47,10 +53,27 @@ def image_processing():
     #send notify to parent thread
     Page1.finish()
     
-    
+def checkIfAllInfoTaken ():
+    if system_info['description'] != "" and system_info['username'] != "" and system_info['name'] != "":
+        Page2.finish()    
 
-        
+def getSystemName(entry):
+    name = entry.get()
+    global system_info
+    system_info['name'] = name
+    checkIfAllInfoTaken()
 
+def getSystemDiscription(entry):
+    description = entry.get()
+    global system_info
+    system_info['description'] = description
+    checkIfAllInfoTaken()
+
+def getSystemUsername(entry):
+    username = entry.get()
+    global system_info
+    system_info['username'] = username
+    checkIfAllInfoTaken()
 
 def showDone(self,screen_width):
     self.ER_image = tk.PhotoImage(file=relative_to_assets("./done.png"))
@@ -98,7 +121,7 @@ class tkinterApp(tk.Tk):
         self.minsize(1750, 1024)
         self.resizable(width=True, height=False)
         self.frames = {} 
-        for F in (StartPage, Page1, ValidationPage,SqlQueriesPage,GeneratedSchemaPage):
+        for F in (StartPage, Page1,Page2, ValidationPage,SqlQueriesPage,GeneratedSchemaPage):
   
             frame = F(container, self)
             self.frames[F] = frame
@@ -243,14 +266,62 @@ class Page1(tk.Frame):
     def finish():
         #hide gif
         Page1.gif_label.destroy()
-
+        showDone(Page1.frame,Page1.width)
         button1 = ttk.Button(Page1.frame, text ="Move To Next Step ...",style='W.TButton',
-        command = lambda : [Page1.frame_controller.show_frame(ValidationPage),ValidationPage.loadEntitiesFrames(), enableSideButtons()])
+        command = lambda : [Page1.frame_controller.show_frame(Page2)])
         button1.place(x = Page1.width/2, y = Page1.height-140, width = 350.0, height = 70.0, anchor = "center")
 
     
+class Page2(tk.Frame):
+    frame_controller = None
+    width = 0
+    height = 0
+    frame = None
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        label = ttk.Label(self, text ="Let us know more about your system?", style = 'W.TLabel',font=VERYLARGEFONT)
+        label.place(x = screen_width/2, y = 100, anchor="center")
 
- 
+        style = ttk.Style()
+        style.configure('TEntry', foreground = '#0f1136')
+        input_text1 = StringVar()
+        entry1 = ttk.Entry(self,width=90,textvariable = input_text1, justify = CENTER,font = ('courier', 18, 'bold'))
+        entry1.focus_force()
+        entry1.place(x = screen_width/2, y = 250,height=50, anchor="center")
+
+        button1 = ttk.Button(self, text ="Add System Name",style='W.TButton',
+        command = lambda : [getSystemName(entry1)])
+        button1.place(x = screen_width/2, y = 350, width = 350.0, height = 70.0, anchor = "center")
+
+        input_text2 = StringVar()
+        entry2 = ttk.Entry(self,width=90,textvariable = input_text2, justify = CENTER,font = ('courier', 18, 'bold'))
+        entry2.focus_force()
+        entry2.place(x = screen_width/2, y = 450,height=50, anchor="center")
+
+        button2 = ttk.Button(self, text ="Add System Description",style='W.TButton',
+        command = lambda : [getSystemDiscription(entry2)])
+        button2.place(x = screen_width/2, y = 550, width = 350.0, height = 70.0, anchor = "center")
+
+        input_text3 = StringVar()
+        entry3 = ttk.Entry(self,width=90,textvariable = input_text3, justify = CENTER,font = ('courier', 18, 'bold'))
+        entry3.focus_force()
+        entry3.place(x = screen_width/2, y = 650,height=50, anchor="center")
+
+        button3 = ttk.Button(self, text ="Add System Username",style='W.TButton',
+        command = lambda : [getSystemUsername(entry3)])
+        button3.place(x = screen_width/2, y = 750, width = 350.0, height = 70.0, anchor = "center")
+        Page2.frame = self
+        Page2.frame_controller = controller
+        Page2.width = screen_width
+        Page2.height = screen_height
+    @staticmethod    
+    def finish():
+        button4 = ttk.Button(Page2.frame, text ="Move To Next Step ...",style='W.TButton',
+        command = lambda : [print(system_info),Page2.frame_controller.show_frame(ValidationPage),ValidationPage.loadEntitiesFrames(), enableSideButtons()])
+        button4.place(x = Page2.width/2, y = Page2.height-140, width = 350.0, height = 70.0, anchor = "center")
+
 
 app = tkinterApp()
 app.mainloop()

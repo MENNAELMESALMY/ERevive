@@ -58,12 +58,19 @@ def OCR():
             keyFound,outImg = keyDetection(binarizedImage)
             isKey.append(keyFound)
 
+            cv2.imwrite("/home/hager/college/GP/GP/src/ImageProcessing/connectEntitiesOutput/yaaaaay"+str(i)+".png",outImg)
             custom_config = r'--oem 3 --psm 6'
             extractedText = pytesseract.image_to_string(outImg,config=custom_config)
+            #print(extractedText)
             if extractedText == "\x0c":
                 extractedText = ""
             else:
                 extractedText = extractedText.split('\n')[0]
+
+            #remove special char from text
+            chars = [":",",","`","'"]
+            for sep in chars:
+                extractedText = extractedText.replace(sep,"")
             textArr.append(extractedText)
             
     return textArr,isKey

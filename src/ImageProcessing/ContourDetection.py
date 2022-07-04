@@ -1,6 +1,8 @@
+from turtle import shape
 import cv2
 import numpy as np
 from numpy.core.fromnumeric import partition
+from .removeLines import *
 
 def getContours(binary_img):
     #applying closing
@@ -108,7 +110,7 @@ def testContour(text_img,c):
             counter =0
     return counter >= (h)//10
 
-def seperateShapes(contours ,cnt_img ,binary_img):
+def seperateShapes(contours ,cnt_img ,binary_img,count = 0):
    
     text_img = 255 - 255*np.ones((cnt_img.shape[0],cnt_img.shape[1],3), np.uint8)
     cv2.imwrite('debugOutput/text_img_test.png',text_img)
@@ -117,7 +119,7 @@ def seperateShapes(contours ,cnt_img ,binary_img):
     img = cv2.cvtColor(binary_img,cv2.COLOR_GRAY2RGB)
     cv2.imwrite('debugOutput/text_img_2_test.png',img)
     
-    count = 0
+    
     for cnt in contours:
         x,y,w,h = cv2.boundingRect(cnt)
         xl = max(0,x-10)
@@ -164,3 +166,28 @@ def checkInside(contours ,binary_img):
         count+=1
     return finalContours
     
+def removeMultivaluedLines(shapes_no,weak,shapes,cnt):
+    for i in range (shapes_no):
+        if shapes[i] == "oval" and weak[i]:
+            image = cv2.imread("./output/text" + str(i) + ".png",0)
+            image = 255 - image
+            cv2.imwrite("./multivaluesDebug/image"+str(i)+".png",image)
+            invertedI = 255 - cv2.imread("./output/text" + str(i) + ".png",0)
+            invertedI = cv2.cvtColor(invertedI,cv2.COLOR_GRAY2RGB)
+            print(invertedI.shape)
+            print(type(invertedI[0][0]))
+            cv2.imwrite("./multivaluesDebug/textInverted"+str(i)+".png",invertedI)
+            print(image.shape)
+            filledImg = FloodFromCorners(image.copy())
+            cv2.imwrite("./multivaluesDebug/filled"+str(i)+".png",filledImg)
+            print("passed")
+            #text_img = 255 - 255*np.ones((filledImg.shape[0],filledImg.shape[1],3), np.uint8)
+            filledImg = cv2.cvtColor(filledImg,cv2.COLOR_GRAY2RGB)
+            cv2.imwrite("./multivaluesDebug/textcnt"+str(i)+".png",filledImg)
+            #binary_img = 255 - filledImg
+            #binary_img = np.uint8(binary_img)
+            #img = cv2.cvtColor(binary_img,cv2.COLOR_GRAY2RGB)
+            print("filledshape" , filledImg.shape)
+            print("invertedIshape" , invertedI.shape)
+            text_img = cv2.bitwise_and(filledImg , invertedI)
+            cv2.imwrite("./multivaluesDebug/text"+str(i)+'.png',text_img)  

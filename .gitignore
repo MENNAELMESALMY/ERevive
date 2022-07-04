@@ -139,3 +139,6 @@ dmypy.json
 /src/ImageProcessing/output/
 /src/ImageProcessing/debugOutput/
 /src/CreateFrontProject/FrontCode/
+/src/ImageProcessing/connectEntitiesOutput/
+/src/ImageProcessing/multivaluesDebug/
+/src/SearchEngine/glove_vectors.model.vectors.npy

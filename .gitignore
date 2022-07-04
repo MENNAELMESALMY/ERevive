@@ -142,3 +142,4 @@ dmypy.json
 /src/ImageProcessing/connectEntitiesOutput/
 /src/ImageProcessing/multivaluesDebug/
 /src/SearchEngine/glove_vectors.model.vectors.npy
+/src/SearchEngine/glove_vectors.model

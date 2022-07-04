@@ -4,6 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import create_engine 
 from decouple import config 
 from flask_cors import CORS 
+from sqlalchemy_schemadisplay import create_schema_graph
 
 user=config("user") 
 password=config("password") 
@@ -28,5 +29,7 @@ def create_db(app):
         engine.execute("USE `{0}`;".format(database)) 
         db.create_all(bind="__all__", app=app) 
         db.session.commit() 
+        graph = create_schema_graph(metadata= db.metadata,show_datatypes=False,show_indexes=False,rankdir="LR",concentrate=False)
+        graph.write_png("generated_schema.png")
         return db 
 

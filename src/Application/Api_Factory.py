@@ -229,7 +229,7 @@ def create_db(app): \n\
         engine.execute("USE `{0}`;".format(database)) \n\
         db.create_all(bind="__all__", app=app) \n\
         db.session.commit() \n\
-        graph = create_schema_graph(metadata= db.metadata,show_datatypes=False,show_indexes=False,rankdir="LR"",concentrate=False)\n\
+        graph = create_schema_graph(metadata= db.metadata,show_datatypes=False,show_indexes=False,rankdir="LR",concentrate=False)\n\
         graph.write_png("generated_schema.png")\n\
         return db \n\
 \n\

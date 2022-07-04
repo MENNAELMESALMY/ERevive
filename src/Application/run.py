@@ -4,6 +4,7 @@ from pathlib import Path
 
 def run_api():
     print("start creating api")
+    os.system('sudo kill $(sudo lsof -t -i:3000)')
     directory_file = os.getcwd()
     api_path =  Path(directory_file) / Path('api')
     os.chdir(str(api_path))

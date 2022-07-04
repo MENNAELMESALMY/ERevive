@@ -164,14 +164,9 @@ styleRoute = 'FrontCode/src/scss/'
 #     }
 #   ]
 # }
+f = open('../systemInfo.json','r')
+systemInfoObject = json.load(f)
 # open file clusters.json
-systemInfoObject = {
-    "system_name": "Learning Management System",
-    "system_description": '''sum is simply dummy text of the printing and typesetting industry. Lorem
-        Ipsum has been the industry's standard dummy text ever since the 1500s,
-        when an unknown printer took a galley of type and scrambled it to make a
-        type specimen book. It has survived not only five centuries.'''
-}
 c={}
 with open('../Application/clusters.json') as f:
     c = json.load(f)
@@ -219,9 +214,9 @@ with open(viewsRoute + "home.vue", 'w') as f:
   <div id="home">
    <div class="mainContent">
       <h2>Welcome to ERevive</h2>
-      <h3>{systemInfoObject["system_name"]}</h3>
+      <h3>{systemInfoObject["name"]}</h3>
       <p>
-        {systemInfoObject["system_description"]}
+        {systemInfoObject["description"]}
       </p>
       <router-link to="/App"><button>CONTINUE</button></router-link>
     </div>
@@ -418,7 +413,7 @@ with open(componentsRoute + "sideBar.vue", 'w') as f:
 <template>
   <div class="sideBar">
     <div class="header">
-      <h4>{systemInfoObject["system_name"]}</h4>
+      <h4>{systemInfoObject["name"]}</h4>
     </div>
   ''')
   f.write('''

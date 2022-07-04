@@ -15,7 +15,17 @@ from Application import Create_Application
 LARGEFONT =("Verdana", 20)
 VERYLARGEFONT =("Verdana", 40)
 OUTPUT_PATH = Path(__file__).parent
+LASTPAGE = False
+canvas = None
 ASSETS_PATH = OUTPUT_PATH / Path("./assets")
+database_info = {
+    'username' : "",
+    "password" : "",
+}
+
+def enableSideButtons():
+    global LASTPAGE
+    LASTPAGE = True
 
 def relative_to_assets(path: str) -> Path:
     return ASSETS_PATH / Path(path)
@@ -58,12 +68,12 @@ def run_front(src_dir):
     os.chdir(str(front_path))
     os.system('npm run serve')
     
-
+#App.database_info["username"],App.database_info["password"],App.database_info["database"]
 def start_creating_application(final_schema):
     src_dir = os.getcwd()
     os.chdir('Application')
     print("start creating application")
-    Create_Application(final_schema)
+    Create_Application(final_schema,database_info["username"],database_info["password"])
     os.system("python3 run.py &")
     os.chdir('./..')
     front_path =  Path(src_dir) / Path('CreateFrontProject/CreateFrontProject.sh')
@@ -75,6 +85,64 @@ def start_creating_application(final_schema):
     front_thread.start()
 
     SqlQueriesPage.finish_creating_application()
+
+def checkIfAllDatabaseInfoTaken ():
+    if database_info['username'] != "" and database_info['password'] != "":
+        Page3.finish() 
+
+def getDatabaseUsername(entry):
+    username = entry.get()
+    global database_info
+    database_info['username'] = username
+    checkIfAllDatabaseInfoTaken()
+
+def getDatabasePassword(entry):
+    password = entry.get()
+    global database_info
+    database_info['password'] = password
+    checkIfAllDatabaseInfoTaken() 
+
+class Page3(tk.Frame):
+    frame_controller = None
+    width = 0
+    height = 0
+    frame = None
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        label = ttk.Label(self, text ="Let us know your database information?", style = 'W.TLabel',font=VERYLARGEFONT)
+        label.place(x = screen_width/2, y = 100, anchor="center")
+
+        style = ttk.Style()
+        style.configure('TEntry', foreground = '#0f1136')
+        input_text1 = StringVar()
+        entry1 = ttk.Entry(self,width=90,textvariable = input_text1, justify = CENTER,font = ('courier', 18, 'bold'))
+        entry1.focus_force()
+        entry1.place(x = screen_width/2, y = 250,height=50, anchor="center")
+
+        button1 = ttk.Button(self, text ="Add Database UserName",style='W.TButton',
+        command = lambda : [getDatabaseUsername(entry1)])
+        button1.place(x = screen_width/2, y = 350, width = 350.0, height = 70.0, anchor = "center")
+
+        input_text2 = StringVar()
+        entry2 = ttk.Entry(self,width=90,textvariable = input_text2, justify = CENTER,font = ('courier', 18, 'bold'))
+        entry2.focus_force()
+        entry2.place(x = screen_width/2, y = 450,height=50, anchor="center")
+
+        button2 = ttk.Button(self, text ="Add Database Password",style='W.TButton',
+        command = lambda : [getDatabasePassword(entry2)])
+        button2.place(x = screen_width/2, y = 550, width = 350.0, height = 70.0, anchor = "center")
+
+        Page3.frame = self
+        Page3.frame_controller = controller
+        Page3.width = screen_width
+        Page3.height = screen_height
+    @staticmethod    
+    def finish():
+        button4 = ttk.Button(Page3.frame, text ="Move To Next Step ...",style='W.TButton',
+        command = lambda : [print(database_info),Page3.frame_controller.showSqlPage()])
+        button4.place(x = Page3.width/2, y = Page3.height-140, width = 350.0, height = 70.0, anchor = "center")
 
 
 class SqlQueriesPage(tk.Frame):
@@ -116,23 +184,53 @@ class SqlQueriesPage(tk.Frame):
         SqlQueriesPage.queries_label.configure(text = "Good To Go!")
         SqlQueriesPage.queries_label.place(x = SqlQueriesPage.width/2, y = 100, anchor="center")
         showDone(SqlQueriesPage.frame,SqlQueriesPage.width)
+        enableSideButtons()
 
 
-
-    
 
 class GeneratedSchemaPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         
         ################### scroll bar not working ###################
-        canvas = Canvas(self,bg = "#FFFFFF")
-        canvas.pack(fill='both', expand=True,side='left')
-        scroll_y = ttk.Scrollbar(self, orient="vertical", command=canvas.yview)
-        scroll_y.pack(fill=Y, side=RIGHT)
-        canvas.configure(yscrollcommand=scroll_y.set)
-        canvas.bind("<Configure>", lambda event: canvas.configure(scrollregion=canvas.bbox("all")))
-        canvas.create_window((300, 0), window=self, anchor="nw")
+        # canvas = Canvas(self,bg = "#FFFFFF")
+        # canvas.pack(fill='both', expand=True,side='left')
+        # scroll_y = ttk.Scrollbar(self, orient="vertical", command=canvas.yview)
+        # scroll_y.pack(fill=Y, side=RIGHT)
+        # canvas.configure(yscrollcommand=scroll_y.set)
+        # canvas.bind("<Configure>", lambda event: canvas.configure(scrollregion=canvas.bbox("all")))
+        # canvas.create_window((300, 0), window=self, anchor="nw")
+        ##############################################################
+
+##      
+        # self.geometry(f"{screen_width}x{screen_height}")
+        self.grid_rowconfigure(0, weight=1)
+        self.columnconfigure(0, weight=1)
+
+##
+        frame_main = Frame(self)
+        frame_main.grid(padx=(185,0),sticky='news')
+        frame_main.grid_propagate(0)
+
+        screen_width = frame_main.winfo_screenwidth()
+##
+        # Create a frame for the canvas with non-zero row&column weights
+        sql_frame = Frame(frame_main)
+        sql_frame.grid(row=0, column=0, sticky='nw')
+        sql_frame.grid_rowconfigure(0, weight=1)
+        sql_frame.grid_columnconfigure(0, weight=1)
+        # Set grid_propagate to False to allow 5-by-5 buttons resizing later
+        sql_frame.grid_propagate(False)
+        global canvas
+        # Add a canvas in that frame
+        canvas = Canvas(sql_frame, bg="yellow")
+        canvas.grid(row=0, column=0, sticky="news")
+
+        # Link a scrollbar to the canvas
+        global vsb
+        vsb = Scrollbar(sql_frame, orient="vertical", command=canvas.yview)
+        vsb.grid(row=0, column=1, sticky='ns')
+        canvas.configure(yscrollcommand=vsb.set)
         ##############################################################
         
         screen_width = self.winfo_screenwidth()
@@ -143,3 +241,9 @@ class GeneratedSchemaPage(tk.Frame):
         Label(self, image=self.finalSchema).place(x = 970, y = 950, anchor="center")
 
         canvas.update_idletasks()
+
+class GeneratedQueries(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+
+        

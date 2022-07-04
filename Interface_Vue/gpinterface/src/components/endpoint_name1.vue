@@ -10,7 +10,7 @@
       <label> equal to</label>
       <label> avg</label><br />
 
-      <input type="submit" value="Call endpoint" @click="call_request" />
+      <input type="submit" value="Call endpoint" />
     </div>
     <table>
       <tr>

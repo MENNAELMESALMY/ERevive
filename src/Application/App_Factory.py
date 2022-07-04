@@ -33,7 +33,7 @@ def get_clusters():
     
 # Create Models method
 # def Create_Application(schema,user="nada",password = "Ringmybells5",db="default"):
-def Create_Application(schema,user="root",password = "admin<3Super",db="default"):
+def Create_Application(schema,user="root",password = "admin<3Super",db="default1"):
     print("Creating Application: ",schema)
     clusters = get_clusters()
     Create_Directory('api')
@@ -42,9 +42,12 @@ def Create_Application(schema,user="root",password = "admin<3Super",db="default"
       
     api = ApiFactory(models,user,password,db,modelsObjects)
     apisFiles,crud_ui_out = api.create_models_apis()
+    with open('../crud_ui_out.json','w') as f:
+        json.dump(crud_ui_out,f)
     createApis(apisFiles)
-    namespaces_imports,inits,clusters_out = create_api_namespaces(api,clusters)
-    clusters_out.update(crud_ui_out)
+    namespaces_imports,inits,clusters_out = create_api_namespaces(api,clusters,crud_ui_out)
+    #clusters_out.update(crud_ui_out)
+    
     #dump clusters_out to file
     json_clusters = json.dumps(clusters_out)
     with open('../clusters.json','w') as f:
@@ -62,10 +65,10 @@ def Create_Application(schema,user="root",password = "admin<3Super",db="default"
     os.chdir('./..')
 
 
-def create_api_namespaces(api,clusters):
+def create_api_namespaces(api,clusters,clusters_out):
     namespaces_imports = ""
     inits = ""
-    clusters_out= {}
+    #clusters_out= {}
     errors = []
     for cluster in clusters:
         
@@ -73,7 +76,8 @@ def create_api_namespaces(api,clusters):
         entities = cluster[0]["entities"]
         api_name = '_'.join(entities)
         api_name = api_name.lower()
-        clusters_out[api_name] = []
+        if api_name not in clusters_out:
+            clusters_out[api_name] = []
         api_file  = 'apis/'+api_name+'_api.py'
         namespace_name = api_name+"_namespace"
         route_path = '/'.join(entities)
@@ -118,6 +122,10 @@ def create_api_namespaces(api,clusters):
             
         #handle crud response
         # add is_entity --> true
+    print("?????????????????????????????????????????????/")
+    print(clusters_out)
+    with open("/home/hager/college/GP/GP/src/cluster_out.json", "w") as json_file:
+        json.dump(clusters_out, json_file)
     return namespaces_imports , inits ,clusters_out
 
 
@@ -942,6 +950,4 @@ def create_api_init(api,cluster_imports,clusters_init):
         f.write("\n\
     return rest_plus_api")
 
-        
-
-
+ 

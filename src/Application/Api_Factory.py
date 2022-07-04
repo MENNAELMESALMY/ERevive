@@ -22,8 +22,10 @@ database="{2}" \n\
 
     def create_models_apis(self):
         Apis={}
+        crud_ui_out = {}
         for model in self.models.keys():
-            crud_ui_out,api = self.create_api(model,self.models[model])
+            crud_ui,api = self.create_api(model,self.models[model])
+            crud_ui_out.update(crud_ui)
             Apis[model.lower()] = api
         self.api_files = Apis
         return Apis,crud_ui_out

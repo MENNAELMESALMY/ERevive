@@ -84,7 +84,7 @@ def generateSchema(entites , relations , shapes_no):
         if len(r["entities"])>2:
             ##nary and NM relation
             shapes_no += 1
-            addEntitiesAsTables(r["entities"] ,r["attributes"] , schema,shapes_no)
+            addEntitiesAsTables(r["name"],r["entities"] ,r["attributes"] , schema,shapes_no)
         else:
             r1 = r["entities"][0]
             r2 = r["entities"][0] if len(r["entities"]) == 1 else r["entities"][1]

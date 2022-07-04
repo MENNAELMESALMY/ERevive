@@ -64,6 +64,9 @@ def rankQueriesSimilarities(quiries_keywords,quiries,er):
 
     quieries_scores_zip = list(zip(filtered_quiries,quiries_scores))
     ##print(quieries_score_zip)
+    with open('rank_queries_similarities_before.json','w') as file:
+        jsonObj = json.dumps(quieries_scores_zip)
+        file.write(jsonObj)
     quieries_score_zip = sorted(quieries_scores_zip,key=lambda x:x[1],reverse=True)  # sort by score
     return quieries_score_zip
 

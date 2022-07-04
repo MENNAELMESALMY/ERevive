@@ -3,7 +3,7 @@
     <div class="tag" :style="{ 'background-color': colorHex }"></div>
     <h3>{{ title }}</h3>
     <p>{{ text }}</p>
-    <button :style="{ 'background-color': colorHex }" @click="clickFuction">
+    <button :style="{ 'background-color': colorHex }" >
       {{ buttonText }}
     </button>
   </div>

@@ -204,6 +204,7 @@ from flask_sqlalchemy import SQLAlchemy \n\
 from sqlalchemy import create_engine \n\
 from decouple import config \n\
 from flask_cors import CORS \n\
+from sqlalchemy_schemadisplay import create_schema_graph\n\
 \n\
 user=config("user") \n\
 password=config("password") \n\
@@ -228,6 +229,8 @@ def create_db(app): \n\
         engine.execute("USE `{0}`;".format(database)) \n\
         db.create_all(bind="__all__", app=app) \n\
         db.session.commit() \n\
+        graph = create_schema_graph(metadata= db.metadata,show_datatypes=False,show_indexes=False,rankdir="LR"",concentrate=False)\n\
+        graph.write_png("generated_schema.png")\n\
         return db \n\
 \n\
 '
@@ -257,6 +260,7 @@ Flask_SQLAlchemy==2.5.1 \n\
 python-decouple==3.5 \n\
 SQLAlchemy==1.4.27 \n\
 mysql-connector-python \n\
+sqlalchemy_schemadisplay\n\
 flask-cors\n\
 '
     def create_app_run(self):

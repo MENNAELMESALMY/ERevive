@@ -4,7 +4,7 @@ from .queryConstruction import constructQuery, queryStructure
 from .globalVars import *
 import timeit
 from collections import Counter
-from .ranker import flatten_query_entities, getRankedQueries, mapToSchema,queryCoverage,mapAttrEntity,mapEntity,getListQueries,getNonZeroQueryHits,constructDictionary
+from .ranker import rankQueriesSimilarities,flatten_query_entities, getRankedQueries, mapToSchema,queryCoverage,mapAttrEntity,mapEntity,getListQueries,getNonZeroQueryHits,constructDictionary
 from .clustering import *
 from .searchIndexer import init_one_hot_vocab , cleanEntityName
 
@@ -17,13 +17,13 @@ def cleanQuery(query):
 
 
 
-def getMappedQueries(schemaGraph,finalQueriesIndexs,listOfQueries,testSchema,entityDict,schemaEntityNames):
+def getMappedQueries(schemaGraph,rankedQueriesBySimilarity,testSchema,entityDict,schemaEntityNames):
     queries = []
     start = timeit.default_timer()
-    for idx in finalQueriesIndexs:
-        mappedEntites, mappedAttributes, goals,mappedEntitesDict,bestJoin =  mapToSchema(schemaGraph,listOfQueries[idx],testSchema,entityDict,schemaEntityNames)
+    for q in rankedQueriesBySimilarity:
+        mappedEntites, mappedAttributes, goals,mappedEntitesDict,bestJoin =  mapToSchema(schemaGraph,q[0],testSchema,entityDict,schemaEntityNames)
         coverage = queryCoverage(mappedAttributes)
-        query = constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,idx,goals,listOfQueries[idx],bestJoin,testSchema)
+        query = constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,goals,q[0],bestJoin,testSchema)
                
         queries.append(query)
         #print("mappedAttributes: ",mappedAttributes)
@@ -105,13 +105,33 @@ def suggest_queries(testSchema):
     query = cleanQuery(schemaEntityNames) #Generated Keywords from shcema or KG //Future work
     queryOneHotVector = getKeyWordsVector(query).T
     queryHits = getQueryHits(queryOneHotVector,queriesMatrix)
+    nonZeroQueriesIndexs = getNonZeroQueryHits(queryHits)
+    nonZeroQueries = []
+    quiries_keywords = []
+    entities_keywords = list(set(query)) 
+    for idx in nonZeroQueriesIndexs:
+        query = listOfQueries[idx]
+        nonZeroQueries.append(query)    
+        entities = query["entities"]
+        selectAttrs = [attr.split('.')[-1] for attr in query["selectAttrs"]]
+        whereAttrs = [attr[0].split('.')[-1] for attr in query["whereAttrs"]]
+        keywords = []
+        keywords.extend(cleanQuery(entities))
+        keywords.extend(cleanQuery(selectAttrs))
+        keywords.extend(cleanQuery(whereAttrs))
+        keywords = list(set(keywords))
+        quiries_keywords.append(keywords)
+    
+    rankedQueriesBySimilarity = rankQueriesSimilarities(quiries_keywords,nonZeroQueries,entities_keywords)
+    with open('rank_queries_similarities.json','w') as file:
+        jsonObj = json.dumps(rankedQueriesBySimilarity)
+        file.write(jsonObj)
 
  
-    nonZeroQueriesIndexs = getNonZeroQueryHits(queryHits)
     tracemalloc.stop()
 
     entityDict = constructDictionary(testSchema)
-    queries = getMappedQueries(schemaGraph,nonZeroQueriesIndexs,listOfQueries,testSchema,entityDict,schemaEntityNames)
+    queries = getMappedQueries(schemaGraph,rankedQueriesBySimilarity,testSchema,entityDict,schemaEntityNames)
     clusteredQueries = getClusteredQueries(queries)
     mergedClusters = getMergdClusters(clusteredQueries,queries)
     rankedQueries = getRankedQueries(mergedClusters,queries)

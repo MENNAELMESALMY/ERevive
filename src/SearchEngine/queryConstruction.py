@@ -1,6 +1,6 @@
 import random
 
-def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,id, goals,origQuery,bestJoin,testSchema):
+def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage, goals,origQuery,bestJoin,testSchema):
     mappedEntitesNames = mappedEntitesDict.values()
     mappedEntitesDict.update({entity:entity for entity in goals if entity not in mappedEntitesNames})
     query = {}
@@ -28,7 +28,6 @@ def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,id,
                     })
     #print(mappedAttributesDict)
     query["coverage"] = coverage
-    query["id"] = id
     query["entities"] = [ent for ent in mappedEntitesDict.values()]
     query["cleanedEntities"] = [ent[1] for ent in mappedEntites]
     query["goals"] = list(goals)

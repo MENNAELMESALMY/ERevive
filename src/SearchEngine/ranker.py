@@ -10,8 +10,10 @@ import json
 import timeit
 import pickle
 from .utilities import *
-
+from gensim.models import KeyedVectors
 from functools import lru_cache
+import hoggorm as ho
+
 global takenAttrs 
 takenAttrs = set()
 global takenEntities
@@ -31,6 +33,39 @@ def getListQueries():
                     listOfQueries.extend(query["allQueries"])
 
     return listOfQueries
+def load_model():
+    glove_vectors = KeyedVectors.load("glove_vectors.model")
+    return glove_vectors
+
+def rankQueriesSimilarities(quiries_keywords,quiries,er):
+    model = load_model()
+    quiries_scores = []
+    er = [model.get_vector(keyword) for keyword in er]
+    er_mat = np.array(er).T
+    filtered_quiries=[]
+    for idx,q in enumerate(quiries):
+        query_keywords_init = quiries_keywords[idx]
+        query_keywords = []
+        for keyword in query_keywords_init:
+            try:
+                model_keyword = model.get_vector(keyword)
+                query_keywords.append(model_keyword)
+            except Exception as e:
+                print(e)
+                continue
+        
+        query_matrix = np.array(query_keywords).T
+        query_out = ho.RVcoeff([query_matrix,er_mat])
+        score = query_out[-1][0]
+        if score>0.55:
+            filtered_quiries.append(q)
+            quiries_scores.append(score)
+
+
+    quieries_scores_zip = list(zip(filtered_quiries,quiries_scores))
+    ##print(quieries_score_zip)
+    quieries_score_zip = sorted(quieries_scores_zip,key=lambda x:x[1],reverse=True)  # sort by score
+    return quieries_score_zip
 
 @lru_cache(maxsize=None)
 def mapEntity(entityKeywords,schemaEntityNames):

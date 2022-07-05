@@ -166,6 +166,7 @@ styleRoute = 'FrontCode/src/scss/'
 # }
 f = open('../systemInfo.json','r')
 systemInfoObject = json.load(f)
+f.close()
 # open file clusters.json
 c={}
 with open('../Application/clusters.json') as f:
@@ -757,6 +758,9 @@ requirments = [
     }
 ]
 ##########################
+# f = open('../userInterfaceInfo.json','r')
+# requirments = json.load(f)
+# f.close()
 
 # create components
 for cluster_name,endpoints in c.items():
@@ -784,11 +788,13 @@ for cluster_name,endpoints in c.items():
         generate_large_cards(cluster_name,endpoint, filePath,is_single_entity,delete_endpoint,put_endpoint,post_endpoint)
  
     elif endpoint["method"] == "post":
-      createForm(requirments,cluster_name,endpoint, filePath)
+      if is_single_entity:
+        print(cluster_name)
+        createForm(requirments,cluster_name,endpoint, filePath)
 
-    elif endpoint["method"] == "put":
-      filePath = componentsRoute + "edit_" +endpoint["endpoint_name"] + ".vue"
-      createForm(requirments,cluster_name,endpoint, filePath)
+    # elif endpoint["method"] == "put":
+    #   filePath = componentsRoute + "edit_" +endpoint["endpoint_name"] + ".vue"
+    #   createForm(requirments,cluster_name,endpoint, filePath)
 
 #Index code generation
 with open('FrontCode/src/index.html', 'w') as f:

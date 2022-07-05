@@ -643,7 +643,7 @@ class ValidationPage(Frame):
         #save object and add errors if needed
         #save button
         saveButton = CTkButton(button_wrapper, \
-                    text="Save Changes",command=lambda: [saveChanges(),ValidationPage.ValidationPageController.show_search_engine_page(global_schema)])
+                    text="Save Changes",command=lambda: [saveChanges(),ValidationPage.ValidationPageController.show_search_engine_page(global_schema,formFields)])
         saveButton.pack(fill='both', expand=True,padx=20, pady=20)
 
 

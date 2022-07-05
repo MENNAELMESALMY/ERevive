@@ -178,11 +178,14 @@ class tkinterApp(tk.Tk):
         # thread.start()
 
         
-    def show_search_engine_page(self,global_schema):
+    def show_search_engine_page(self,global_schema,formFields):
         frame = self.frames[Page3]
         frame.tkraise()
         thread = threading.Thread(target=start_search_engine,args=(global_schema,))        
         thread.start()
+        with open("userInterfaceInfo.json", "w") as outfile:
+            json.dump(formFields, outfile)
+
 
     def showSqlPage(self):
         frame = self.frames[SqlQueriesPage]

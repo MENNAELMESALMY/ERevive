@@ -6,7 +6,7 @@ from numpy import pad
 
 
 global_schema = {}
-
+formFields = {}
 validation_frame = None
 canvas = None
 errors_labels = []
@@ -16,6 +16,7 @@ entities_list = []
 
 dataTypes = ['str', 'int', 'float', 'datetime','bool']
 participations = ['full', 'partial']
+fieldTypes = ['text','number','date','checkbox','email','password','tel','url','list','radiobutton','textarea']
 
 def addEntity():
     global entities_list,row,col,ROWCOUNT,entities_wrapper
@@ -43,6 +44,26 @@ def expandCanvas():
     canvas.itemconfigure("canvas_frame", height=height)
     canvas.configure(scrollregion=canvas.bbox("all"))
 
+def getFormFields():
+    global formFields
+    formFields = {}
+    for entity in entities_list:
+        entityName = entity.name.get()
+        formFields[entityName] = []
+        for attr in entity.attributes.values():
+            formFields[entityName].append(
+                {
+                    "field_name": attr.name.get(),
+                    "field_type": attr.formDataType.get(),
+                    "isRequired": True,
+                    "maxRange": 0,
+                    "minRange": 100,
+                    "options": ["option1","option2","option3"],
+                }
+            )
+            
+
+
 def saveChanges():
     # destroy errors if exists
     global errors_labels,entities_list,global_schema
@@ -63,6 +84,7 @@ def saveChanges():
             }
             global_schema[entityName]['ForgeinKey'].append(fk_obj)
     #print('fff',global_schema)
+
             
     for entity in global_schema.values():
         entityName = entity['TableName']
@@ -74,17 +96,14 @@ def saveChanges():
             fkName = fk['attributeName']
             fkTable = fk['ForignKeyTable']
             fkTableAttrName = fk['ForignKeyTableAttributeName']
-            #print(entity['attributes'])
-            #print(global_schema[fkTable]['attributes'])
-            #print("pppp",fkName,fkTable,fkTableAttrName)
             if entity['attributes'][fkName] != global_schema[fkTable]['attributes'][fkTableAttrName]:
-            #     fk['dataType'] = entity['attributes'][fkName]
-            # else:
                 errors.append(f'{fkName} foreignkey in {entityName} has type mismatch with attribute it is pointing to')
+    formFields = {}
     if len(errors)>0: errors.append('cannot save changes')
     else: 
         print('------------------------------------------------------')
         print(global_schema)
+        formFields = getFormFields()
     # add ui for errors
     global errors_wrapper
     for err in errors:
@@ -147,9 +166,6 @@ class attribute:
         self.entityName = entityName
         self.removed = False
 
-        self.dataType = StringVar(wrapperFrame)
-        self.dataType.set(dataType)
-
         self.nameStr = name
         self.name = StringVar(wrapperFrame)
         self.name.trace("w", lambda name, index, mode, sv=self.name: self.editAtrr(sv))
@@ -158,16 +174,25 @@ class attribute:
         
         self.attrName = CTkEntry(wrapperFrame,\
              textvariable=self.name, width=120)
-        # self.attrName.grid(row=row)
         self.attrName.pack(fill='both', expand=True,padx=20, pady=20)
+
+        self.dataType = StringVar(wrapperFrame)
+        self.dataType.set(dataType)
 
         
         self.dataTypeMenu = OptionMenu(wrapperFrame,\
             self.dataType,*dataTypes,command=self.changeDataType)
         self.dataTypeMenu.pack(fill='both', expand=True,padx=20, pady=20)
+        #### Field Type ####    
+        self.formDataType = StringVar(wrapperFrame)
+        self.formDataType.set('text')
 
-        # self.dataTypeMenu.grid(row=row+1)
-        #self.isPrimaryKey = isPrimaryKey
+        
+        self.formDataTypeMenu = OptionMenu(wrapperFrame,\
+            self.formDataType,*fieldTypes)
+        self.formDataTypeMenu.pack(fill='both', expand=True,padx=20, pady=20)
+        ###################
+
         self.isPrimaryKey = Variable()
         self.isPrimaryCheckbox = CTkCheckBox(wrapperFrame, text = "isPrimaryKey", \
             variable=self.isPrimaryKey, command=self.isPrimaryKeyCheckbox)
@@ -292,15 +317,12 @@ class foreignKey:
     
     def updateAttributes(self,entityName= None):
         # updating attributes to entity the key is pointing to
-        #print("IO")
         if entityName is not None:
             self.entityName.set(entityName)
-            # print("pppppppppppppppppppppppppppp",entityName)
             self.entityAttributes = [e for e in global_schema[entityName]['primaryKey']]
             if len(self.entityAttributes)>0: self.entityAttribute.set(self.entityAttributes[0])
             else: self.removeForeignKey();return
         else:
-            #print("Changing entity",self.entityName.get())
             entityName = self.entityName.get()
             self.entityAttributes = [e for e in global_schema[entityName]['primaryKey']]
             if self.entityAttribute.get() in self.entityAttributes:
@@ -310,7 +332,6 @@ class foreignKey:
                 else: self.removeForeignKey();return
         
         self.entityAttributesMenu["menu"].delete(0, 'end')
-        #print("attr",self.entityAttributes)
         for choice in self.entityAttributes:
             self.entityAttributesMenu["menu"]\
                 .add_command(label=choice, command= lambda a=choice: \
@@ -622,7 +643,7 @@ class ValidationPage(Frame):
         #save object and add errors if needed
         #save button
         saveButton = CTkButton(button_wrapper, \
-                    text="Save Changes",command=lambda: [saveChanges(),ValidationPage.ValidationPageController.show_search_engine_page(global_schema)])
+                    text="Save Changes",command=lambda: [saveChanges(),ValidationPage.ValidationPageController.show_search_engine_page(global_schema,formFields)])
         saveButton.pack(fill='both', expand=True,padx=20, pady=20)
 
 

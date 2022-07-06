@@ -33,7 +33,7 @@ def get_clusters():
     
 # Create Models method
 # def Create_Application(schema,user="nada",password = "Ringmybells5",db="default"):
-def Create_Application(schema,user="root",password = "admin<3Super",db="default1"):
+def Create_Application(schema,user,password,db="default"):
     print("Creating Application: ",schema)
     clusters = get_clusters()
     Create_Directory('api')
@@ -124,7 +124,7 @@ def create_api_namespaces(api,clusters,clusters_out):
         # add is_entity --> true
     print("?????????????????????????????????????????????/")
     print(clusters_out)
-    with open("/home/hager/college/GP/GP/src/cluster_out.json", "w") as json_file:
+    with open("/home/nihal/Desktop/uploadgp/GP/src/cluster_out.json", "w") as json_file:
         json.dump(clusters_out, json_file)
     return namespaces_imports , inits ,clusters_out
 

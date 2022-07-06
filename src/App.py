@@ -6,20 +6,18 @@ import webbrowser
 import cv2
 # from tables import Description
 from ImageProcessing import process_image
-from gui_validation import *
+from gui_validation import * 
 import threading
 
 OUTPUT_PATH = Path(__file__).parent
 ASSETS_PATH = OUTPUT_PATH / Path("./assets")
 LARGEFONT =("Verdana", 20)
 VERYLARGEFONT =("Verdana", 40)
-LASTPAGE = False
 NEXTPAGEBUTTON = False
 ERimage = None
 system_info = {
     'name': "",
     'description': "",
-    'username': ""
 }
 
 ############################## mimic to the processing time ###############################
@@ -54,8 +52,11 @@ def image_processing():
     Page1.finish()
     
 def checkIfAllInfoTaken ():
-    if system_info['description'] != "" and system_info['username'] != "" and system_info['name'] != "":
-        Page2.finish()    
+    if system_info['description'] != "" and system_info['name'] != "":
+        with open("systemInfo.json", "w") as outfile:
+            json.dump(system_info, outfile)
+        Page2.finish() 
+ 
 
 def getSystemName(entry):
     name = entry.get()
@@ -69,11 +70,6 @@ def getSystemDiscription(entry):
     system_info['description'] = description
     checkIfAllInfoTaken()
 
-def getSystemUsername(entry):
-    username = entry.get()
-    global system_info
-    system_info['username'] = username
-    checkIfAllInfoTaken()
 
 def showDone(self,screen_width):
     self.ER_image = tk.PhotoImage(file=relative_to_assets("./done.png"))
@@ -84,15 +80,12 @@ def showDone(self,screen_width):
     label.place(x = screen_width/2, y = 550, anchor="center")
 
 def open_back_url():
-    webbrowser.open_new("https://www.google.com/")
+    webbrowser.open_new("http://localhost:3000/api/")
 
 def open_front_url():
     webbrowser.open_new("http://localhost:8080/")
 
 
-def enableSideButtons():
-    global LASTPAGE
-    LASTPAGE = True
 
 def reachedLastPage(page):
     if LASTPAGE == True and page == "front":
@@ -121,7 +114,7 @@ class tkinterApp(tk.Tk):
         self.minsize(1750, 1024)
         self.resizable(width=True, height=False)
         self.frames = {} 
-        for F in (StartPage, Page1,Page2, ValidationPage,SqlQueriesPage,GeneratedSchemaPage):
+        for F in (StartPage, Page1,Page2,Page3, ValidationPage,SqlQueriesPage,GeneratedSchemaPage,GeneratedQueries):
   
             frame = F(container, self)
             self.frames[F] = frame
@@ -149,7 +142,7 @@ class tkinterApp(tk.Tk):
             homeButton.place(x = 22, y = 50)
 
             self.sql = tk.PhotoImage(file=relative_to_assets("sql.png"))
-            sqlButton = ttk.Button(self, image =self.sql,style='W.TButton', command = lambda: moveToPage(self, SqlQueriesPage))
+            sqlButton = ttk.Button(self, image =self.sql,style='W.TButton', command = lambda: moveToPage(self, GeneratedQueries))
             sqlButton.place(x = 22, y = 240)
 
             self.api = tk.PhotoImage(file=relative_to_assets("api.png"))
@@ -185,11 +178,18 @@ class tkinterApp(tk.Tk):
         # thread.start()
 
         
-    def show_search_engine_page(self,global_schema):
-        frame = self.frames[SqlQueriesPage]
+    def show_search_engine_page(self,global_schema,formFields):
+        frame = self.frames[Page3]
         frame.tkraise()
         thread = threading.Thread(target=start_search_engine,args=(global_schema,))        
         thread.start()
+        with open("userInterfaceInfo.json", "w") as outfile:
+            json.dump(formFields, outfile)
+
+
+    def showSqlPage(self):
+        frame = self.frames[SqlQueriesPage]
+        frame.tkraise()
         
    
 
@@ -267,8 +267,8 @@ class Page1(tk.Frame):
         ### finish preprocessing
         # wait(self,screen_width)
 
-        self.uploadedER = tk.PhotoImage(file=relative_to_assets("./uploadedImage.png"))
-        Label(self, image=self.uploadedER).place(x = screen_width/2, y = 755,width=550,height=260, anchor="center")
+        # self.uploadedER = tk.PhotoImage(file=relative_to_assets("./uploadedImage.png"))
+        # Label(self, image=self.uploadedER).place(x = screen_width/2, y = 755,width=550,height=260, anchor="center")
         #add showframe event
     @staticmethod    
     def finish():
@@ -312,14 +312,6 @@ class Page2(tk.Frame):
         command = lambda : [getSystemDiscription(entry2)])
         button2.place(x = screen_width/2, y = 550, width = 350.0, height = 70.0, anchor = "center")
 
-        input_text3 = StringVar()
-        entry3 = ttk.Entry(self,width=90,textvariable = input_text3, justify = CENTER,font = ('courier', 18, 'bold'))
-        entry3.focus_force()
-        entry3.place(x = screen_width/2, y = 650,height=50, anchor="center")
-
-        button3 = ttk.Button(self, text ="Add System Username",style='W.TButton',
-        command = lambda : [getSystemUsername(entry3)])
-        button3.place(x = screen_width/2, y = 750, width = 350.0, height = 70.0, anchor = "center")
         Page2.frame = self
         Page2.frame_controller = controller
         Page2.width = screen_width
@@ -327,7 +319,7 @@ class Page2(tk.Frame):
     @staticmethod    
     def finish():
         button4 = ttk.Button(Page2.frame, text ="Move To Next Step ...",style='W.TButton',
-        command = lambda : [print(system_info),Page2.frame_controller.show_frame(ValidationPage),ValidationPage.loadEntitiesFrames(), enableSideButtons()])
+        command = lambda : [print(system_info),Page2.frame_controller.show_frame(ValidationPage),ValidationPage.loadEntitiesFrames()])
         button4.place(x = Page2.width/2, y = Page2.height-140, width = 350.0, height = 70.0, anchor = "center")
 
 

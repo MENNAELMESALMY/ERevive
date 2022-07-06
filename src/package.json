@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "nltk": "^0.0.1"
+    "nltk": "^0.0.1",
+    "vuex-persistedstate": "^4.1.0"
   }
 }

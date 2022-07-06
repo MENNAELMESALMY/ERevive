@@ -74,7 +74,7 @@ class get_employee_filteredby_name_groupedby_all_resource(Resource):
         try:
             results = db.session.query(Employee, func.count().label('count_all'))\
 				.filter(Employee.name == args['Employee.name'])\
-				.group_by(Employee.Login_Has_username, Employee.phone, Employee.name, Employee.email, Employee.Department_Has_name, Employee.Role_Has_name).all()
+				.group_by(Employee.Role_Has_name, Employee.Department_Has_name, Employee.name, Employee.email, Employee.Login_Has_username, Employee.phone).all()
 
             results = serialize(results)
             return results , 200
@@ -92,7 +92,7 @@ class get_employee_groupedby_all_resource(Resource):
         results = None
         try:
             results = db.session.query(Employee, func.count().label('count_all'))\
-				.group_by(Employee.Login_Has_username, Employee.phone, Employee.name, Employee.email, Employee.Department_Has_name, Employee.Role_Has_name).all()
+				.group_by(Employee.Role_Has_name, Employee.Department_Has_name, Employee.name, Employee.email, Employee.Login_Has_username, Employee.phone).all()
 
             results = serialize(results)
             return results , 200
@@ -114,7 +114,7 @@ class get_employee_groupedby_all_orderedby_name_resource(Resource):
         results = None
         try:
             results = db.session.query(Employee, func.count().label('count_all'))\
-				.group_by(Employee.Login_Has_username, Employee.phone, Employee.name, Employee.email, Employee.Department_Has_name, Employee.Role_Has_name)\
+				.group_by(Employee.Role_Has_name, Employee.Department_Has_name, Employee.name, Employee.email, Employee.Login_Has_username, Employee.phone)\
 				.order_by(name_direction(Employee.name)).all()
 
             results = serialize(results)

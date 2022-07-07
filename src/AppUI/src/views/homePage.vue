@@ -18,6 +18,7 @@
   width: 100%;
   text-align: center;
   margin-top: 50px;
+  margin-bottom: 50px;
   padding: 15px;
   padding-top: 30px;
   padding-bottom: 30px;

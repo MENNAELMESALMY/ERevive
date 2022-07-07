@@ -1,12 +1,13 @@
 <template>
   <div class="home">
-    <navBar />
+    <nav-bar />
     <div>
-      <aboutERevive />
+      <about-e-revive />
     </div>
     <div class="subTitle">What We Offer ?</div>
-    <showSteps />
-    <footerSection />
+    <show-steps />
+    <router-view />
+    <footer-section />
   </div>
 </template>
 

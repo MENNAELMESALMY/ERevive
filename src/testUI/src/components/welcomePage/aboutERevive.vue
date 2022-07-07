@@ -10,7 +10,7 @@
       entities as well as suggested top queries.
     </div>
     <div>
-      <router-link to="/mainPage">
+      <router-link to="/systemInfo">
         <button class="customBtn">
           LET'S START &nbsp;<i class="fa fa-arrow-right"></i>
         </button>

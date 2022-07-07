@@ -16,5 +16,11 @@
   }
   .customBtn:hover {
     transform: translateY(-3px);
-    background-color: $lightYellow;
+    background-color: $lightBlue;
   }
+
+@media (max-width: 768px) {
+  .customBtn {
+    width: 175px;
+  }
+}

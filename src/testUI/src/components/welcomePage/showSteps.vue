@@ -18,12 +18,12 @@
         <li data-target="#carouselExampleIndicators" data-slide-to="5"></li>
       </ol>
       <div class="carousel-inner">
-        <stepsCard
+        <steps-card
           class="carousel-item active"
           title="1. Upload Image"
           description="Upload your ER diagram image"
         />
-        <stepsCard
+        <steps-card
           class="carousel-item"
           v-for="(card, i) in cards"
           :key="i"

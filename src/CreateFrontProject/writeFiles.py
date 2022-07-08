@@ -164,14 +164,10 @@ styleRoute = 'FrontCode/src/scss/'
 #     }
 #   ]
 # }
+f = open('../systemInfo.json','r')
+systemInfoObject = json.load(f)
+f.close()
 # open file clusters.json
-systemInfoObject = {
-    "system_name": "Learning Management System",
-    "system_description": '''sum is simply dummy text of the printing and typesetting industry. Lorem
-        Ipsum has been the industry's standard dummy text ever since the 1500s,
-        when an unknown printer took a galley of type and scrambled it to make a
-        type specimen book. It has survived not only five centuries.'''
-}
 c={}
 with open('../Application/clusters.json') as f:
     c = json.load(f)
@@ -219,9 +215,9 @@ with open(viewsRoute + "home.vue", 'w') as f:
   <div id="home">
    <div class="mainContent">
       <h2>Welcome to ERevive</h2>
-      <h3>{systemInfoObject["system_name"]}</h3>
+      <h3>{systemInfoObject["name"]}</h3>
       <p>
-        {systemInfoObject["system_description"]}
+        {systemInfoObject["description"]}
       </p>
       <router-link to="/App"><button>CONTINUE</button></router-link>
     </div>
@@ -418,7 +414,7 @@ with open(componentsRoute + "sideBar.vue", 'w') as f:
 <template>
   <div class="sideBar">
     <div class="header">
-      <h4>{systemInfoObject["system_name"]}</h4>
+      <h4>{systemInfoObject["name"]}</h4>
     </div>
   ''')
   f.write('''
@@ -762,6 +758,9 @@ requirments = [
     }
 ]
 ##########################
+# f = open('../userInterfaceInfo.json','r')
+# requirments = json.load(f)
+# f.close()
 
 # create components
 for cluster_name,endpoints in c.items():
@@ -789,11 +788,13 @@ for cluster_name,endpoints in c.items():
         generate_large_cards(cluster_name,endpoint, filePath,is_single_entity,delete_endpoint,put_endpoint,post_endpoint)
  
     elif endpoint["method"] == "post":
-      createForm(requirments,cluster_name,endpoint, filePath)
+      if is_single_entity:
+        print(cluster_name)
+        createForm(requirments,cluster_name,endpoint, filePath)
 
-    elif endpoint["method"] == "put":
-      filePath = componentsRoute + "edit_" +endpoint["endpoint_name"] + ".vue"
-      createForm(requirments,cluster_name,endpoint, filePath)
+    # elif endpoint["method"] == "put":
+    #   filePath = componentsRoute + "edit_" +endpoint["endpoint_name"] + ".vue"
+    #   createForm(requirments,cluster_name,endpoint, filePath)
 
 #Index code generation
 with open('FrontCode/src/index.html', 'w') as f:

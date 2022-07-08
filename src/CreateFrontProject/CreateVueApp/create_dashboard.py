@@ -15,7 +15,7 @@ def generate_dashboard(cluster_name,endpoint,directory,
         
     if len(query_params)>0:
         dashboard_string += '\t\t<p>Filters</p>\n'
-    dashboard_string += '\t\t<form @submit.prevent="call_request" >\n'
+    dashboard_string += '\t\t<form @submit.prevent="call_request">\n'
     dashboard_string += '\t\t<div class="filters">\n'
     for param,datatype,operator,aggregate in query_params:
         param = param.replace('.','_')
@@ -52,7 +52,8 @@ def generate_dashboard(cluster_name,endpoint,directory,
     dashboard_string +='''
         <input type="submit"
         value="Call endpoint"
-        class="button">
+        class="button"
+        >
         </form>
         </div>
 

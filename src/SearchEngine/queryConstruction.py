@@ -62,7 +62,7 @@ def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage, go
                         if mappedAttributesDict.get(attr[2]) is not None:
                             attr[2] = mappedAttributesDict[attr[2]]
                             query[key].append(attr)
-                            firstAttrIsUpdated = False
+                        firstAttrIsUpdated = False
                     else:
                         firstAttrIsUpdated = False
                         query[key].append(attr)

@@ -22,7 +22,9 @@ def shapes_statistics(shapes,weak,keys,relations,total_time,datatypes):
         detected[shape][key] += 1
 
     relation = relation_statistics(relations)
+    print("finished rel")
     datatype = datatypes_statistics(datatypes,shapes)
+    print("data")
 
     #primary key
     keys = sum([1 for i in keys if i == True ])
@@ -52,7 +54,7 @@ def relation_statistics(relations):
 
         if len(cardenality) > 2:
             detected["nary relation"]+=1
-        else:
+        elif len(cardenality) == 2:
             if "1" in cardenality and ("N" in cardenality or "M" in cardenality):
                 detected["1 to N"]+=1
             elif cardenality[0] in ["N","M"] and cardenality[1] in ["N","M"]:

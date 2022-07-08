@@ -72,7 +72,7 @@ def datatypes_statistics(datatypes,shapes):
     
     total_count = 1 if total_count == 0 else total_count
     for i in detected.keys():
-        detected[i] = detected[i] / total_count
+        detected[i] = int((detected[i] / total_count) *100)
     return detected
     
 

@@ -1,6 +1,8 @@
 from turtle import shape
 import cv2
 import numpy as np
+import shutil
+import os
 from numpy.core.fromnumeric import partition
 from .removeLines import *
 
@@ -112,6 +114,9 @@ def testContour(text_img,c):
 
 def seperateShapes(contours ,cnt_img ,binary_img,count = 0):
    
+    shutil.rmtree('output/') # delete output dir if exists
+    os.makedirs('output/')
+
     text_img = 255 - 255*np.ones((cnt_img.shape[0],cnt_img.shape[1],3), np.uint8)
     cv2.imwrite('debugOutput/text_img_test.png',text_img)
     binary_img = 255 - binary_img

@@ -24,7 +24,7 @@
 <style lang="scss" scoped>
 @import "../../scss/Colors.scss";
 .stepsCard {
-  background-color: $biege;
+  background-color: $veryLightBlue;
   color: $darkBlue;
   .left {
     display: flex;

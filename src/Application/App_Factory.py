@@ -33,8 +33,8 @@ def get_clusters():
     
 # Create Models method
 # def Create_Application(schema,user="nada",password = "Ringmybells5",db="default"):
-def Create_Application(schema,user,password,db="default"):
-    print("Creating Application: ",schema)
+def Create_Application(schema,user="root",password = "admin<3Super",db="department"):
+    #print("Creating Application: ",schema)
     clusters = get_clusters()
     Create_Directory('api')
     os.chdir('api')
@@ -98,18 +98,20 @@ def create_api_namespaces(api,clusters,clusters_out):
                 continue
 
             resource_model , endpoint_object , _ = create_query_ui_endpoint(query,api.modelsObjects)  # return to frontend
+
             clusters_out[api_name].append(endpoint_object)
             parse_args , db_query = create_query_api_logic(endpoint_object,query,api.modelsObjects)  
 
             #create api logic
             if endpoint_object["endpoint_name"] == "get_players_awards_players_groupedby_playerID_orderedby_all":
-                print("WEWEWE\n")
+                #print("WEWEWE\n")
                 query.pop("origQuery")
-                print(query)
+                #print(query)
             if endpoint_object['endpoint_name'] not in errors:
                 errors.append(endpoint_object['endpoint_name'])
             else:
-                print("ENDPOINT ALREADY EXISTS\n",query,endpoint_object['endpoint_name'])   
+                pass
+                #print("ENDPOINT ALREADY EXISTS\n",query,endpoint_object['endpoint_name'])   
             #if "awards_coaches" in query["entities"] and "coaches" in query["entities"]:
             #if "awards_players" in query["entities"] and "player_allstar" in query["entities"]:
                 #print("\nquery entites: ",query["entities"],"\n")
@@ -122,9 +124,9 @@ def create_api_namespaces(api,clusters,clusters_out):
             
         #handle crud response
         # add is_entity --> true
-    print("?????????????????????????????????????????????/")
-    print(clusters_out)
-    with open("/home/nihal/Desktop/uploadgp/GP/src/cluster_out.json", "w") as json_file:
+    #print("?????????????????????????????????????????????/")
+    #print(clusters_out)
+    with open("/home/hager/college/GP/GP/src/cluster_out.json", "w") as json_file:
         json.dump(clusters_out, json_file)
     return namespaces_imports , inits ,clusters_out
 
@@ -605,10 +607,10 @@ def create_query_api_logic(endpoint_object,query,models_obj):
         "url":endpoint_url.lower(),
         }) 
 
-    if will_print:
-        print("MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM")
-        print(db_query)
-        print("MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM")
+    #if will_print:
+    #    print("MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM")
+    #    print(db_query)
+    #    print("MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM")
     #print(db_query)
     #if "results = db.session.query(awards_players.lgID, awards_players.playerID, func.count().label('count_all'))" in db_query:
     #if hereJoins and "db.session.query(teams.rank.label('teams.rank'), teams.name.label('teams.name'), teams.lgID.label('teams.lgID'))" in db_query:
@@ -642,6 +644,10 @@ def create_resource(resource_model, endpoint_object,api_file,namespace_name,pars
         except_parser =  "@{1}.expect({0}_parser)\n".format(endpoint_object["endpoint_name"].lower(),namespace_name)
         parser = endpoint_object["endpoint_name"].lower()+"_parser = reqparse.RequestParser()\n"
         for param in params:
+            # if param[1] not in ["str","int","bool"]:
+            #     print("???????????????????????????????????????????????????????/")
+            #     print(param)
+            #     print(endpoint_object)
             if param[2] in ["in","between"]:
                 parser += endpoint_object["endpoint_name"].lower()+"_parser.add_argument('"+param[0]+"', type="+param[1]+", required=True,action='append', location='args')\n"
             else:
@@ -683,6 +689,9 @@ def create_query_ui_endpoint(query,modelsObjects):
         attr_name = attr[0][0]
         attr_type = attr[0][1]
         attr_operator = attr[1]
+        if attr_type not in ["int","str","bool"]:
+            print("---------------------------------------")
+            print("where",attr)
         queryParams.append((attr_name,attr_type,attr_operator,None))
 
     for attr in query["havingAttrs"]:
@@ -692,6 +701,10 @@ def create_query_ui_endpoint(query,modelsObjects):
         attr_type = attr[1][1] if "*" not in attr[1][0] else "int"
         attr_operator = attr[2]
         attr_aggregation = attr[0]
+        
+        if attr_type not in ["int","str","bool"]:
+            print("---------------------------------------")
+            print("having",attr)
         queryParams.append((attr_name,attr_type,attr_operator,attr_aggregation))
 
     for attr in query["orderByAttrs"]:
@@ -950,4 +963,7 @@ def create_api_init(api,cluster_imports,clusters_init):
         f.write("\n\
     return rest_plus_api")
 
- 
+# with open("/home/hager/college/GP/GP/src/ImageProcessing/output/schema.json") as file:
+#     schema = json.load(file)
+
+# Create_Application(schema) 

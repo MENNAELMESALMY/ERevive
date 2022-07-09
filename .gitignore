@@ -143,3 +143,4 @@ dmypy.json
 /src/ImageProcessing/multivaluesDebug/
 /src/SearchEngine/glove_vectors.model.vectors.npy
 /src/SearchEngine/glove_vectors.model
+/src/SearchEngine/crawler/

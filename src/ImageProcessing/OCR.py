@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 import skimage.io as io
 import os
+import re
 
 #################### Detect Keys ######################################
 def keyDetection(image):
@@ -68,9 +69,8 @@ def OCR():
                 extractedText = extractedText.split('\n')[0]
 
             #remove special char from text
-            chars = [":",",","`","'"]
-            for sep in chars:
-                extractedText = extractedText.replace(sep,"")
+            extractedText = re.sub('[^a-zA-Z0-9 \n\-_]', '', extractedText)
+            extractedText = extractedText.replace(" ","_")
             textArr.append(extractedText)
             
     return textArr,isKey

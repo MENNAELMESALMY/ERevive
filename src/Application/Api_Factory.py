@@ -60,7 +60,7 @@ from utils import convert_db_model_to_restx_model , serialize \n\
             if attribute == attributes[-1]:
                 terminal_command = ''
             if attribute in primary_keys:
-                parser_create_string+= "{0}_id_parser.add_argument('{1}',type={2})\n".format(model.lower(),attribute,type)
+                parser_create_string+= "{0}_id_parser.add_argument('{1}',type={2},location = 'args')\n".format(model.lower(),attribute,type)
                 query_params.append((attribute,type))
                 put_filter_primary_keys+="{0}.{1}==request.json.get('{1}') and ".format(model,attribute)
                 delete_filter_primary_keys+="{0}.{1}=={2}_id_parser.parse_args().get('{1}') and ".format(model,attribute,model.lower())

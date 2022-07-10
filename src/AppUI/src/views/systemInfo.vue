@@ -25,7 +25,7 @@
             required
           />
           <input
-            type="text"
+            type="password"
             id="password"
             placeholder="Enter Database Password"
             required
@@ -120,7 +120,7 @@ export default {
   name: "systemInfo",
   methods: {
     submitForm() {
-      this.$store.commit("triggerSavedModal/toggleSavedModal");
+      this.$store.commit("triggerModals/toggleSavedModal");
     },
   },
 };

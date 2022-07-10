@@ -9,6 +9,8 @@
     </div>
     <div class="mainContent">
       <savedModal v-if="savedModalState" />
+      <delete-query-modal v-if="deleteQueryModalState" />
+      <add-query-modal v-if="addQueryModalState" />
       <router-view />
     </div>
   </div>
@@ -38,15 +40,21 @@
 
 <script>
 import { mapState } from "vuex";
+import AddQueryModal from "../components/addQueryModal.vue";
+import DeleteQueryModal from "../components/deleteQueryModal.vue";
 import savedModal from "../components/savedModal.vue";
 export default {
   name: "mainPage",
   components: {
     savedModal,
+    DeleteQueryModal,
+    AddQueryModal,
   },
   computed: {
     ...mapState({
-      savedModalState: (state) => state.triggerSavedModal.savedModal,
+      savedModalState: (state) => state.triggerModals.savedModal,
+      deleteQueryModalState: (state) => state.triggerModals.deleteQueryModal,
+      addQueryModalState: (state) => state.triggerModals.addQueryModal,
     }),
   },
 };

@@ -267,8 +267,8 @@ class Page1(tk.Frame):
         ### finish preprocessing
         # wait(self,screen_width)
 
-        # self.uploadedER = tk.PhotoImage(file=relative_to_assets("./uploadedImage.png"))
-        # Label(self, image=self.uploadedER).place(x = screen_width/2, y = 755,width=550,height=260, anchor="center")
+        #self.uploadedER = tk.PhotoImage(file=relative_to_assets("./uploadedImage.png"))
+        #Label(self, image=self.uploadedER).place(x = screen_width/2, y = 755,width=550,height=260, anchor="center")
         #add showframe event
     @staticmethod    
     def finish():

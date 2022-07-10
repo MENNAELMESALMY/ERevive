@@ -1,3 +1,5 @@
+from time import time
+from tracemalloc import start
 import numpy as np
 from .preprocessing import *
 from .removeLines import *
@@ -9,8 +11,10 @@ from .detect_rel_prop import *
 from .OCR import *
 from .dataTypesPrediction.scripts.dataTypePrediction import *
 from .schemaGeneration.schema_generation import *
+from .testing import *
 import cv2
 import os
+import timeit
 
 
 def changeContours(contours, img,idx):
@@ -35,7 +39,10 @@ def process_image(img_dir):
     print(img_dir)
     print("processing img:  "+img_dir)
     pre = img_dir.split('.')[0]
+    if "/" in pre: pre = pre.split("/")[-1]
     try:
+        start = timeit.default_timer()
+
         adjustPrespective,approxContour,grayImg = GetMaxContour(img_dir)
         warpedImg = grayImg
         if(adjustPrespective):
@@ -87,30 +94,61 @@ def process_image(img_dir):
         dataTypesArr = predictWordsTypes(textArr)
         #print(dataTypesDic)
         #print(textArr)
+        print(len(textArr),len(dataTypesArr),len(shapes))
         textArr, dataTypesArr = addDefaultNames(shapes, textArr, dataTypesArr)
-        #print(textArr)
+        print(len(textArr),len(dataTypesArr),len(shapes))
         #print("????????????????????//")
+
+        end = timeit.default_timer()
+        total_time = (end-start)
+        with open("../timing"+str(pre)+".txt","w+") as file:
+            file.write(f"Preprocessing and shape detection time is {str(end-start)} \n")
+
         print("######### Start Connecting EntdataTypesArrities #########")
+        start = timeit.default_timer()
         scaled_contours = scale_contours(finalContours[:],1.17)
         connectedComponents,skeleton = connectEntities(scaled_contours,finalContours,binarizedImg,shapes,textArr,weak,isKey,dataTypesArr)
+        end = timeit.default_timer()
+        total_time += (end-start)
+        with open("../timing"+str(pre)+".txt","a+") as file:
+            file.write(f"connect components time is {str(end-start)}\n")
         print("///////////////////////////////////////////")
         print(textArr,isKey)
+
         print("######### Start Participation #########")
+        start = timeit.default_timer()
         relations = get_relations(skeleton,connectedComponents)
+        end = timeit.default_timer()
+        total_time += (end-start)
+        with open("../timing"+str(pre)+".txt","a+") as file:
+            file.write(f"get relations time is {str(end-start)}\n")
+
         print("######### Start Cardinality #########")
+        start = timeit.default_timer()
         relations = cardinality(relations,skeleton,binarizedImg)
+        end = timeit.default_timer()
+        total_time += (end-start)
+        with open("../timing"+str(pre)+".txt","a+") as file:
+            file.write(f"Cardinality time is {str(end-start)}\n")
         print("///////////////////////////////////////////")
         #connectEntities(finalContours,binarizedImg,shapes)
+        start = timeit.default_timer()
         connectedComponents = removeContours(connectedComponents)
         relations = removeContoursRelations(relations)
         connectedComponents, shapes_no = addDefaultKey(connectedComponents, shapes_no)
-
-        print(connectedComponents,relations)
-        print("///////////////////////////////////////////")
+        #print(connectedComponents,relations)
+        #print("///////////////////////////////////////////")
         #print(relations)
 
         schema = generateSchema(connectedComponents,relations,shapes_no)
+        end = timeit.default_timer()
+        total_time += (end-start)
+        with open("../timing"+str(pre)+".txt","a+") as file:
+            file.write(f"generating schema time is {str(end-start)}\n")
 
+        with open("../detection_statistics_"+str(pre)+".json","w+") as file:
+            json.dump(shapes_statistics(shapes,weak,isKey,relations,total_time,dataTypesArr),file)
+            
         print("///////////////////////////////////////////")
         #print(relations)
 

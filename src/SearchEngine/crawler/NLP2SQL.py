@@ -6,9 +6,10 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
 import timeit
-file = open('queries.txt', 'a')
 
-def getSQL(questions):
+
+def getSQL(questions,file_name = "queries.txt"):
+    file = open(file_name, 'a+')
     #right queries
     dumpEvery = 10
     chat_input = driver.find_elements(by=By.CLASS_NAME,value='chat-message')[0]
@@ -29,6 +30,7 @@ def getSQL(questions):
                 sqlQuery += q
             print("dumbing questions",dumpEvery)
             file.write(sqlQuery)
+    file.close()
 
 
 questions = [
@@ -58,11 +60,10 @@ databases = driver.find_elements(by=By.CLASS_NAME,value='db-name')
 databases[0].click()
 
 start = timeit.default_timer()
-getSQL(questions)
+getSQL(questions,"LC_queries.txt")
 stop = timeit.default_timer()
 print("time",stop-start)
 
 # for db in databases:
 #     print("db",db.get_attribute('innerHTML'))
 
-file.close()

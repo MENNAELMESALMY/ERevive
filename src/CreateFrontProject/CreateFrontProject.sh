@@ -1,6 +1,13 @@
 echo $PWD
-rm -rf CreateFrontProject/FrontCode
-mkdir CreateFrontProject/FrontCode
+
+if [ ! -d "CreateFrontProject/FrontCode" ]; then
+    mkdir CreateFrontProject/FrontCode
+fi
+
+find CreateFrontProject/FrontCode -mindepth 1 ! -regex '^CreateFrontProject/FrontCode/node_modules\(/.*\)?' -delete
+
+
+
 cd ./CreateFrontProject/FrontCode
 touch .babelrc.js
 touch webpack.config.js

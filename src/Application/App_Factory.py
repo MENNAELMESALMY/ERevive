@@ -1,3 +1,4 @@
+from click import command
 from .Api_Factory import ApiFactory
 import json
 import os
@@ -6,10 +7,13 @@ from .generateModel import createAllModels
 def Create_Directory(directory):
     path = os.path.join(os.getcwd(), directory) 
     os.umask(0)
-    try:
-        os.mkdir(path)
-    except Exception as e:
-        pass
+    if os.path.exists(path):
+        command = "find "+path + " -mindepth 1 ! -regex '^"+path+"/venv"+"\(/.*\)?' -delete"
+        os.system(command)
+    else:
+        os.makedirs(path,mode=0o777)
+
+
 
 
 # TODO
@@ -32,8 +36,8 @@ def get_clusters():
     return clusters
     
 # Create Models method
-# def Create_Application(schema,user="nada",password = "Ringmybells5",db="default"):
-def Create_Application(schema,user="root",password = "admin<3Super",db="department"):
+def Create_Application(schema,user="nada",password = "Ringmybells5",db="default"):
+#def Create_Application(schema,user="root",password = "admin<3Super",db="department"):
     #print("Creating Application: ",schema)
     clusters = get_clusters()
     Create_Directory('api')
@@ -126,8 +130,8 @@ def create_api_namespaces(api,clusters,clusters_out):
         # add is_entity --> true
     #print("?????????????????????????????????????????????/")
     #print(clusters_out)
-    with open("/home/hager/college/GP/GP/src/cluster_out.json", "w") as json_file:
-        json.dump(clusters_out, json_file)
+    #with open("/home/hager/college/GP/GP/src/cluster_out.json", "w") as json_file:
+    #    json.dump(clusters_out, json_file)
     return namespaces_imports , inits ,clusters_out
 
 

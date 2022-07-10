@@ -124,6 +124,9 @@ export default {
         image.setAttribute("src", URL.createObjectURL(inputFieldBtn.files[0]));
         image.style.display = "block";
       };
+      this.$store.dispatch("systemInput/postImage", {
+        image: inputFieldBtn.files[0],
+      });
     },
   },
 };

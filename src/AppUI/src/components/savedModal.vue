@@ -44,7 +44,7 @@ export default {
   name: "savedModal",
   methods: {
     closeModal() {
-      this.$store.commit("triggerSavedModal/toggleSavedModal");
+      this.$store.commit("triggerModals/toggleSavedModal");
     },
   },
 };

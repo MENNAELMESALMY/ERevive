@@ -6,6 +6,8 @@ import uploadPage from "../views/uploadPage.vue";
 import systemInfo from "../views/systemInfo.vue";
 import ipOutput from "../views/ipOutput.vue";
 import loadingPage from "../views/loadingPage.vue";
+import predictedQueriesPage from "../views/predictedQueriesPage.vue";
+import clustersPage from "../views/clustersPage.vue";
 
 Vue.use(VueRouter);
 
@@ -43,6 +45,18 @@ const routes = [
         path: "/loadingPage",
         name: "loadingPage",
         component: loadingPage,
+        children: [],
+      },
+      {
+        path: "/predictedQueriesPage",
+        name: "predictedQueriesPage",
+        component: predictedQueriesPage,
+        children: [],
+      },
+      {
+        path: "/clustersPage",
+        name: "clustersPage",
+        component: clustersPage,
         children: [],
       },
     ],

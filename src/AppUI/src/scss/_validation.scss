@@ -1,0 +1,129 @@
+.entity_card{
+    margin: 40px auto;
+    padding: 20px;
+    width: 95%;
+    border-radius: 25px;
+}
+.entity_card:nth-child(3n-1){background-color: rgba(225, 141, 149, 0.2);}
+.entity_card:nth-child(3n+0){background-color: rgba(56, 144, 143, 0.2);}
+.entity_card:nth-child(3n+1){background-color: rgba(176, 150, 56, 0.2);}
+
+.entity_form{
+    display: flex;
+    flex-direction: column;
+    
+    span{
+        margin: 10px;
+    }
+
+    input[type=text],input[type=number],input[type=date],select {
+        width: 100%;
+        padding: 12px 20px;
+        margin: 8px auto;
+        box-sizing: border-box;
+        border: 3px solid #ccc;
+        -webkit-transition: 0.5s;
+        transition: 0.5s;
+        outline: none;
+      }
+
+    button{
+        margin: 10px auto;
+        height: 54px;
+        width: 100%;
+        background-color:white;
+        border: #b09638;
+        border-radius: 5px;
+        transition-duration: 0.4s;
+        cursor: pointer;
+    }
+    button:hover {
+        background-color: #b09638;
+        color: white;
+      }
+}
+
+.attributes_wrapper,.fks_wrapper{
+    display: flex;
+    flex-wrap: wrap;
+}
+.attribute_card,.fk_card{
+    margin: 20px;
+    background-color: white;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+
+}
+.close_wrapper{
+    display: flex;
+    justify-content: flex-end;
+    #close{
+        color: #000;
+        font-size: 20px;
+    }
+}
+
+html{
+    scroll-behavior: smooth;
+}
+.entities_names_wrapper{
+    width: 100%;
+}
+.entities_names{
+    margin: auto;
+    width: 60%;
+    display: flex;
+    justify-content: space-evenly;
+    flex-wrap: wrap;
+    a{
+        text-decoration: none;
+        color: white;
+        padding: 10px;
+        margin: 3px;
+        border-radius: 25px;
+        cursor: pointer;
+    }
+        a:nth-child(3n-1){background-color: #b09638;}
+        a:nth-child(3n+0){background-color: #e18d96;}
+        a:nth-child(3n+1){background-color: #38908f;}
+}
+
+.button_wrapper{
+    display: flex;
+    justify-content: space-evenly;
+    flex-wrap: wrap;
+    width: 100%;
+    button{
+        margin: 10px auto 50px auto;
+        height: 54px;
+        width: 200px;
+        background-color:white;
+        border: 2px solid #b09638;
+        border-radius: 5px;
+        transition-duration: 0.4s;
+        cursor: pointer;
+    }
+    button:hover {
+        background-color: #b09638;
+        color: white;
+      }
+}
+.error_wrapper{
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    width: 50%;
+    border: 2px solid red;
+    border-radius: 25px;
+    margin: auto;
+    p{
+        margin: 10px auto;
+        color: red;
+    }
+}
+@media only screen and (max-width: 900px) {
+    .error_wrapper{
+        width: 95%;
+    }
+  }

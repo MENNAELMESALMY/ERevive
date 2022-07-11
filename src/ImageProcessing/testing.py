@@ -43,7 +43,10 @@ def relation_statistics(relations):
                 "fullParticipation":0,
                 "partialParticipation":0}
     
+    cardenality_count = 0
+    partici_count = 0
     for r in relations.values():
+       
         cardenality = []
         for e in r["entities"]:
             if e["participation"] == "partial":
@@ -51,7 +54,9 @@ def relation_statistics(relations):
             else:
                 detected["fullParticipation"]+=1
             cardenality.append(e["cardinality"].upper())
+            partici_count += 1
 
+        cardenality_count += 1
         if len(cardenality) > 2:
             detected["naryRelation"]+=1
         elif len(cardenality) == 2:
@@ -61,7 +66,20 @@ def relation_statistics(relations):
                 detected["manyToMany"]+=1
             else:
                 detected["oneToOne"]+=1
-        
+
+
+    if partici_count == 0: partici_count = 1
+
+    detected["partialParticipation"] = int((detected["partialParticipation"] /  partici_count) * 100)
+    detected["fullParticipation"] = int((detected["fullParticipation"] /  partici_count) * 100)
+
+    if cardenality_count == 0:cardenality_count=1
+
+    detected["oneToOne"] = int((detected["oneToOne"]/cardenality_count)*100)
+    detected["oneToMany"] = int((detected["oneToMany"]/cardenality_count)*100)
+    detected["manyToMany"] = int((detected["manyToMany"]/cardenality_count)*100)
+    detected["naryRelation"] = int((detected["naryRelation"]/cardenality_count)*100)
+
     return detected
 
 def datatypes_statistics(datatypes,shapes):

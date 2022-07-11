@@ -28,6 +28,7 @@ const state = {
   numManyToMany: 0,
   totalTime: 0,
   initialSchema: {},
+  loadingTitle: "Image Processing is Running ....",
 };
 
 const mutations = {
@@ -40,6 +41,9 @@ const mutations = {
   },
   setErImage(state, image) {
     state.erImage = image;
+  },
+  setLoadingTitle(state, title) {
+    state.loadingTitle = title;
   },
   setIpOutputData(state, ipOutputData) {
     state.initialSchema = ipOutputData[0];

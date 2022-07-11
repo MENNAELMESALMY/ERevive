@@ -348,6 +348,11 @@ export default {
           formData: this.formData,
         };
         this.$store.dispatch("validation/sendSchema", payload);
+        this.$store.commit(
+          "systemInput/setLoadingTitle",
+          "Suggesting Queries ..."
+        );
+        this.$router.push("/loadingPage");
       } else {
         console.log("validation failed");
       }

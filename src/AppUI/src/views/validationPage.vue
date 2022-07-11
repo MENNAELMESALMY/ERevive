@@ -80,8 +80,10 @@
                 {{ dataType }}
               </option>
             </select>
-
-            <select v-model="attr[3]">
+            <select
+              v-model="attr[3]"
+              @change="componentKey = (componentKey + 1) % 2"
+            >
               <option
                 v-for="fieldType in fieldTypes"
                 :value="fieldType"
@@ -187,7 +189,7 @@
       </form>
     </div>
     <div class="error_wrapper" v-if="errors.length > 0">
-      <p v-for="e in errors" :value="e" :key="e" class="error">
+      <p v-for="(e, idx) in errors" :value="e" :key="idx" class="error">
         {{ e }}
       </p>
     </div>
@@ -300,6 +302,7 @@ export default {
           this.formData[TableName].push({
             field_name: attrName,
             field_type: fieldType,
+            data_type: attrDataType,
             isRequired: true,
             maxRange: parseInt(maxNum),
             minRange: parseInt(minNum),
@@ -335,7 +338,7 @@ export default {
           });
         }
       }
-      console.log("finalSchema", this.finalSchema);
+      // console.log("finalSchema", this.finalSchema);
       let isValid = this.check_validation();
       if (isValid) {
         // send request to server
@@ -387,9 +390,7 @@ export default {
             this.delete_fk(key, fk);
         }
       }
-      // console.log(this.globalSchema[entityIdx]["attributes"][attributeIdx]);
       delete this.globalSchema[entityIdx]["attributes"][attributeIdx];
-      // console.log(this.globalSchema[entityIdx]["attributes"].length);
       this.componentKey = (this.componentKey + 1) % 2;
     },
     add_fk(entityIdx) {
@@ -437,7 +438,7 @@ export default {
           ) {
             this.errors.push(
               "Attribute " +
-                ForignKeyTableAttributeName +
+                attributeName +
                 " in Table " +
                 TableName +
                 " has datatype mismatch "
@@ -445,6 +446,79 @@ export default {
           }
         }
       }
+      for (let key in this.formData) {
+        for (let attrIdx in this.formData[key]) {
+          // check if data type is compatible with the attribute type
+          let attrName = this.formData[key][attrIdx]["field_name"];
+          let attrType = this.formData[key][attrIdx]["field_type"];
+          let dataType = this.formData[key][attrIdx]["data_type"];
+          let maxRange = this.formData[key][attrIdx]["maxRange"];
+          let minRange = this.formData[key][attrIdx]["minRange"];
+          let options = this.formData[key][attrIdx]["options"];
+          if (attrType == "number")
+            if (dataType != "int" && dataType != "float") {
+              this.errors.push(
+                "Attribute1 " +
+                  attrName +
+                  " " +
+                  attrType +
+                  " " +
+                  dataType +
+                  " " +
+                  " in Table " +
+                  key +
+                  " has datatype mismatch with formData type"
+              );
+            }
+
+          if (dataType == "int" || dataType == "float")
+            if (attrType != "number") {
+              this.errors.push(
+                "Attribute " +
+                  attrName +
+                  " " +
+                  attrType +
+                  " " +
+                  dataType +
+                  " " +
+                  " in Table " +
+                  key +
+                  " has datatype mismatch with formData type"
+              );
+            }
+
+          if (
+            (attrType == "date" && dataType != "datetime") ||
+            (dataType == "datetime" && attrType != "date")
+          ) {
+            this.errors.push(
+              "Attribute " +
+                attrName +
+                " " +
+                attrType +
+                " " +
+                dataType +
+                " in Table " +
+                key +
+                " has datatype mismatch with formData type"
+            );
+          }
+
+          if (attrType == "number" && minRange >= maxRange)
+            this.errors.push(
+              "Attribute " +
+                attrName +
+                " in table " +
+                key +
+                " has invalid range"
+            );
+          if (this.requireOptions.includes(attrType) && options.length <= 1)
+            this.errors.push(
+              "Attribute " + attrName + " in table " + key + " has no options"
+            );
+        }
+      }
+      // check dataType validation
       return this.errors.length == 0;
     },
   },

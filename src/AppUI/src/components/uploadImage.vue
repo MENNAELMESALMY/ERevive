@@ -14,9 +14,9 @@
     <div class="controlBtns">
       <input id="default-btn" type="file" hidden />
       <button class="customBtn" @click="uploadImageFile()">Upload Image</button>
-      <router-link to="/">
-        <button class="customBtn">Proceed</button>
-      </router-link>
+      <button class="customBtn" id="proceedBtn" @click="callImageProcessing">
+        Proceed
+      </button>
     </div>
   </div>
 </template>
@@ -97,12 +97,19 @@
 </style>
 
 <script>
+import { mapState } from "vuex";
 export default {
   name: "uploadImage",
   data() {
     return {
       imageFile: null,
+      imageUploaded: false,
     };
+  },
+  computed: {
+    ...mapState({
+      ipOutPutReturned: (state) => state.systemInput.ipOutPutReturned,
+    }),
   },
   methods: {
     // onFileChange: function (event) {
@@ -124,9 +131,24 @@ export default {
         image.setAttribute("src", URL.createObjectURL(inputFieldBtn.files[0]));
         image.style.display = "block";
       };
-      this.$store.dispatch("systemInput/postImage", {
-        image: inputFieldBtn.files[0],
-      });
+      this.imageFile = inputFieldBtn.files[0];
+      this.imageUploaded = true;
+    },
+    callImageProcessing() {
+      if (this.imageUploaded) {
+        this.$router.push("/loadingPage");
+        this.$store.dispatch("systemInput/postImage", {
+          image: this.imageFile,
+        });
+        // this.interval = setInterval(() => {
+        //   this.$store.dispatch("systemInput/getIpOutput");
+        //   if (this.ipOutPutReturned) {
+        //     clearInterval(this.interval);
+        //   }
+        // }, 10);
+      } else {
+        alert("Please upload an image first!");
+      }
     },
   },
 };

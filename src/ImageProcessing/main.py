@@ -145,10 +145,10 @@ def process_image(img_dir):
         total_time += (end-start)
         with open("../timing"+str(pre)+".txt","a+") as file:
             file.write(f"generating schema time is {str(end-start)}\n")
-
-        with open("../detection_statistics_"+str(pre)+".json","w+") as file:
-            json.dump(shapes_statistics(shapes,weak,isKey,relations,total_time,dataTypesArr),file)
             
+
+        detected_shapes = shapes_statistics(shapes,weak,isKey,relations,total_time,dataTypesArr)
+        print(detected_shapes)
         print("///////////////////////////////////////////")
         #print(relations)
 
@@ -161,7 +161,8 @@ def process_image(img_dir):
              json.dump(relations, json_file)
         #return to the current directory
         os.chdir('./..')
-        return schema
+        return schema,detected_shapes
+
     except Exception as e:
         # with open("schema"+pre+".json", "w") as json_file:
         #     json.dump({"error":str(e)}, json_file)

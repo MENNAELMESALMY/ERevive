@@ -22,43 +22,45 @@ def shapes_statistics(shapes,weak,keys,relations,total_time,datatypes):
         detected[shape][key] += 1
 
     relation = relation_statistics(relations)
+    print("finished rel")
     datatype = datatypes_statistics(datatypes,shapes)
+    print("data")
 
     #primary key
     keys = sum([1 for i in keys if i == True ])
-    return {"detected shapes":detected ,
-            "detected keys":keys ,
-            "detected relations":relation ,
+    return {"detectedShapes":detected ,
+            "detectedKeys":keys ,
+            "detectedRelations":relation ,
             "dataTypes":datatype , 
-            "total time":total_time}
+            "totalTime":"{:.2f}".format(total_time)}
 
 
 def relation_statistics(relations):
-    detected = {"1 to 1":0,
-                "1 to N":0,
-                "N to M":0,
-                "nary relation":0,
-                "full participation":0,
-                "partial participation":0}
+    detected = {"oneToOne":0,
+                "oneToMany":0,
+                "manyToMany":0,
+                "naryRelation":0,
+                "fullParticipation":0,
+                "partialParticipation":0}
     
     for r in relations.values():
         cardenality = []
         for e in r["entities"]:
             if e["participation"] == "partial":
-                detected["partial participation"]+=1
+                detected["partialParticipation"]+=1
             else:
-                detected["full participation"]+=1
+                detected["fullParticipation"]+=1
             cardenality.append(e["cardinality"].upper())
 
         if len(cardenality) > 2:
-            detected["nary relation"]+=1
-        else:
+            detected["naryRelation"]+=1
+        elif len(cardenality) == 2:
             if "1" in cardenality and ("N" in cardenality or "M" in cardenality):
-                detected["1 to N"]+=1
+                detected["oneToMany"]+=1
             elif cardenality[0] in ["N","M"] and cardenality[1] in ["N","M"]:
-                detected["N to M"]+=1
+                detected["manyToMany"]+=1
             else:
-                detected["1 to 1"]+=1
+                detected["oneToOne"]+=1
         
     return detected
 

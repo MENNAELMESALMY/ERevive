@@ -6,6 +6,7 @@ import uploadPage from "../views/uploadPage.vue";
 import systemInfo from "../views/systemInfo.vue";
 import ipOutput from "../views/ipOutput.vue";
 import loadingPage from "../views/loadingPage.vue";
+import validationPage from "../views/validationPage.vue";
 import predictedQueriesPage from "../views/predictedQueriesPage.vue";
 import clustersPage from "../views/clustersPage.vue";
 
@@ -46,6 +47,11 @@ const routes = [
         name: "loadingPage",
         component: loadingPage,
         children: [],
+      },
+      {
+        path: "/validationPage",
+        name: "validationPage",
+        component: validationPage,
       },
       {
         path: "/predictedQueriesPage",

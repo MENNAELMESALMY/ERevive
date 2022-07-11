@@ -6,11 +6,16 @@
       :key="i"
       :clusterName="cluster"
     />
+    <div class="controlBtns">
+      <button class="customBtn" @click="startApplication">Proceed</button>
+    </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
 @import "../scss/Colors.scss";
+@import "../scss/Button.scss";
+
 .clustersPage {
   display: flex;
   flex-direction: column;
@@ -27,6 +32,14 @@
   text-align: center;
   color: $darkBlue;
 }
+.controlBtns {
+  width: 100%;
+  text-align: center;
+  .customBtn {
+    width: 60%;
+    margin: 12px;
+  }
+}
 </style>
 
 <script>
@@ -41,6 +54,16 @@ export default {
     ...mapState({
       clusters: (state) => state.predictedQueries.clusters,
     }),
+  },
+  methods: {
+    startApplication() {
+      this.$store.dispatch("predictedQueries/postStartApplication");
+      this.$store.commit(
+        "systemInput/setLoadingTitle",
+        "Creating Application ..."
+      );
+      this.$router.push("/loadingPage");
+    },
   },
 };
 </script>

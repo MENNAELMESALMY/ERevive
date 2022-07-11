@@ -2,11 +2,6 @@ import axios from "axios";
 import router from "../../router/index";
 
 const state = {
-  systemName: "",
-  systemDescription: "",
-  dataBaseName: "",
-  dataBaseUserName: "",
-  dataBasePassword: "",
   ipOutPutReturned: false,
   numEntities: 0,
   numRelations: 0,
@@ -28,18 +23,15 @@ const state = {
   numManyToMany: 0,
   totalTime: 0,
   initialSchema: {},
+  loadingTitle: "Image Processing is Running ....",
 };
 
 const mutations = {
-  setSystemInfo(state, systemObject) {
-    state.systemName = systemObject.systemName;
-    state.systemDescription = systemObject.systemDescription;
-    state.dataBaseName = systemObject.dataBaseName;
-    state.dataBaseUserName = systemObject.dataBaseUserName;
-    state.dataBasePassword = systemObject.dataBasePassword;
-  },
   setErImage(state, image) {
     state.erImage = image;
+  },
+  setLoadingTitle(state, title) {
+    state.loadingTitle = title;
   },
   setIpOutputData(state, ipOutputData) {
     state.initialSchema = ipOutputData[0];

@@ -19,7 +19,13 @@
       <button class="customBtn" @click="toggleAddQueryModal">
         Add New Query
       </button>
-      <button class="customBtn" v-if="queries.length > 0">Proceed</button>
+      <button
+        class="customBtn"
+        v-if="queries.length > 0"
+        @click="startApplication"
+      >
+        Proceed
+      </button>
     </div>
   </div>
 </template>
@@ -105,6 +111,14 @@ export default {
   methods: {
     toggleAddQueryModal() {
       this.$store.commit("triggerModals/toggleAddQueryModal");
+    },
+    startApplication() {
+      this.$store.dispatch("predictedQueries/postStartApplication");
+      this.$store.commit(
+        "systemInput/setLoadingTitle",
+        "Creating Application ..."
+      );
+      this.$router.push("/loadingPage");
     },
   },
 };

@@ -136,7 +136,6 @@ src/SearchEngine/nGrams/entities.pickle
 src/SearchEngine/nGrams/ngrams.pickle
 src/SearchEngine/nGrams/unigram.pickle
 src/Application/api/
-src/ImageProcessing/output/
 src/ImageProcessing/debugOutput/
 src/CreateFrontProject/FrontCode/
 src/ImageProcessing/connectEntitiesOutput/

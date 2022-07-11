@@ -204,6 +204,8 @@
 </style>
 
 <script>
+import { mapState } from "vuex";
+
 export default {
   name: "validationPage",
   data: function () {
@@ -226,151 +228,6 @@ export default {
         "textarea",
       ],
       requireOptions: ["checkbox", "list", "radiobutton"],
-      // receivedSchema: {
-      //   11: {
-      //     TableName: "DEPARTMENT",
-      //     TableType: "",
-      //     attributes: {
-      //       name: "str",
-      //       start_date: "datetime",
-      //       EMPLOYEE_Manages: "str",
-      //     },
-      //     primaryKey: ["name"],
-      //     ForgeinKey: [
-      //       {
-      //         attributeName: "EMPLOYEE_Manages",
-      //         ForignKeyTable: "EMPLOYEE",
-      //         ForignKeyTableAttributeName: "ssn",
-      //         patricipaction: "partial",
-      //         dataType: "str",
-      //       },
-      //     ],
-      //     isWeak: false,
-      //   },
-      //   34: {
-      //     TableName: "DEPARTMENT_Clocation",
-      //     TableType: "",
-      //     attributes: { Clocation: "str", DEPARTMENT_name: "str" },
-      //     primaryKey: ["Clocation", "DEPARTMENT_name"],
-      //     ForgeinKey: [
-      //       {
-      //         attributeName: "DEPARTMENT_name",
-      //         ForignKeyTable: "DEPARTMENT",
-      //         ForignKeyTableAttributeName: "name",
-      //         patricipaction: "full",
-      //         dataType: "str",
-      //       },
-      //     ],
-      //     isWeak: false,
-      //   },
-      //   12: {
-      //     TableName: "EMPLOYEE",
-      //     TableType: "",
-      //     attributes: {
-      //       last_name: "str",
-      //       middle_initis: "str",
-      //       first_name: "str",
-      //       address: "str",
-      //       salary: "float",
-      //       sex: "str",
-      //       status: "str",
-      //       birth_dat: "str",
-      //       ssn: "str",
-      //       start_date: "datetime",
-      //       DEPARTMENT_Employed_name: "str",
-      //       EMPLOYEE_Supervision_: "str",
-      //     },
-      //     primaryKey: ["ssn"],
-      //     ForgeinKey: [
-      //       {
-      //         attributeName: "DEPARTMENT_Employed_name",
-      //         ForignKeyTable: "DEPARTMENT",
-      //         ForignKeyTableAttributeName: "name",
-      //         patricipaction: "full",
-      //         dataType: "str",
-      //       },
-      //       {
-      //         attributeName: "EMPLOYEE_Supervision_",
-      //         ForignKeyTable: "EMPLOYEE",
-      //         ForignKeyTableAttributeName: "ssn",
-      //         patricipaction: "partial",
-      //         dataType: "str",
-      //       },
-      //     ],
-      //     isWeak: false,
-      //   },
-      //   24: {
-      //     TableName: "PROJECT",
-      //     TableType: "",
-      //     attributes: {
-      //       location: "str",
-      //       name: "str",
-      //       budget: "float",
-      //       DEPARTMENT_Assigned_name: "str",
-      //     },
-      //     primaryKey: ["name"],
-      //     ForgeinKey: [
-      //       {
-      //         attributeName: "DEPARTMENT_Assigned_name",
-      //         ForignKeyTable: "DEPARTMENT",
-      //         ForignKeyTableAttributeName: "name",
-      //         patricipaction: "partial",
-      //         dataType: "str",
-      //       },
-      //     ],
-      //     isWeak: false,
-      //   },
-      //   25: {
-      //     TableName: "DEPENDENT",
-      //     TableType: "",
-      //     attributes: {
-      //       sex: "str",
-      //       relatlonship: "str",
-      //       name: "str",
-      //       birth_date: "datetime",
-      //       Dependents_EMPLOYEE_: "str",
-      //     },
-      //     primaryKey: ["Dependents_EMPLOYEE_"],
-      //     ForgeinKey: [
-      //       {
-      //         attributeName: "Dependents_EMPLOYEE_",
-      //         ForignKeyTable: "EMPLOYEE",
-      //         ForignKeyTableAttributeName: "ssn",
-      //         patricipaction: "partial",
-      //         dataType: "str",
-      //       },
-      //     ],
-      //     isWeak: true,
-      //   },
-      //   35: {
-      //     TableName: "Works_EMPLOYEE_PROJECT",
-      //     TableType: "mTm",
-      //     attributes: {
-      //       start_date: "datetime",
-      //       hours: "int",
-      //       EMPLOYEE_: "str",
-      //       PROJECT_: "str",
-      //     },
-      //     primaryKey: ["EMPLOYEE_", "PROJECT_"],
-      //     ForgeinKey: [
-      //       {
-      //         attributeName: "EMPLOYEE_",
-      //         ForignKeyTable: "EMPLOYEE",
-      //         ForignKeyTableAttributeName: "ssn",
-      //         patricipaction: "full",
-      //         dataType: "str",
-      //       },
-      //       {
-      //         attributeName: "PROJECT_",
-      //         ForignKeyTable: "PROJECT",
-      //         ForignKeyTableAttributeName: "name",
-      //         patricipaction: "full",
-      //         dataType: "str",
-      //       },
-      //     ],
-      //     isWeak: false,
-      //   },
-      // },
       globalSchema: {},
       finalSchema: {},
       formData: {},
@@ -634,19 +491,11 @@ export default {
         attrIndex += 1;
       }
       for (let fk in ForgeinKey) {
-        console.log("fk", fk);
+        // console.log("fk", fk);
         let attributeName = ForgeinKey[fk]["attributeName"];
         let ForignKeyTable = ForgeinKey[fk]["ForignKeyTable"];
         let ForignKeyTableAttributeName =
           ForgeinKey[fk]["ForignKeyTableAttributeName"];
-        console.log(
-          "attributeName",
-          attributeName,
-          "ForignKeyTable",
-          ForignKeyTable,
-          "ForignKeyTableAttributeName",
-          ForignKeyTableAttributeName
-        );
         let ForignKeyTableIdx = invertedNamesList[ForignKeyTable]["idx"];
         let ForignKeyTableAttributeIdx =
           invertedNamesList[ForignKeyTable]["attributes"][
@@ -654,20 +503,6 @@ export default {
           ];
         let attributeIdx =
           invertedNamesList[TableName]["attributes"][attributeName];
-        console.log(
-          "attributeName",
-          attributeName,
-          "ForignKeyTable",
-          ForignKeyTable,
-          "ForignKeyTableAttributeName",
-          ForignKeyTableAttributeName,
-          "attributeIdx",
-          attributeIdx,
-          "ForignKeyTableAttributeIdx",
-          ForignKeyTableAttributeIdx,
-          "ForignKeyTableIdx",
-          ForignKeyTableIdx
-        );
         this.globalSchema[TableIdx]["ForgeinKey"].push({
           attributeName: attributeName,
           ForignKeyTable: ForignKeyTable,
@@ -679,12 +514,12 @@ export default {
         });
       }
     }
+    this.componentKey = (this.componentKey + 1) % 2;
   },
   computed: {
     ...mapState({
-      receivedSchema: (state) => state.validation.schema
+      receivedSchema: (state) => state.validation.schema,
     }),
   },
-
 };
 </script>

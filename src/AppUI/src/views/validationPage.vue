@@ -347,7 +347,10 @@ export default {
           finalSchema: this.finalSchema,
           formData: this.formData,
         };
-        this.$store.dispatch("validation/sendSchema", payload);
+        this.$store.dispatch(
+          "predictedQueries/postSearchEngineQueries",
+          payload
+        );
         this.$store.commit(
           "systemInput/setLoadingTitle",
           "Suggesting Queries ..."

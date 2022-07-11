@@ -8,6 +8,13 @@ const state = {
   clusters: [],
   currentClusterName: "",
   queries: [],
+  formData: {},
+  appFinished: false,
+  systemName: "",
+  systemDescription: "",
+  databaseName: "",
+  databaseUsername: "",
+  databasePassword: "",
 };
 
 const mutations = {
@@ -49,16 +56,51 @@ const mutations = {
     state.clusters = Object.keys(clusters);
     state.predictedClusters = clusters;
   },
+  setAppFinished(state, finished) {
+    state.appFinished = finished;
+  },
+  setSystemInfo(state, systemObject) {
+    state.systemName = systemObject.systemName;
+    state.systemDescription = systemObject.systemDescription;
+    state.databaseName = systemObject.databaseName;
+    state.databaseUsername = systemObject.databaseUsername;
+    state.datbasePassword = systemObject.databasePassword;
+  },
 };
 
 const actions = {
-  getSearchEngineQueries({ commit }) {
+  postSearchEngineQueries({ commit, state }, payload) {
+    let schema = {
+      schema: payload.finalSchema,
+    };
+    state.formData = payload.formData;
     axios
-      .get("/seoutput")
+      .post("/searchengine", schema)
       .then((response) => {
-        console.log("seoutput", response.data);
+        console.log("search Engine Output", response.data);
         commit("setSearchEngineQueries", response.data);
         router.push("/clustersPage");
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  },
+  postStartApplication({ commit, state }) {
+    let systemData = {
+      forms: state.formData,
+      systemData: {
+        systemName: state.systemName,
+        systemDescription: state.systemDescription,
+        databaseName: state.databaseName,
+        databaseUsername: state.databaseUsername,
+        databasePassword: state.databasePassword,
+      },
+    };
+    axios
+      .post("/application", systemData)
+      .then(() => {
+        commit("setAppFinished", true);
+        router.push("/lastPage");
       })
       .catch((error) => {
         console.log(error);

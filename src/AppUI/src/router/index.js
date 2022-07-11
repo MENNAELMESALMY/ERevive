@@ -9,6 +9,7 @@ import loadingPage from "../views/loadingPage.vue";
 import validationPage from "../views/validationPage.vue";
 import predictedQueriesPage from "../views/predictedQueriesPage.vue";
 import clustersPage from "../views/clustersPage.vue";
+import lastPage from "../views/lastPage.vue";
 
 Vue.use(VueRouter);
 
@@ -63,6 +64,12 @@ const routes = [
         path: "/clustersPage",
         name: "clustersPage",
         component: clustersPage,
+        children: [],
+      },
+      {
+        path: "/lastPage",
+        name: "lastPage",
+        component: lastPage,
         children: [],
       },
     ],

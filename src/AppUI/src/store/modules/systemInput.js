@@ -2,11 +2,6 @@ import axios from "axios";
 import router from "../../router/index";
 
 const state = {
-  systemName: "",
-  systemDescription: "",
-  dataBaseName: "",
-  dataBaseUserName: "",
-  dataBasePassword: "",
   ipOutPutReturned: false,
   numEntities: 0,
   numRelations: 0,
@@ -32,13 +27,6 @@ const state = {
 };
 
 const mutations = {
-  setSystemInfo(state, systemObject) {
-    state.systemName = systemObject.systemName;
-    state.systemDescription = systemObject.systemDescription;
-    state.dataBaseName = systemObject.dataBaseName;
-    state.dataBaseUserName = systemObject.dataBaseUserName;
-    state.dataBasePassword = systemObject.dataBasePassword;
-  },
   setErImage(state, image) {
     state.erImage = image;
   },

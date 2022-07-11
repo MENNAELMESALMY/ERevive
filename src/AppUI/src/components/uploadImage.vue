@@ -14,7 +14,7 @@
     <div class="controlBtns">
       <input id="default-btn" type="file" hidden />
       <button class="customBtn" @click="uploadImageFile()">Upload Image</button>
-        <button class="customBtn" @click="processImage()">Proceed</button>
+      <button class="customBtn" @click="processImage()">Proceed</button>
     </div>
   </div>
 </template>
@@ -136,33 +136,28 @@ export default {
     },
     async processImage() {
       if (this.imageUploaded) {
-      this.$router.push("/loadingPage");
-      const image = document.getElementById("uploadedImage");
-      let imageBlob = await this.getImageBlob(image.src);
-      console.log(imageBlob);
-      let imageType = { type: imageBlob.type };
-      let imageName =
-        image.src.split("/")[image.src.split("/").length - 1] +
-        "." +
-        imageBlob.type.split("/")[1];
-      const formData = new FormData();
-      formData.append("image", imageBlob, imageName);
+        this.$router.push("/loadingPage");
+        const image = document.getElementById("uploadedImage");
+        let imageBlob = await this.getImageBlob(image.src);
+        console.log(imageBlob);
+        let imageName =
+          image.src.split("/")[image.src.split("/").length - 1] +
+          "." +
+          imageBlob.type.split("/")[1];
+        const formData = new FormData();
+        formData.append("image", imageBlob, imageName);
 
-      this.$store.dispatch("systemInput/postImage", 
-        formData,
-      );
-      this.interval = setInterval(() => {
+        this.$store.dispatch("systemInput/postImage", formData);
+        this.interval = setInterval(() => {
           this.$store.dispatch("systemInput/getIpOutput");
           if (this.ipOutPutReturned) {
             clearInterval(this.interval);
           }
-        }, 10);
-      }
-      else {
+        }, 10000);
+      } else {
         alert("Please upload an image first!");
       }
     },
- 
   },
 };
 </script>

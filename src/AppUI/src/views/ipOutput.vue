@@ -46,7 +46,9 @@
         </div>
       </div>
       <div class="controlBtns">
-        <button class="customBtn">Proceed</button>
+        <router-link to="/validationPage">
+          <button class="customBtn">Proceed</button>
+        </router-link>
       </div>
     </div>
   </div>
@@ -102,6 +104,9 @@
   .customBtn {
     width: 30%;
   }
+}
+a:hover {
+  text-decoration: none;
 }
 @media screen and (max-width: 900px) {
   .showStatistics {

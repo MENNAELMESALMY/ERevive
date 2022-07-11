@@ -14,9 +14,7 @@
     <div class="controlBtns">
       <input id="default-btn" type="file" hidden />
       <button class="customBtn" @click="uploadImageFile()">Upload Image</button>
-      <button class="customBtn" id="proceedBtn" @click="callImageProcessing">
-        Proceed
-      </button>
+      <button class="customBtn" @click="processImage()">Proceed</button>
     </div>
   </div>
 </template>
@@ -102,7 +100,6 @@ export default {
   name: "uploadImage",
   data() {
     return {
-      imageFile: null,
       imageUploaded: false,
     };
   },
@@ -131,21 +128,32 @@ export default {
         image.setAttribute("src", URL.createObjectURL(inputFieldBtn.files[0]));
         image.style.display = "block";
       };
-      this.imageFile = inputFieldBtn.files[0];
       this.imageUploaded = true;
     },
-    callImageProcessing() {
+    async getImageBlob(imageUrl) {
+      const response = await fetch(imageUrl);
+      return response.blob();
+    },
+    async processImage() {
       if (this.imageUploaded) {
         this.$router.push("/loadingPage");
-        this.$store.dispatch("systemInput/postImage", {
-          image: this.imageFile,
-        });
-        // this.interval = setInterval(() => {
-        //   this.$store.dispatch("systemInput/getIpOutput");
-        //   if (this.ipOutPutReturned) {
-        //     clearInterval(this.interval);
-        //   }
-        // }, 10);
+        const image = document.getElementById("uploadedImage");
+        let imageBlob = await this.getImageBlob(image.src);
+        console.log(imageBlob);
+        let imageName =
+          image.src.split("/")[image.src.split("/").length - 1] +
+          "." +
+          imageBlob.type.split("/")[1];
+        const formData = new FormData();
+        formData.append("image", imageBlob, imageName);
+
+        this.$store.dispatch("systemInput/postImage", formData);
+        this.interval = setInterval(() => {
+          this.$store.dispatch("systemInput/getIpOutput");
+          if (this.ipOutPutReturned) {
+            clearInterval(this.interval);
+          }
+        }, 10000);
       } else {
         alert("Please upload an image first!");
       }

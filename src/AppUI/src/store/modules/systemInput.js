@@ -27,6 +27,7 @@ const state = {
   numOneToMany: 0,
   numManyToMany: 0,
   totalTime: 0,
+  initialSchema: {},
 };
 
 const mutations = {
@@ -41,50 +42,58 @@ const mutations = {
     state.erImage = image;
   },
   setIpOutputData(state, ipOutputData) {
-    state.numEntities = ipOutputData.detectedShapes.rectangle.totalCount;
-    state.numRelations = ipOutputData.detectedShapes.diamond.totalCount;
-    state.numAttributes = ipOutputData.detectedShapes.oval.totalCount;
-    state.stringPercent = ipOutputData.dataTypes.str;
-    state.intPercent = ipOutputData.dataTypes.int;
-    state.floatPercent = ipOutputData.dataTypes.float;
-    state.datePercent = ipOutputData.dataTypes.datetime;
-    state.booleanPercent = ipOutputData.dataTypes.bool;
-    state.numPrimaryKeys = ipOutputData.detectedKeys;
-    state.numMultivalued =
-      ipOutputData.detectedShapes.oval.multivaluedAttrCount;
+    state.initialSchema = ipOutputData[0];
+    let statistics = ipOutputData[1];
+    state.numEntities = statistics.detectedShapes.rectangle.totalCount;
+    state.numRelations = statistics.detectedShapes.diamond.totalCount;
+    state.numAttributes = statistics.detectedShapes.oval.totalCount;
+    state.stringPercent = statistics.dataTypes.str;
+    state.intPercent = statistics.dataTypes.int;
+    state.floatPercent = statistics.dataTypes.float;
+    state.datePercent = statistics.dataTypes.datetime;
+    state.booleanPercent = statistics.dataTypes.bool;
+    state.numPrimaryKeys = statistics.detectedKeys;
+    state.numMultivalued = statistics.detectedShapes.oval.multivaluedAttrCount;
     state.numIdentifying =
-      ipOutputData.detectedShapes.diamond.IdentifyingRelationCount;
-    state.numWeakEntities = ipOutputData.detectedShapes.rectangle.weakCount;
-    state.naryNum = ipOutputData.detectedRelations.naryRelation;
-    state.fullNum = ipOutputData.detectedRelations.fullParticipation;
-    state.partialNum = ipOutputData.detectedRelations.partialParticipation;
-    state.numOneToOne = ipOutputData.detectedRelations.oneToOne;
-    state.numOneToMany = ipOutputData.detectedRelations.oneToMany;
-    state.numManyToMany = ipOutputData.detectedRelations.manyToMany;
-    state.totalTime = ipOutputData.totalTime;
+      statistics.detectedShapes.diamond.IdentifyingRelationCount;
+    state.numWeakEntities = statistics.detectedShapes.rectangle.weakCount;
+    state.naryNum = statistics.detectedRelations.naryRelation;
+    state.fullNum = statistics.detectedRelations.fullParticipation;
+    state.partialNum = statistics.detectedRelations.partialParticipation;
+    state.numOneToOne = statistics.detectedRelations.oneToOne;
+    state.numOneToMany = statistics.detectedRelations.oneToMany;
+    state.numManyToMany = statistics.detectedRelations.manyToMany;
+    state.totalTime = statistics.totalTime;
   },
 };
 
 const actions = {
   async postImage({ commit }, payload) {
     try {
-      await axios.post("/imageprocessing", payload.image);
-      commit("setErImage", payload.image);
+      await axios.post("/imageprocessing", payload, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      commit("setErImage", payload);
     } catch (err) {
       console.log(err);
     }
   },
   getIpOutput({ commit, state }) {
-    axios
-      .get("/ipoutput")
-      .then((response) => {
-        state.ipOutPutReturned = true;
-        commit("setIpOutputData", response.data);
-        router.push("/ipOutput");
-      })
-      .catch((error) => {
-        console.log(error);
-      });
+    if (!state.ipOutPutReturned) {
+      axios
+        .get("/ipoutput")
+        .then((response) => {
+          console.log("ipoutput", response.data);
+          state.ipOutPutReturned = true;
+          commit("setIpOutputData", response.data);
+          router.push("/ipOutput");
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    }
   },
 };
 export default {

@@ -49,5 +49,8 @@ export default {
     aboutERevive,
     footerSection,
   },
+  mounted() {
+    this.$store.commit("predictedQueries/setAppFinished", false);
+  },
 };
 </script>

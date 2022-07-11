@@ -73,9 +73,9 @@ def create_api_namespaces(api,clusters,clusters_out):
     namespaces_imports = ""
     inits = ""
     #clusters_out= {}
-    errors = []
+    
     for cluster in clusters:
-        
+        errors = []
         #endoint = create_endpoint(clusters[0])
         entities = cluster[0]["entities"]
         api_name = '_'.join(entities)
@@ -102,20 +102,16 @@ def create_api_namespaces(api,clusters,clusters_out):
                 continue
 
             resource_model , endpoint_object , _ = create_query_ui_endpoint(query,api.modelsObjects)  # return to frontend
-
-            clusters_out[api_name].append(endpoint_object)
-            parse_args , db_query = create_query_api_logic(endpoint_object,query,api.modelsObjects)  
-
             #create api logic
-            if endpoint_object["endpoint_name"] == "get_players_awards_players_groupedby_playerID_orderedby_all":
-                #print("WEWEWE\n")
-                query.pop("origQuery")
-                #print(query)
+            # if endpoint_object["endpoint_name"] == "get_productrelationship_price_prodcutprice_productreforvalue_groupedby_prodcutprice_has_id_name_pricealternation_has_id":
+            #     print("WEWEWE\n")
+            #     #query.pop("origQuery")
+            #     print(query)
             if endpoint_object['endpoint_name'] not in errors:
                 errors.append(endpoint_object['endpoint_name'])
             else:
-                pass
-                #print("ENDPOINT ALREADY EXISTS\n",query,endpoint_object['endpoint_name'])   
+                print("ENDPOINT ALREADY EXISTS\n",query,endpoint_object['endpoint_name'])   
+                continue
             #if "awards_coaches" in query["entities"] and "coaches" in query["entities"]:
             #if "awards_players" in query["entities"] and "player_allstar" in query["entities"]:
                 #print("\nquery entites: ",query["entities"],"\n")
@@ -123,6 +119,8 @@ def create_api_namespaces(api,clusters,clusters_out):
                 #print("\ncluster entites: ",cluster[0]["entities"],"\n")
                 #print("\ncluster" , cluster[0])
                 #print("\nquery" , query)
+            clusters_out[api_name].append(endpoint_object)
+            parse_args , db_query = create_query_api_logic(endpoint_object,query,api.modelsObjects)  
 
             create_resource(resource_model, endpoint_object,api_file,namespace_name,parse_args , db_query)
             
@@ -822,7 +820,7 @@ def create_response_model(selectAttrs,aggrAttrs,entities,modelsObject):
     return response_model , ui_response_model ,db_selects
 
 def get_astrisk_models(entities,modelsObjects):
-    #print("inside astrisk",entities)
+    print("inside astrisk",entities)
     all_models_response=''
     all_models_ui_response = {}
     for entity in entities:
@@ -839,14 +837,18 @@ def get_astrisk_models(entities,modelsObjects):
     return all_models_response , all_models_ui_response
 
 
-def get_attr_name_type(attrs):
+def get_attr_name_type(attrs,attr_type=None):
     attr_names = []
 
     for attr in attrs:
         if type(attr[0])!=str:
             attr_name = attr[0][0] 
+            if attr_type and attr[1] and attr[1] !="":
+                attr_name = attr_name.split('.')[0]+'.'+attr[1]+'_'+attr_name.split('.')[-1]
         else:
             attr_name = attr[0]
+            if attr[1] and attr[1] !="":
+                attr_name = attr[1]+"_"+attr_name
         if attr_name.find('*')!=-1:   
             #replace * with all
             attr_name = attr_name.replace('*','all')
@@ -865,7 +867,8 @@ def query_renaming(entities,whereAttrs,groupAttrs,orderAttrs,isUpdate=False,is_g
         group_attr = groupAttrs
     if is_group_all:
         group_attr = ["all"]
-    order_attr = get_attr_name_type(orderAttrs)
+    print("order_attr",orderAttrs)
+    order_attr = get_attr_name_type(orderAttrs,"order")
     #print("orrdderd by before" , order_attr)
     where_attr = set([attr[attr.find(".")+1:] for attr in where_attr if attr != "*"])
     order_attr = set([attr[attr.find(".")+1:] for attr in order_attr if attr != "*"])

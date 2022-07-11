@@ -1,6 +1,6 @@
 <template>
   <div class="loadingPage">
-    <div class="subTitle">Image Processing is Running ....</div>
+    <div class="subTitle">{{ loadingTitle }}</div>
     <div class="loader"></div>
   </div>
 </template>
@@ -72,7 +72,13 @@
 </style>
 
 <script>
+import { mapState } from "vuex";
 export default {
   name: "loadingPage",
+  computed: {
+    ...mapState({
+      loadingTitle: (state) => state.predictedQueries.loadingTitle,
+    }),
+  },
 };
 </script>

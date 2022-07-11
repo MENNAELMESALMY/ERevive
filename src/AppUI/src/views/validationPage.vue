@@ -346,7 +346,15 @@ export default {
           finalSchema: this.finalSchema,
           formData: this.formData,
         };
-        this.$store.dispatch("validation/sendSchema", payload);
+        this.$store.dispatch(
+          "predictedQueries/postSearchEngineQueries",
+          payload
+        );
+        this.$store.commit(
+          "predictedQueries/setLoadingTitle",
+          "Suggesting Queries ..."
+        );
+        this.$router.push("/loadingPage");
       } else {
         console.log("validation failed");
       }

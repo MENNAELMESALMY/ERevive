@@ -1,11 +1,26 @@
 <template>
   <div class="mainPage">
     <div class="sideBar">
-      <img src="../../public/assets/home.png" alt="homeIcon" />
-      <img src="../../public/assets/sql.png" alt="sqlIcon" />
-      <img src="../../public/assets/api.png" alt="apiIcon" />
-      <img src="../../public/assets/frontDemo.png" alt="frontIcon" />
-      <img src="../../public/assets/schema.png" alt="schemaIcon" />
+      <img
+        src="../../public/assets/home.png"
+        alt="homeIcon"
+        @click="routeToPage('homePage')"
+      />
+      <img
+        src="../../public/assets/api.png"
+        alt="apiIcon"
+        @click="routeToPage('api')"
+      />
+      <img
+        src="../../public/assets/frontDemo.png"
+        alt="frontIcon"
+        @click="routeToPage('front')"
+      />
+      <img
+        src="../../public/assets/schema.png"
+        alt="schemaIcon"
+        @click="routeToPage('schemaPage')"
+      />
     </div>
     <div class="mainContent">
       <savedModal v-if="savedModalState" />
@@ -55,7 +70,23 @@ export default {
       savedModalState: (state) => state.triggerModals.savedModal,
       deleteQueryModalState: (state) => state.triggerModals.deleteQueryModal,
       addQueryModalState: (state) => state.triggerModals.addQueryModal,
+      appFinished: (state) => state.predictedQueries.appFinished,
     }),
+  },
+  methods: {
+    routeToPage(page) {
+      if (this.appFinished) {
+        if (page == "homePage") {
+          this.$router.push("/");
+        } else if (page == "api") {
+          window.open("http://localhost:3000/", "_blank");
+        } else if (page == "front") {
+          window.open("http://localhost:8081/", "_blank");
+        } else if (page == "schemaPage") {
+          this.$router.push("/schemaPage");
+        }
+      }
+    },
   },
 };
 </script>

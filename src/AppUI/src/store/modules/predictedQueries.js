@@ -1,95 +1,159 @@
+import axios from "axios";
+import router from "../../router/index";
+
 const state = {
-  predictedClusters: {
-    Cluster1: [
-      {
-        name: "Query 1",
-        query: "SELECT * FROM users",
-      },
-      {
-        name: "Query 2",
-        query:
-          "select count ( * ) from class as t1 join enroll as t2 on t1.class_code = t2.class_code join course as t3 on t1.crs_code = t3.crs_code join department as t4 on t3.dept_code = t4.dept_code where t4.dept_name = 'accounting'",
-      },
-      {
-        name: "Query 3",
-        query:
-          "select classes.id , count ( students_classes.* ) from students_classes join classes on students_classes.class_id = classes.id group by classes.id having count ( students_classes.* ) = 5",
-      },
-    ],
-    Cluster2: [
-      {
-        name: "Query 4",
-        query: "SELECT * FROM users",
-      },
-      {
-        name: "Query 5",
-        query:
-          "select count ( * ) from class as t1 join enroll as t2 on t1.class_code = t2.class_code join course as t3 on t1.crs_code = t3.crs_code join department as t4 on t3.dept_code = t4.dept_code where t4.dept_name = 'accounting'",
-      },
-      {
-        name: "Query 6",
-        query:
-          "select classes.id , count ( students_classes.* ) from students_classes join classes on students_classes.class_id = classes.id group by classes.id having count ( students_classes.* ) = 5",
-      },
-    ],
-    Cluster3: [
-      {
-        name: "Query 7",
-        query: "SELECT * FROM users",
-      },
-      {
-        name: "Query 8",
-        query:
-          "select count ( * ) from class as t1 join enroll as t2 on t1.class_code = t2.class_code join course as t3 on t1.crs_code = t3.crs_code join department as t4 on t3.dept_code = t4.dept_code where t4.dept_name = 'accounting'",
-      },
-      {
-        name: "Query 9",
-        query:
-          "select classes.id , count ( students_classes.* ) from students_classes join classes on students_classes.class_id = classes.id group by classes.id having count ( students_classes.* ) = 5",
-      },
-    ],
-  },
+  predictedClusters: {},
   deletedQuery: "",
   deletedQueryName: "",
-  clusters: ["Cluster1", "Cluster2", "Cluster3"],
+  clusters: [],
   currentClusterName: "",
-  queries: [],
+  formData: {},
+  appFinished: false,
+  systemName: "",
+  systemDescription: "",
+  databaseName: "",
+  databaseUsername: "",
+  databasePassword: "",
+  testSchema: {},
+  schemaGraph: {},
+  entityDict: {},
+  schemaEntityNames: {},
+  loadingTitle: "Image Processing is Running ....",
+  queriesErrors: {},
+  errorsClusters: [],
 };
 
 const mutations = {
   setQueries(state, queriesList) {
     state.queries = queriesList;
   },
+  setLoadingTitle(state, title) {
+    state.loadingTitle = title;
+  },
   setDeletedQuery(state, queryObject) {
     state.deletedQuery = queryObject.query;
     state.deletedQueryName = queryObject.queryName;
   },
   deleteQuery(state, queryObject) {
-    state.queries = state.queries.filter(
+    let queries = state.predictedClusters[state.currentClusterName];
+    queries.filter(
       (item) =>
-        item.name !== queryObject.queryName && item.query !== queryObject.query
+        item.ui_name !== queryObject.queryName &&
+        item.query[0] !== queryObject.query
     );
   },
   editQuery(state, queryObject) {
-    state.queries.map((item) => {
+    let queries = state.predictedClusters[state.currentClusterName];
+    queries.map((item) => {
       if (
-        item.name == queryObject.oldQueryName &&
-        item.query == queryObject.oldQuery
+        item.ui_name == queryObject.oldQueryName &&
+        item.query[0] == queryObject.oldQuery
       ) {
-        item.query = queryObject.query;
-        item.name = queryObject.queryName;
+        item.query[0] = queryObject.query;
+        item.ui_name = queryObject.queryName;
+        item.is_updated = true;
       }
     });
   },
   addNewQuery(state, queryObject) {
-    state.queries.push({
-      name: queryObject.queryName,
-      query: queryObject.query,
-    });
+    let queries = state.predictedClusters[state.currentClusterName];
+    let copiedObject = queries[0];
+    let newObject = {
+      ui_name: queryObject.queryName,
+      query: [queryObject.query],
+      is_updated: false,
+      ...copiedObject,
+    };
+    queries.push(newObject);
   },
   setCurrentCluster(state, clusterName) {
     state.currentClusterName = clusterName;
-    state.queries = state.predictedClusters[clusterName];
+  },
+  setSearchEngineQueries(state, clusters) {
+    state.testSchema = clusters.searchOut.testSchema;
+    state.schemaGraph = clusters.searchOut.schemaGraph;
+    state.entityDict = clusters.searchOut.entityDict;
+    state.schemaEntityNames = clusters.searchOut.schemaEntityNames;
+    state.clusters = Object.keys(clusters.searchOut.clusters);
+    state.predictedClusters = clusters.searchOut.clusters;
+  },
+  setAppFinished(state, finished) {
+    state.appFinished = finished;
+  },
+  setSystemInfo(state, systemObject) {
+    state.systemName = systemObject.systemName;
+    state.systemDescription = systemObject.systemDescription;
+    state.databaseName = systemObject.databaseName;
+    state.databaseUsername = systemObject.databaseUsername;
+    state.datbasePassword = systemObject.databasePassword;
+  },
+  setQueriesErrors(state, errors) {
+    state.queriesErrors = errors;
+    state.errorsClusters = Object.keys(errors);
+  },
+};
+
+const actions = {
+  postSearchEngineQueries({ commit, state }, payload) {
+    let schema = {
+      schema: payload.finalSchema,
+    };
+    state.formData = payload.formData;
+    axios
+      .post("/searchengine", schema)
+      .then((response) => {
+        console.log("search Engine Output", response.data);
+        commit("setSearchEngineQueries", response.data);
+        router.push("/clustersPage");
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  },
+  postValidate({ commit, state }) {
+    let updatedClusters = {
+      testSchema: state.testSchema,
+      schemaGraph: state.schemaGraph,
+      entityDict: state.entityDict,
+      schemaEntityNames: state.schemaEntityNames,
+      clusters: state.predictedClusters,
+    };
+    axios
+      .post("/validate", updatedClusters)
+      .then((response) => {
+        if (response.status == 200) {
+          commit("setLoadingTitle", "Creating Application ...");
+          router.push("/loadingPage");
+          this.postStartApplication();
+        }
+      })
+      .catch((error) => {
+        console.log(error);
+        commit("setQueriesErrors", error.response.data);
+        router.push("/queriesErrors");
+      });
+  },
+  postStartApplication({ commit, state }) {
+    let systemData = {
+      forms: state.formData,
+      systemData: {
+        systemName: state.systemName,
+        systemDescription: state.systemDescription,
+        databaseName: state.databaseName,
+        databaseUsername: state.databaseUsername,
+        databasePassword: state.databasePassword,
+      },
+      clusters: state.predictedClusters,
+    };
+    axios
+      .post("/application", systemData)
+      .then(() => {
+        commit("setAppFinished", true);
+        router.push("/lastPage");
+      })
+      .catch((error) => {
+        console.log(error);
+      });
   },
 };
 
@@ -97,4 +161,5 @@ export default {
   namespaced: true,
   state,
   mutations,
+  actions,
 };

@@ -37,6 +37,9 @@
     padding: 20px;
   }
 }
+a:hover {
+  text-decoration: none;
+}
 </style>
 
 <script>
@@ -44,7 +47,7 @@ export default {
   name: "savedModal",
   methods: {
     closeModal() {
-      this.$store.commit("triggerSavedModal/toggleSavedModal");
+      this.$store.commit("triggerModals/toggleSavedModal");
     },
   },
 };

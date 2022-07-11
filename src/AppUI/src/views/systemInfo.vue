@@ -10,35 +10,45 @@
             type="text"
             id="systemName"
             placeholder="Enter System Name"
+            v-model="systemName"
             required
           />
           <input
             type="text"
             id="systemDescription"
             placeholder="Enter System Description"
+            v-model="systemDescription"
             required
           />
           <input
             type="text"
             id="username"
             placeholder="Enter Database Username"
+            v-model="username"
             required
           />
           <input
-            type="text"
+            type="password"
             id="password"
             placeholder="Enter Database Password"
+            v-model="password"
             required
           />
           <input
             type="text"
             id="databaseName"
             placeholder="Enter Database Name"
+            v-model="databaseName"
             required
           />
         </div>
         <div class="controlBtns">
-          <input type="submit" class="customBtn" id="submitbuttonId" />
+          <input
+            type="submit"
+            class="customBtn"
+            value="Submit"
+            id="submitbuttonId"
+          />
         </div>
       </form>
     </div>
@@ -118,9 +128,25 @@ form {
 <script>
 export default {
   name: "systemInfo",
+  data() {
+    return {
+      systemName: "",
+      systemDescription: "",
+      username: "",
+      password: "",
+      databaseName: "",
+    };
+  },
   methods: {
     submitForm() {
-      this.$store.commit("triggerSavedModal/toggleSavedModal");
+      this.$store.commit("triggerModals/toggleSavedModal");
+      this.$store.commit("systemInput/setSystemInfo", {
+        systemName: this.systemName,
+        systemDescription: this.systemDescription,
+        dataBaseUserName: this.username,
+        dataBasePassword: this.password,
+        dataBaseName: this.databaseName,
+      });
     },
   },
 };

@@ -3,44 +3,44 @@
     <div class="content">
       <div class="subTitle">What we get from Image Processing !</div>
       <ip-dashboard
-        :entitiesCounter="100"
-        :relationsCounter="250"
-        :attributesCounter="50"
+        :entitiesCounter="numEntities"
+        :relationsCounter="numRelations"
+        :attributesCounter="numAttributes"
       />
       <div class="showStatistics">
         <div class="firstSection">
           <datatypes-dashboard
-            :stringTypePercent="90"
-            :intTypePercent="10"
-            :floatTypePercent="45"
-            :boolTypePercent="30"
-            :dateTypePercent="58"
+            :stringTypePercent="stringPercent"
+            :intTypePercent="intPercent"
+            :floatTypePercent="floatPercent"
+            :boolTypePercent="booleanPercent"
+            :dateTypePercent="datePercent"
           />
         </div>
         <div class="secondSection">
           <show-info-table
-            :primaryKeysCount="12"
-            :multivaluedCount="5"
-            :identifyingCount="7"
-            :weakEntitiesCount="3"
-            :naryCount="2"
-            :fullCount="4"
-            :partialCount="7"
+            :primaryKeysCount="numPrimaryKeys"
+            :multivaluedCount="numMultivalued"
+            :identifyingCount="numIdentifying"
+            :weakEntitiesCount="numWeakEntities"
+            :naryCount="naryNum"
+            :fullCount="fullNum"
+            :partialCount="partialNum"
           />
         </div>
       </div>
       <div class="thirdContent">
         <div class="thirdSection">
           <relations-dashboard
-            :oneToOneCounter="80"
-            :oneToMCounter="26"
-            :mToNCounter="54"
+            :oneToOneCounter="numOneToOne"
+            :oneToMCounter="numOneToMany"
+            :mToNCounter="numManyToMany"
           />
         </div>
         <div class="totalTime">
           <div class="subTitle">Total Time Taken :</div>
           <div class="timeValue">
-            <span> 170.259 </span>
+            <span> {{ totalTime }} </span>
             <span>sec</span>
           </div>
         </div>
@@ -127,6 +127,7 @@
 </style>
 
 <script>
+import { mapState } from "vuex";
 import ipDashboard from "../components/ipDashboard.vue";
 import datatypesDashboard from "../components/datatypesDashboard.vue";
 import relationsDashboard from "../components/relationsDashboard.vue";
@@ -138,6 +139,29 @@ export default {
     datatypesDashboard,
     relationsDashboard,
     showInfoTable,
+  },
+  computed: {
+    ...mapState({
+      numEntities: (state) => state.systemInput.numEntities,
+      numRelations: (state) => state.systemInput.numRelations,
+      numAttributes: (state) => state.systemInput.numAttributes,
+      stringPercent: (state) => state.systemInput.stringPercent,
+      intPercent: (state) => state.systemInput.intPercent,
+      floatPercent: (state) => state.systemInput.floatPercent,
+      booleanPercent: (state) => state.systemInput.booleanPercent,
+      datePercent: (state) => state.systemInput.datePercent,
+      numPrimaryKeys: (state) => state.systemInput.numPrimaryKeys,
+      numMultivalued: (state) => state.systemInput.numMultivalued,
+      numIdentifying: (state) => state.systemInput.numIdentifying,
+      numWeakEntities: (state) => state.systemInput.numWeakEntities,
+      naryNum: (state) => state.systemInput.naryNum,
+      fullNum: (state) => state.systemInput.fullNum,
+      partialNum: (state) => state.systemInput.partialNum,
+      numOneToOne: (state) => state.systemInput.numOneToOne,
+      numOneToMany: (state) => state.systemInput.numOneToMany,
+      numManyToMany: (state) => state.systemInput.numManyToMany,
+      totalTime: (state) => state.systemInput.totalTime,
+    }),
   },
 };
 </script>

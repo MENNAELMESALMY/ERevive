@@ -146,21 +146,16 @@ const state = {
       isWeak: false,
     },
   },
+  formData:{}
 };
 const actions = {
-  async getSchema({ state }) {
-    try {
-      let response = await axios.get("/imageprocessing");
-      state.schema = response.data;
-      console.log(state.schema);
-    } catch (err) {
-      console.log(err);
-    }
-  },
   async sendSchema({ state }, payload) {
+    let schema = {
+        "schema": payload.finalSchema,
+    }
+    state.formData = payload.formData;
     try {
-      await axios.post("/imageprocessing", payload);
-      console.log(state.schema);
+      await axios.post("/searchengine", schema);
     } catch (err) {
       console.log(err);
     }

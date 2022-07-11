@@ -1,0 +1,19 @@
+[
+"substring '<value>'", 
+"begins with the letter '<value>'",
+"contains the word '<value>'", 
+"the prefix '<value>'", 
+"have the word '<value>'", 
+"contains the string '<value>'", 
+"containing the letter <value>", 
+"ending with the letter '<value>'", 
+"having char '<value>'", 
+"'<value>' as a substring", 
+"starts with '<value>'", 
+"includes the substring '<value>'", 
+"include letter '<value>'", 
+"starting with the letter '<value>'",
+"have the letters '<value>'", 
+"contain letter '<value>'", 
+"starting with '<value>'"
+]

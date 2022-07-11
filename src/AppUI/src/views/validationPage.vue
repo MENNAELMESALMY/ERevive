@@ -1,7 +1,7 @@
 <template>
-  <div class="validation" :key="componentKey">
+  <div class="validation">
     <h2 class="subTitle">validation</h2>
-    <div class="entities_names_wrapper">
+    <div class="entities_names_wrapper" :key="componentKey + 4000">
       <div class="entities_names">
         <a
           v-for="(value, entityIdx) in globalSchema"
@@ -26,7 +26,9 @@
           @click="delete_entity(entityIdx)"
         ></i>
       </div>
-      <h3 class="subTitle">{{ globalSchema[entityIdx]["TableName"] }}</h3>
+      <h3 class="subTitle" :key="componentKey + entityIdx">
+        {{ globalSchema[entityIdx]["TableName"] }}
+      </h3>
       <form class="entity_form">
         <input
           type="text"
@@ -80,10 +82,7 @@
                 {{ dataType }}
               </option>
             </select>
-            <select
-              v-model="attr[3]"
-              @change="componentKey = (componentKey + 1) % 2"
-            >
+            <select v-model="attr[3]">
               <option
                 v-for="fieldType in fieldTypes"
                 :value="fieldType"
@@ -124,7 +123,7 @@
           Add Attribute
         </button>
         <!-- < foreign keys /> -->
-        <div class="fks_wrapper">
+        <div class="fks_wrapper" :key="componentKey + 2000">
           <div
             v-for="(fk, fkIndex) in globalSchema[entityIdx]['ForgeinKey']"
             :key="fkIndex"
@@ -251,13 +250,13 @@ export default {
       };
       this.componentKey = (this.componentKey + 1) % 2;
     },
-    change_name(event) {
+    change_name() {
       this.componentKey = (this.componentKey + 1) % 2;
-      const el_id = event.target.id;
-      document.getElementById(el_id).focus();
-      setTimeout(function () {
-        document.getElementById(el_id).focus();
-      }, 0);
+      // const el_id = event.target.id;
+      // document.getElementById(el_id).focus();
+      // setTimeout(function () {
+      //   document.getElementById(el_id).focus();
+      // }, 0);
     },
     delete_entity(entityIdx) {
       for (let key in this.globalSchema) {
@@ -342,7 +341,7 @@ export default {
       let isValid = true; //this.check_validation();
       if (isValid) {
         // send request to server
-        console.log("validation success");
+        // console.log("validation success");
         let payload = {
           finalSchema: this.finalSchema,
           formData: this.formData,
@@ -537,11 +536,11 @@ export default {
     for (let key in this.receivedSchema) {
       let TableName = this.receivedSchema[key]["TableName"];
       invertedNamesList[TableName] = { idx: entityIndex };
-      console.log(TableName, key);
+      // console.log(TableName, key);
       invertedNamesList[TableName]["attributes"] = {};
       let attrIndex = 0;
       for (let attr in this.receivedSchema[key]["attributes"]) {
-        console.log(attrIndex, attr);
+        // console.log(attrIndex, attr);
         invertedNamesList[TableName]["attributes"][attr] = attrIndex;
         attrIndex += 1;
       }

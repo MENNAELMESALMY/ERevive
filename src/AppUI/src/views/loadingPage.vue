@@ -77,7 +77,7 @@ export default {
   name: "loadingPage",
   computed: {
     ...mapState({
-      loadingTitle: (state) => state.systemInput.loadingTitle,
+      loadingTitle: (state) => state.predictedQueries.loadingTitle,
     }),
   },
 };

@@ -57,12 +57,7 @@ export default {
   },
   methods: {
     startApplication() {
-      this.$store.dispatch("predictedQueries/postStartApplication");
-      this.$store.commit(
-        "systemInput/setLoadingTitle",
-        "Creating Application ..."
-      );
-      this.$router.push("/loadingPage");
+      this.$store.dispatch("predictedQueries/postValidate");
     },
   },
 };

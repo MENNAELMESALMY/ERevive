@@ -7,7 +7,6 @@ const state = {
   deletedQueryName: "",
   clusters: [],
   currentClusterName: "",
-  queries: [],
   formData: {},
   appFinished: false,
   systemName: "",
@@ -15,46 +14,68 @@ const state = {
   databaseName: "",
   databaseUsername: "",
   databasePassword: "",
+  testSchema: {},
+  schemaGraph: {},
+  entityDict: {},
+  schemaEntityNames: {},
+  loadingTitle: "Image Processing is Running ....",
+  queriesErrors: {},
+  errorsClusters: [],
 };
 
 const mutations = {
   setQueries(state, queriesList) {
     state.queries = queriesList;
   },
+  setLoadingTitle(state, title) {
+    state.loadingTitle = title;
+  },
   setDeletedQuery(state, queryObject) {
     state.deletedQuery = queryObject.query;
     state.deletedQueryName = queryObject.queryName;
   },
   deleteQuery(state, queryObject) {
-    state.queries = state.queries.filter(
+    let queries = state.predictedClusters[state.currentClusterName];
+    queries.filter(
       (item) =>
-        item.name !== queryObject.queryName && item.query !== queryObject.query
+        item.ui_name !== queryObject.queryName &&
+        item.query[0] !== queryObject.query
     );
   },
   editQuery(state, queryObject) {
-    state.queries.map((item) => {
+    let queries = state.predictedClusters[state.currentClusterName];
+    queries.map((item) => {
       if (
-        item.name == queryObject.oldQueryName &&
-        item.query == queryObject.oldQuery
+        item.ui_name == queryObject.oldQueryName &&
+        item.query[0] == queryObject.oldQuery
       ) {
-        item.query = queryObject.query;
-        item.name = queryObject.queryName;
+        item.query[0] = queryObject.query;
+        item.ui_name = queryObject.queryName;
+        item.is_updated = true;
       }
     });
   },
   addNewQuery(state, queryObject) {
-    state.queries.push({
-      name: queryObject.queryName,
-      query: queryObject.query,
-    });
+    let queries = state.predictedClusters[state.currentClusterName];
+    let copiedObject = queries[0];
+    let newObject = {
+      ui_name: queryObject.queryName,
+      query: [queryObject.query],
+      is_updated: false,
+      ...copiedObject,
+    };
+    queries.push(newObject);
   },
   setCurrentCluster(state, clusterName) {
     state.currentClusterName = clusterName;
-    state.queries = state.predictedClusters[clusterName];
   },
   setSearchEngineQueries(state, clusters) {
-    state.clusters = Object.keys(clusters);
-    state.predictedClusters = clusters;
+    state.testSchema = clusters.searchOut.testSchema;
+    state.schemaGraph = clusters.searchOut.schemaGraph;
+    state.entityDict = clusters.searchOut.entityDict;
+    state.schemaEntityNames = clusters.searchOut.schemaEntityNames;
+    state.clusters = Object.keys(clusters.searchOut.clusters);
+    state.predictedClusters = clusters.searchOut.clusters;
   },
   setAppFinished(state, finished) {
     state.appFinished = finished;
@@ -65,6 +86,10 @@ const mutations = {
     state.databaseName = systemObject.databaseName;
     state.databaseUsername = systemObject.databaseUsername;
     state.datbasePassword = systemObject.databasePassword;
+  },
+  setQueriesErrors(state, errors) {
+    state.queriesErrors = errors;
+    state.errorsClusters = Object.keys(errors);
   },
 };
 
@@ -85,6 +110,29 @@ const actions = {
         console.log(error);
       });
   },
+  postValidate({ commit, state }) {
+    let updatedClusters = {
+      testSchema: state.testSchema,
+      schemaGraph: state.schemaGraph,
+      entityDict: state.entityDict,
+      schemaEntityNames: state.schemaEntityNames,
+      clusters: state.predictedClusters,
+    };
+    axios
+      .post("/validate", updatedClusters)
+      .then((response) => {
+        if (response.status == 200) {
+          commit("setLoadingTitle", "Creating Application ...");
+          router.push("/loadingPage");
+          this.postStartApplication();
+        }
+      })
+      .catch((error) => {
+        console.log(error);
+        commit("setQueriesErrors", error.response.data);
+        router.push("/queriesErrors");
+      });
+  },
   postStartApplication({ commit, state }) {
     let systemData = {
       forms: state.formData,
@@ -95,6 +143,7 @@ const actions = {
         databaseUsername: state.databaseUsername,
         databasePassword: state.databasePassword,
       },
+      clusters: state.predictedClusters,
     };
     axios
       .post("/application", systemData)

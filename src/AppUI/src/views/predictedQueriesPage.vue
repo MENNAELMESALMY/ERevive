@@ -99,12 +99,20 @@ import { mapState } from "vuex";
 import queriesCard from "../components/queriesCard.vue";
 export default {
   name: "predictedQueriesPage",
+  data() {
+    return {
+      queries: [],
+    };
+  },
   components: {
     queriesCard,
   },
+  mounted() {
+    this.queries = this.predictedClusters[this.currentClusterName];
+  },
   computed: {
     ...mapState({
-      queries: (state) => state.predictedQueries.queries,
+      predictedClusters: (state) => state.predictedQueries.predictedClusters,
       currentClusterName: (state) => state.predictedQueries.currentClusterName,
     }),
   },
@@ -113,12 +121,7 @@ export default {
       this.$store.commit("triggerModals/toggleAddQueryModal");
     },
     startApplication() {
-      this.$store.dispatch("predictedQueries/postStartApplication");
-      this.$store.commit(
-        "systemInput/setLoadingTitle",
-        "Creating Application ..."
-      );
-      this.$router.push("/loadingPage");
+      this.$store.dispatch("predictedQueries/postValidate");
     },
   },
 };

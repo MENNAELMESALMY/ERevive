@@ -352,7 +352,7 @@ export default {
           payload
         );
         this.$store.commit(
-          "systemInput/setLoadingTitle",
+          "predictedQueries/setLoadingTitle",
           "Suggesting Queries ..."
         );
         this.$router.push("/loadingPage");

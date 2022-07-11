@@ -10,6 +10,7 @@ import validationPage from "../views/validationPage.vue";
 import predictedQueriesPage from "../views/predictedQueriesPage.vue";
 import clustersPage from "../views/clustersPage.vue";
 import schemaPage from "../views/schemaPage.vue";
+import queriesErrors from "../views/queriesErrors.vue";
 import lastPage from "../views/lastPage.vue";
 
 Vue.use(VueRouter);
@@ -71,6 +72,12 @@ const routes = [
         path: "/schemaPage",
         name: "schemaPage",
         component: schemaPage,
+        children: [],
+      },
+      {
+        path: "/queriesErrors",
+        name: "queriesErrors",
+        component: queriesErrors,
         children: [],
       },
       {

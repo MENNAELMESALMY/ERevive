@@ -448,8 +448,8 @@ export default {
       return this.errors.length == 0;
     },
   },
-  async beforeMount() {
-    await this.$store.dispatch("validation/getSchema");
+  beforeMount() {
+    //await this.$store.dispatch("validation/getSchema");
     let entityIndex = 0;
     let invertedNamesList = {};
     for (let key in this.receivedSchema) {
@@ -518,7 +518,7 @@ export default {
   },
   computed: {
     ...mapState({
-      receivedSchema: (state) => state.validation.schema,
+      receivedSchema: (state) => state.systemInput.initialSchema,
     }),
   },
 };

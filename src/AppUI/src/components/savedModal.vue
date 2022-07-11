@@ -37,6 +37,9 @@
     padding: 20px;
   }
 }
+a:hover {
+  text-decoration: none;
+}
 </style>
 
 <script>

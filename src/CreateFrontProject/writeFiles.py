@@ -894,7 +894,7 @@ create_card_design4(componentsRoute + "cardDesign4.vue")
 create_color_pallete(componentsRoute + "colorPallete.vue")
 create_color_pallete_module(storeRoute + "color_pallete.js")
 create_dashboard_style(styleRoute+'_dashboard.scss')
-create_dashboard_style(styleRoute+'_big_card.scss')
+create_large_card_style(styleRoute+'_big_card.scss')
 
 
 # '''

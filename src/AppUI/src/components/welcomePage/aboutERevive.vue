@@ -44,6 +44,9 @@
     margin-bottom: 45px;
   }
 }
+a:hover {
+  text-decoration: none;
+}
 </style>
 
 <script>

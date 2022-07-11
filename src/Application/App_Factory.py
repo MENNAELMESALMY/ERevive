@@ -40,6 +40,12 @@ def Create_Application(schema,user="root",password = "admin<3Super",db="departme
     os.chdir('api')
     models,modelsObjects = createAllModels(schema)  #should be replaced with nihal's models 
       
+    with open('../models.json','w') as f:
+        json.dump(models,f)
+
+    with open('../modelsObjects.json','w') as f:
+        json.dump(modelsObjects,f)
+
     api = ApiFactory(models,user,password,db,modelsObjects)
     apisFiles,crud_ui_out = api.create_models_apis()
     with open('../crud_ui_out.json','w') as f:
@@ -821,8 +827,10 @@ def get_astrisk_models(entities,modelsObjects):
     #print("inside astrisk",entities)
     all_models_response=''
     all_models_ui_response = {}
+    print(modelsObjects)
+    print(entities)
     for entity in entities:
-        
+        print(entity)
         attrs = modelsObjects[entity]['attributes'].items()
         #print(attrs)
         attrs = [(entity+'.'+attr[0],attr[1]) for attr in attrs]

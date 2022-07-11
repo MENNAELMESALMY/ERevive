@@ -15,7 +15,7 @@
       <input id="default-btn" type="file" hidden />
       <button class="customBtn" @click="uploadImageFile()">Upload Image</button>
       <router-link to="/">
-        <button class="customBtn">Proceed</button>
+        <button class="customBtn" @click="processImage()">Proceed</button>
       </router-link>
     </div>
   </div>
@@ -124,9 +124,27 @@ export default {
         image.setAttribute("src", URL.createObjectURL(inputFieldBtn.files[0]));
         image.style.display = "block";
       };
-      this.$store.dispatch("systemInput/postImage", {
-        image: inputFieldBtn.files[0],
-      });
+    },
+    async getImageBlob(imageUrl) {
+      const response = await fetch(imageUrl);
+      return response.blob();
+    },
+    async processImage() {
+      const image = document.getElementById("uploadedImage");
+      //get image type from src blob
+      let imageBlob = await this.getImageBlob(image.src);
+      console.log(imageBlob);
+      let imageType = { type: imageBlob.type };
+      let imageName =
+        image.src.split("/")[image.src.split("/").length - 1] +
+        "." +
+        imageBlob.type.split("/")[1];
+      const formData = new FormData();
+      formData.append("image", imageBlob, imageName);
+
+      this.$store.dispatch("systemInput/postImage", 
+        formData,
+      );
     },
   },
 };

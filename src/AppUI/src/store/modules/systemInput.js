@@ -23,8 +23,17 @@ const mutations = {
 const actions = {
   async postImage({ commit }, payload) {
     try {
-      await axios.post("/imageprocessing", payload.image);
-      commit("setErImage", payload.image);
+ 
+      await axios.post(
+        "/imageprocessing",
+        payload ,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      commit("setErImage", payload);
     } catch (err) {
       console.log(err);
     }

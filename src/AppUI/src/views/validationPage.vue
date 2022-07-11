@@ -1,6 +1,6 @@
 <template>
   <div class="validation" :key="componentKey">
-    <h2>validation</h2>
+    <h2 class="subTitle">validation</h2>
     <div class="entities_names_wrapper">
       <div class="entities_names">
         <a
@@ -26,7 +26,7 @@
           @click="delete_entity(entityIdx)"
         ></i>
       </div>
-      <h3>{{ globalSchema[entityIdx]["TableName"] }}</h3>
+      <h3 class="subTitle">{{ globalSchema[entityIdx]["TableName"] }}</h3>
       <form class="entity_form">
         <input
           type="text"
@@ -118,7 +118,9 @@
             </div>
           </div>
         </div>
-        <button @click="add_attribute(entityIdx)">Add Attribute</button>
+        <button class="customBtn" @click="add_attribute(entityIdx)">
+          Add Attribute
+        </button>
         <!-- < foreign keys /> -->
         <div class="fks_wrapper">
           <div
@@ -179,7 +181,9 @@
           </div>
         </div>
 
-        <button @click="add_fk(entityIdx)">Add Foreign Key</button>
+        <button class="customBtn" @click="add_fk(entityIdx)">
+          Add Foreign Key
+        </button>
       </form>
     </div>
     <div class="error_wrapper" v-if="errors.length > 0">
@@ -188,8 +192,8 @@
       </p>
     </div>
     <div class="button_wrapper">
-      <button @click="add_entity">Add Entity</button>
-      <button @click="save_changes">Save changes</button>
+      <button class="customBtn" @click="add_entity">Add Entity</button>
+      <button class="customBtn" @click="save_changes">Save changes</button>
     </div>
   </div>
 </template>
@@ -222,191 +226,152 @@ export default {
         "textarea",
       ],
       requireOptions: ["checkbox", "list", "radiobutton"],
-      receivedSchema: {
-        11: {
-          TableName: "DEPARTMENT",
-          TableType: "",
-          attributes: {
-            name: "str",
-            start_date: "datetime",
-            EMPLOYEE_Manages: "str",
-          },
-          primaryKey: ["name"],
-          ForgeinKey: [
-            {
-              attributeName: "EMPLOYEE_Manages",
-              ForignKeyTable: "EMPLOYEE",
-              ForignKeyTableAttributeName: "ssn",
-              patricipaction: "partial",
-              dataType: "str",
-            },
-          ],
-          isWeak: false,
-        },
-        34: {
-          TableName: "DEPARTMENT_Clocation",
-          TableType: "",
-          attributes: { Clocation: "str", DEPARTMENT_name: "str" },
-          primaryKey: ["Clocation", "DEPARTMENT_name"],
-          ForgeinKey: [
-            {
-              attributeName: "DEPARTMENT_name",
-              ForignKeyTable: "DEPARTMENT",
-              ForignKeyTableAttributeName: "name",
-              patricipaction: "full",
-              dataType: "str",
-            },
-          ],
-          isWeak: false,
-        },
-        12: {
-          TableName: "EMPLOYEE",
-          TableType: "",
-          attributes: {
-            last_name: "str",
-            middle_initis: "str",
-            first_name: "str",
-            address: "str",
-            salary: "float",
-            sex: "str",
-            status: "str",
-            birth_dat: "str",
-            ssn: "str",
-            start_date: "datetime",
-            DEPARTMENT_Employed_name: "str",
-            EMPLOYEE_Supervision_: "str",
-          },
-          primaryKey: ["ssn"],
-          ForgeinKey: [
-            {
-              attributeName: "DEPARTMENT_Employed_name",
-              ForignKeyTable: "DEPARTMENT",
-              ForignKeyTableAttributeName: "name",
-              patricipaction: "full",
-              dataType: "str",
-            },
-            {
-              attributeName: "EMPLOYEE_Supervision_",
-              ForignKeyTable: "EMPLOYEE",
-              ForignKeyTableAttributeName: "ssn",
-              patricipaction: "partial",
-              dataType: "str",
-            },
-          ],
-          isWeak: false,
-        },
-        24: {
-          TableName: "PROJECT",
-          TableType: "",
-          attributes: {
-            location: "str",
-            name: "str",
-            budget: "float",
-            DEPARTMENT_Assigned_name: "str",
-          },
-          primaryKey: ["name"],
-          ForgeinKey: [
-            {
-              attributeName: "DEPARTMENT_Assigned_name",
-              ForignKeyTable: "DEPARTMENT",
-              ForignKeyTableAttributeName: "name",
-              patricipaction: "partial",
-              dataType: "str",
-            },
-          ],
-          isWeak: false,
-        },
-        25: {
-          TableName: "DEPENDENT",
-          TableType: "",
-          attributes: {
-            sex: "str",
-            relatlonship: "str",
-            name: "str",
-            birth_date: "datetime",
-            Dependents_EMPLOYEE_: "str",
-          },
-          primaryKey: ["Dependents_EMPLOYEE_"],
-          ForgeinKey: [
-            {
-              attributeName: "Dependents_EMPLOYEE_",
-              ForignKeyTable: "EMPLOYEE",
-              ForignKeyTableAttributeName: "ssn",
-              patricipaction: "partial",
-              dataType: "str",
-            },
-          ],
-          isWeak: true,
-        },
-        35: {
-          TableName: "Works_EMPLOYEE_PROJECT",
-          TableType: "mTm",
-          attributes: {
-            start_date: "datetime",
-            hours: "int",
-            EMPLOYEE_: "str",
-            PROJECT_: "str",
-          },
-          primaryKey: ["EMPLOYEE_", "PROJECT_"],
-          ForgeinKey: [
-            {
-              attributeName: "EMPLOYEE_",
-              ForignKeyTable: "EMPLOYEE",
-              ForignKeyTableAttributeName: "ssn",
-              patricipaction: "full",
-              dataType: "str",
-            },
-            {
-              attributeName: "PROJECT_",
-              ForignKeyTable: "PROJECT",
-              ForignKeyTableAttributeName: "name",
-              patricipaction: "full",
-              dataType: "str",
-            },
-          ],
-          isWeak: false,
-        },
-      },
-      globalSchema: {},
-      // globalSchema: {
-      //   0: {
+      // receivedSchema: {
+      //   11: {
       //     TableName: "DEPARTMENT",
       //     TableType: "",
       //     attributes: {
-      //       // [attributeName, dataType, isPrimary,fieldType,listOfValues,minNum,maxNum]
-      //       0: ["DepartmentName", "str", true, "text", "", 0, 100],
-      //       1: ["DepartmentID", "int", false, "text", "", 0, 100],
-      //       2: ["DepartmentManager", "str", false, "text", "", 0, 100],
-      //       3: ["DepartmentLocation", "str", false, "text", "", 0, 100],
+      //       name: "str",
+      //       start_date: "datetime",
+      //       EMPLOYEE_Manages: "str",
       //     },
-      //     primaryKey: ["DepartmentName"],
+      //     primaryKey: ["name"],
       //     ForgeinKey: [
       //       {
-      //         TableIdx: 0,
-      //         attributeName: "DepartmentManager",
-      //         attributeIdx: 2,
+      //         attributeName: "EMPLOYEE_Manages",
       //         ForignKeyTable: "EMPLOYEE",
-      //         ForignKeyTableIdx: 1,
       //         ForignKeyTableAttributeName: "ssn",
-      //         ForignKeyTableAttributeIdx: 0,
       //         patricipaction: "partial",
       //         dataType: "str",
       //       },
       //     ],
       //     isWeak: false,
       //   },
-      //   1: {
-      //     TableName: "Employee",
+      //   34: {
+      //     TableName: "DEPARTMENT_Clocation",
+      //     TableType: "",
+      //     attributes: { Clocation: "str", DEPARTMENT_name: "str" },
+      //     primaryKey: ["Clocation", "DEPARTMENT_name"],
+      //     ForgeinKey: [
+      //       {
+      //         attributeName: "DEPARTMENT_name",
+      //         ForignKeyTable: "DEPARTMENT",
+      //         ForignKeyTableAttributeName: "name",
+      //         patricipaction: "full",
+      //         dataType: "str",
+      //       },
+      //     ],
+      //     isWeak: false,
+      //   },
+      //   12: {
+      //     TableName: "EMPLOYEE",
       //     TableType: "",
       //     attributes: {
-      //       0: ["ssn", "str", true, "text", "", 0, 100],
-      //       1: ["EmplyeeName", "int", false, "text", "", 0, 100],
+      //       last_name: "str",
+      //       middle_initis: "str",
+      //       first_name: "str",
+      //       address: "str",
+      //       salary: "float",
+      //       sex: "str",
+      //       status: "str",
+      //       birth_dat: "str",
+      //       ssn: "str",
+      //       start_date: "datetime",
+      //       DEPARTMENT_Employed_name: "str",
+      //       EMPLOYEE_Supervision_: "str",
       //     },
       //     primaryKey: ["ssn"],
-      //     ForgeinKey: [],
+      //     ForgeinKey: [
+      //       {
+      //         attributeName: "DEPARTMENT_Employed_name",
+      //         ForignKeyTable: "DEPARTMENT",
+      //         ForignKeyTableAttributeName: "name",
+      //         patricipaction: "full",
+      //         dataType: "str",
+      //       },
+      //       {
+      //         attributeName: "EMPLOYEE_Supervision_",
+      //         ForignKeyTable: "EMPLOYEE",
+      //         ForignKeyTableAttributeName: "ssn",
+      //         patricipaction: "partial",
+      //         dataType: "str",
+      //       },
+      //     ],
+      //     isWeak: false,
+      //   },
+      //   24: {
+      //     TableName: "PROJECT",
+      //     TableType: "",
+      //     attributes: {
+      //       location: "str",
+      //       name: "str",
+      //       budget: "float",
+      //       DEPARTMENT_Assigned_name: "str",
+      //     },
+      //     primaryKey: ["name"],
+      //     ForgeinKey: [
+      //       {
+      //         attributeName: "DEPARTMENT_Assigned_name",
+      //         ForignKeyTable: "DEPARTMENT",
+      //         ForignKeyTableAttributeName: "name",
+      //         patricipaction: "partial",
+      //         dataType: "str",
+      //       },
+      //     ],
+      //     isWeak: false,
+      //   },
+      //   25: {
+      //     TableName: "DEPENDENT",
+      //     TableType: "",
+      //     attributes: {
+      //       sex: "str",
+      //       relatlonship: "str",
+      //       name: "str",
+      //       birth_date: "datetime",
+      //       Dependents_EMPLOYEE_: "str",
+      //     },
+      //     primaryKey: ["Dependents_EMPLOYEE_"],
+      //     ForgeinKey: [
+      //       {
+      //         attributeName: "Dependents_EMPLOYEE_",
+      //         ForignKeyTable: "EMPLOYEE",
+      //         ForignKeyTableAttributeName: "ssn",
+      //         patricipaction: "partial",
+      //         dataType: "str",
+      //       },
+      //     ],
+      //     isWeak: true,
+      //   },
+      //   35: {
+      //     TableName: "Works_EMPLOYEE_PROJECT",
+      //     TableType: "mTm",
+      //     attributes: {
+      //       start_date: "datetime",
+      //       hours: "int",
+      //       EMPLOYEE_: "str",
+      //       PROJECT_: "str",
+      //     },
+      //     primaryKey: ["EMPLOYEE_", "PROJECT_"],
+      //     ForgeinKey: [
+      //       {
+      //         attributeName: "EMPLOYEE_",
+      //         ForignKeyTable: "EMPLOYEE",
+      //         ForignKeyTableAttributeName: "ssn",
+      //         patricipaction: "full",
+      //         dataType: "str",
+      //       },
+      //       {
+      //         attributeName: "PROJECT_",
+      //         ForignKeyTable: "PROJECT",
+      //         ForignKeyTableAttributeName: "name",
+      //         patricipaction: "full",
+      //         dataType: "str",
+      //       },
+      //     ],
       //     isWeak: false,
       //   },
       // },
+      globalSchema: {},
       finalSchema: {},
       formData: {},
       errors: [],
@@ -518,6 +483,11 @@ export default {
       if (isValid) {
         // send request to server
         console.log("validation success");
+        let payload = {
+          finalSchema: this.finalSchema,
+          formData: this.formData,
+        };
+        this.$store.dispatch("validation/sendSchema", payload);
       } else {
         console.log("validation failed");
       }
@@ -621,8 +591,8 @@ export default {
       return this.errors.length == 0;
     },
   },
-  beforeMount() {
-    this.receivedSchema;
+  async beforeMount() {
+    await this.$store.dispatch("validation/getSchema");
     let entityIndex = 0;
     let invertedNamesList = {};
     for (let key in this.receivedSchema) {
@@ -709,7 +679,12 @@ export default {
         });
       }
     }
-    console.log("Mounting");
   },
+  computed: {
+    ...mapState({
+      receivedSchema: (state) => state.validation.schema
+    }),
+  },
+
 };
 </script>

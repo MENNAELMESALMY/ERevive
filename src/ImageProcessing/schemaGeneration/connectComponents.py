@@ -316,6 +316,8 @@ def removeContoursRelations(relations):
             relations[r].pop('bounding_box')
         if relations[r].get('contour_cardinality') is not None:
             relations[r].pop('contour_cardinality')
+        if relations[r].get('contour_participation') is not None:
+            relations[r].pop('contour_participation')
         if relations[r].get('paths') is not None:
             relations[r].pop('paths')
         for entity in relations[r]['entities']:
@@ -325,6 +327,8 @@ def removeContoursRelations(relations):
                 entity.pop('bounding_box')
             if entity.get('contour_cardinality') is not None:
                 entity.pop('contour_cardinality')
+            if entity.get('contour_participation') is not None:
+                entity.pop('contour_participation')
             if entity.get('paths') is not None:
                 entity.pop('paths')           
         

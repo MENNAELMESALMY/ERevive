@@ -143,7 +143,6 @@ src/ImageProcessing/multivaluesDebug/
 src/SearchEngine/glove_vectors.model.vectors.npy
 src/SearchEngine/glove_vectors.model
 Interface_Vue/createFrontProject/FrontCode/
-*.png
 src/NlpToSql/datasets/*
 src/NlpToSql/not_done_dict/*
 src/SearchEngine/crawler

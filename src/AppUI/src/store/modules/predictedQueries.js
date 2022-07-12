@@ -21,6 +21,7 @@ const state = {
   loadingTitle: "Image Processing is Running ....",
   queriesErrors: {},
   errorsClusters: [],
+  setSeeds: false,
 };
 
 const mutations = {
@@ -156,6 +157,16 @@ const actions = {
         console.log(error);
         commit("setQueriesErrors", error.response.data);
         router.push("/queriesErrors");
+      });
+  },
+  postAddSeeds({ state }) {
+    axios
+      .post("/seeds")
+      .then(() => {
+        state.setSeeds = true;
+      })
+      .catch((error) => {
+        console.log(error);
       });
   },
 };

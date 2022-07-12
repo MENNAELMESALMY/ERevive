@@ -130,27 +130,31 @@ export default {
     startCount(circularBar) {
       let percent = 0;
       let goal = circularBar.getAttribute("data-goal");
-      let timer = setInterval(() => {
-        percent += 1;
-        circularBar.style.background = `conic-gradient(#1D1E4E ${
-          percent * 3.6
-        }deg, #D3D3D3 ${percent * 3.6}deg)`;
-        if (percent == goal) {
-          clearInterval(timer);
-        }
-      }, 20);
+      if (goal > 0) {
+        let timer = setInterval(() => {
+          percent += 1;
+          circularBar.style.background = `conic-gradient(#1D1E4E ${
+            percent * 3.6
+          }deg, #D3D3D3 ${percent * 3.6}deg)`;
+          if (percent == goal) {
+            clearInterval(timer);
+          }
+        }, 20);
+      }
       window.removeEventListener("scroll", this.handleScroll);
     },
     startCountPercent(percentValue) {
       let percent = 0;
       let goal = percentValue.getAttribute("data-goal");
-      let timer = setInterval(() => {
-        percent += 1;
-        percentValue.innerHTML = percent + "%";
-        if (percent == goal) {
-          clearInterval(timer);
-        }
-      }, 20);
+      if (goal > 0) {
+        let timer = setInterval(() => {
+          percent += 1;
+          percentValue.innerHTML = percent + "%";
+          if (percent == goal) {
+            clearInterval(timer);
+          }
+        }, 20);
+      }
     },
   },
 };

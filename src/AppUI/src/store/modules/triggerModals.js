@@ -2,6 +2,8 @@ const state = {
   savedModal: false,
   deleteQueryModal: false,
   addQueryModal: false,
+  headerModal: "System Information",
+  toPageFromModal: "/uploadPage",
 };
 
 const mutations = {
@@ -13,6 +15,12 @@ const mutations = {
   },
   toggleAddQueryModal(state) {
     state.addQueryModal = !state.addQueryModal;
+  },
+  setHeaderModal(state, header) {
+    state.headerModal = header;
+  },
+  setToPageFromModal(state, page) {
+    state.toPageFromModal = page;
   },
 };
 export default {

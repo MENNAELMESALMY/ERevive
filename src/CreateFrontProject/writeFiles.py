@@ -841,9 +841,9 @@ requirments = [
     }
 ]
 ##########################
-# f = open('userInterfaceInfo.json','r')
-# requirments = json.load(f)
-# f.close()
+f = open('userInterfaceInfo.json','r')
+requirments = json.load(f)
+f.close()
 
 # create components
 for cluster_name,endpoints in c.items():
@@ -872,12 +872,13 @@ for cluster_name,endpoints in c.items():
  
     elif endpoint["method"] == "post":
       if is_single_entity:
-        print(cluster_name)
+        cluster_name = cluster_name.split('_')[0]
         createForm(requirments,cluster_name,endpoint, filePath)
 
-    # elif endpoint["method"] == "put":
-    #   filePath = componentsRoute + "edit_" +endpoint["endpoint_name"] + ".vue"
-    #   createForm(requirments,cluster_name,endpoint, filePath)
+    elif endpoint["method"] == "put":
+      filePath = componentsRoute + endpoint["endpoint_name"] + ".vue"
+      cluster_name = cluster_name.split('_')[0]
+      createForm(requirments,cluster_name,endpoint, filePath)
 
 #Index code generation
 with open('FrontCode/src/index.html', 'w') as f:

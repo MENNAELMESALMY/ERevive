@@ -1,0 +1,1 @@
+{"articles": ["aid", "textbody", "timeatamp", "title", "users_writes_userid"], "comments": ["articles_has_aid", "cid", "text", "timestamp", "users_posts_userid"], "users": ["email", "name", "userid"]}

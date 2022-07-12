@@ -136,6 +136,10 @@ export default {
     },
     async processImage() {
       if (this.imageUploaded) {
+        this.$store.commit(
+          "predictedQueries/setLoadingTitle",
+          "Image Processing is Running ..."
+        );
         this.$router.push("/loadingPage");
         const image = document.getElementById("uploadedImage");
         let imageBlob = await this.getImageBlob(image.src);

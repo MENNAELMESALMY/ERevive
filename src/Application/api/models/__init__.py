@@ -1,4 +1,3 @@
-from .Login import Login
-from .Role import Role
-from .Employee import Employee
-from .Department import Department
+from .articles import articles
+from .comments import comments
+from .users import users

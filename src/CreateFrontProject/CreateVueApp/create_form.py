@@ -12,7 +12,7 @@ def createForm (requirments,cluster_name,endpoint,filePath):
     <div class="form">
         <form @submit.prevent="submitForm">
         ''') 
-        for req in requirments:
+        for req in requirments[cluster_name]:
             file.write(f'''
             <h2>{req["field_name"]}</h2>
             ''')
@@ -317,7 +317,7 @@ export default {
     data(){
         return{
         ''')
-        for req in requirments:
+        for req in requirments[cluster_name]:
             if req["field_type"] == "text" or req["field_type"] == "email" or req["field_type"] == "tel" or req["field_type"] == "url" or req["field_type"] == "password" or req["field_type"] == "number":
                 file.write(f'''
             {req["field_name"].replace(' ','_')}:"",
@@ -349,7 +349,7 @@ export default {
         submitForm(){
             let formData = {
         ''')
-        for req in requirments:
+        for req in requirments[cluster_name]:
             if req["field_type"] == "text" or req["field_type"] == "email" or req["field_type"] == "tel" or req["field_type"] == "url" or req["field_type"] == "password" or req["field_type"] == "number":
                 file.write(f'''
             {req["field_name"].replace(' ','_')}:this.{req["field_name"].replace(' ','_')},

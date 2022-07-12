@@ -114,6 +114,11 @@ const actions = {
       });
   },
   postStartApplication({ commit, state }) {
+    console.log("systemName", state.systemName);
+    console.log("systemDescription", state.systemDescription);
+    console.log("databaseName", state.databaseName);
+    console.log("databaseUsername", state.databaseUsername);
+    console.log("databasePassword", state.databasePassword);
     let systemData = {
       forms: state.formData,
       systemData: {

@@ -68,12 +68,14 @@ export default {
   methods: {
     startCount(element) {
       let goal = element.getAttribute("data-goal");
-      let count = setInterval(() => {
-        element.textContent++;
-        if (element.textContent == goal) {
-          clearInterval(count);
-        }
-      }, 10);
+      if (goal > 0) {
+        let count = setInterval(() => {
+          element.textContent++;
+          if (element.textContent == goal) {
+            clearInterval(count);
+          }
+        }, 10);
+      }
     },
   },
   props: {

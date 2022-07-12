@@ -5,14 +5,12 @@ import json
 import re
 import datetime
 import itertools
-from turtle import st
-from numpy import positive
-from sqlalchemy.sql import case
+import timeit
 from nltk.stem import PorterStemmer
 from nltk.corpus import stopwords
 from sqlalchemy import create_engine
-from textblob import Sentence
 from faker_classes import faker_classes_mapper , pk_faker_classes
+
 
 def clean_word(colName , stopwords):
     #remove names with one character 
@@ -107,69 +105,32 @@ def get_keys_attrs(model):
 
 
 def mapping_model_to_faker(stop_words, classes, attributes, primary_keys):
-    #clean words
-    #try excat match 
-    #try NER
-    #put defaults
-    
     attr_pk = (attributes.copy())
     attr_pk.update(primary_keys)
     attr_pk_mapping= {}
 
-    # cleaned = [' '.join(clean_word(k,stop_words)) for k in attr_pk.keys()]
-    # sentence = ' '.join(cleaned)
-    # doc = nlp(sentence)
-    # print("//////////////////////////////////")
-    # print(sentence)
-    # for ent in doc.ents:
-    #     print("-->",ent.text, ent.label_)
-
-
     for attr , datatype in attr_pk.items():
         attr_cleaned = clean_word(attr,stop_words)
         max_score,best_match = 0,None
-        #print("//////////////////////////////")
+
         for faker_class in faker_classes_mapper.keys():
             faker_class_cleaned = clean_word(faker_class,stop_words)
             score = match(attr_cleaned,faker_class_cleaned)
             
             value = faker_classes_mapper[faker_class]()
             same_type = isinstance(value,classes[datatype])
-        
-            # #////////////////
-            # a = ' '.join(attr_cleaned)
-            # b = ' '.join(faker_class_cleaned)
-            # seq = difflib.SequenceMatcher(None,a,b)
-            # d = seq.ratio()*100
-            # if d >= 50 and same_type:print(f"({a} , {b}) --> {d}")
-            # #/////////////////
 
             if score > max_score and same_type:
                 max_score = score
                 best_match = faker_class
         
-        if not best_match: #default
+        if not best_match:
             best_match = datatype
-
-        #print(f"best match is ({attr},{best_match}) --> {max_score}")
 
         attr_pk_mapping[attr] = best_match
  
     return attr_pk_mapping
 
-
-def get_pk_data(primary_keys,attr_pk_mapping,num_of_records):
-    values = {}
-    for i,pk in enumerate(primary_keys):
-        values[pk] = []
-        faker_class = attr_pk_mapping[pk]
-        for _ in range(num_of_records):
-            value = pk_faker_classes[faker_class]()
-            if isinstance(value,str) or isinstance(value,datetime.datetime):
-                values[pk].append(str(value))
-            else:
-                values[pk].append(value)
-    return values
 
 def fill_model_statment(num_of_records, attr_pk_mapping, primary_keys):
     pk = primary_keys
@@ -194,10 +155,24 @@ def fill_model_statment(num_of_records, attr_pk_mapping, primary_keys):
     return values,stmt[:-2]
 
 
+def get_pk_data(primary_keys,attr_pk_mapping,num_of_records):
+    values = {}
+    for i,pk in enumerate(primary_keys):
+        values[pk] = []
+        faker_class = attr_pk_mapping[pk]
+        for _ in range(num_of_records):
+            value = pk_faker_classes[faker_class]()
+            if isinstance(value,str) or isinstance(value,datetime.datetime):
+                values[pk].append(str(value))
+            else:
+                values[pk].append(value)
+    return values
+
+
 def get_fk_data(model,pks_data,num_of_records):
     stmt = ""
     values = []
-    for i,fk in enumerate(model):
+    for fk in model:
         stmt += fk["attributeName"] + ', '
         table = fk["ForignKeyTable"]
         attr = fk["ForignKeyTableAttributeName"]
@@ -205,35 +180,6 @@ def get_fk_data(model,pks_data,num_of_records):
         pk = random.choices(pk , k = num_of_records)
         values.append(pk)
     return values,stmt[:-2]
-
-        
-
-
-# def fill_model_statment(num_of_records, model_name, attr_pk_mapping, primary_keys, attributes):
-#     pk = primary_keys.keys()
-    
-#     statment = f"INSERT INTO {model_name} ("
-#     values = "("
-#     for attr,faker_class in attr_pk_mapping.items():
-#         statment += "{0}, ".format(attr)
-    
-#     for _ in range(num_of_records):
-#         for attr,faker_class in attr_pk_mapping.items():
-#             if attr in pk:
-#                 value = pk_faker_classes[faker_class]()
-#             else:
-#                 value = faker_classes_mapper[faker_class]()
-
-#             if isinstance(value,str) or isinstance(value,datetime.datetime):
-#                 values += "'{0}', ".format(value)
-#             else:
-#                 values += "{0}, ".format(value)
-#         values = values[:-2] + ') , ('
-    
-#     statment = statment[:-2] + ') VALUES '+values[:-4]+';'
-#     return statment
-
-    
 
 
 def __main__():
@@ -248,15 +194,10 @@ def __main__():
         'datetime':datetime.datetime
     }
 
-    # l1 = [[1,2,5,4],[4,5,2,6],[4,2,5,6]]
-    # l2 = [4,5,2,6]
-    # print(list(zip(*l1)))
-    
-    #nlp = spacy.load("en_core_web_sm")
     stop_words = stopwords.words('english')
     attr_pk_mapping = {}
     models_fk = {}
-    num_of_records = 5
+    num_of_records = 100
 
     user="root"
     password="admin<3Super"
@@ -265,7 +206,10 @@ def __main__():
     engine = create_engine(connection_string)
 
     pks_data = {}
+    stmts = []
     with engine.begin() as conn:
+        start = timeit.default_timer()
+
         #insert attrs and primary keys
         for model_name , model in models.items():
             #print("//////////////////////////////////////")
@@ -273,7 +217,18 @@ def __main__():
             models_fk[model_name] = foriegn_keys
             attr_pk_mapping[model_name] = mapping_model_to_faker(stop_words, classes, attributes, primary_keys)
             pks_data[model_name] = get_pk_data(primary_keys,attr_pk_mapping[model_name],num_of_records)
-            
+
+        end = timeit.default_timer()  
+        with open("timing.txt","w+") as file:
+            file.write(f"time for primary keys data {end-start} \n") 
+        start = timeit.default_timer()
+        
+        with open("./fk.json","w+") as file:
+            json.dump(models_fk , file)    
+
+        with open("./mapped_to_faker.json","w+") as file:
+            json.dump(attr_pk_mapping , file)
+
         #print(pks_data)
         for model_name,model in models.items():
             #print("//////////////////////////////////////")
@@ -285,7 +240,7 @@ def __main__():
             #if len(fk_data): row_values.extend(fk_data)
             row_values = list(zip(*row_values))
 
-            insert_stmt = "INSERT INTO {0} (".format(model_name)
+            insert_stmt = "INSERT INTO {0}.{1} (".format(database,model_name)
             for pk in model["primaryKey"]:
                 insert_stmt +=  pk + ', '
 
@@ -295,7 +250,12 @@ def __main__():
             insert_stmt += ") VALUES {0};".format(str(row_values)[1:-1])
             #print(insert_stmt)
 
+            end = timeit.default_timer()
+            with open("timing.txt","a+") as file:
+                file.write(f"time for adding {model_name} attr and pk data {end-start} \n") 
+            start = timeit.default_timer()
             # print(insert_stmt)
+            stmts.append(insert_stmt.replace("),","),\n").replace("VALUES","\nVALUES\n") + "\n")
             try:    
                 conn.execute(insert_stmt)
                 #conn.execute("delete from {0}".format(model_name))
@@ -303,6 +263,11 @@ def __main__():
             except Exception as e:
                 print(e)
                 #continue
+
+            end = timeit.default_timer()
+            with open("timing.txt","a+") as file:
+                file.write(f"time for inserting {model_name} attr and pk data to DB {end-start} \n") 
+            start = timeit.default_timer()
 
         #foriegn keys
         for model_name,model in models.items():
@@ -315,114 +280,42 @@ def __main__():
             if len(fk_data): row_values.extend(fk_data)
             row_values = list(zip(*row_values))
 
-            insert_stmt = "INSERT INTO {0} (".format(model_name)
+            insert_stmt = "INSERT INTO {0}.{1} (".format(database,model_name)
             for pk in model["primaryKey"]:
                 insert_stmt +=  pk + ', '
 
             insert_stmt = insert_stmt[:-2]
             if fk_stmt: insert_stmt += ", " + fk_stmt
-            insert_stmt += ") VALUES {0} ".format(str(row_values)[1:-1])
-            insert_stmt += "ON DUPLICATE KEY UPDATE "
+            insert_stmt += ") \nVALUES \n {0} ".format(str(row_values)[1:-1].replace("),","),\n"))
+            insert_stmt += "\nON DUPLICATE KEY UPDATE \n"
 
             fks_names = fk_stmt.split(', ')
             #print(fks_names)
             for fk_name in fks_names:
-                insert_stmt +=  "{0} = VALUES({0}), " .format(fk_name)
+                insert_stmt +=  " {0} = VALUES({0}),\n" .format(fk_name)
             insert_stmt = insert_stmt[:-2] +';'
 
-            #print(insert_stmt)
-
-            #pk_data.extend(fk_data)
-            #values = list(zip(*pk_data))
-            #print(row_values)
-            #stmt = "INSERT into comments (cid, articles_has_aid, users_posts_userid) VALUES {0} ".format(str(values)[1:-1])
-            #stmt += "ON DUPLICATE KEY UPDATE users_posts_userid = VALUES(users_posts_userid), articles_has_aid = VALUES(articles_has_aid);"
-
+            end = timeit.default_timer()
+            with open("timing.txt","a+") as file:
+                file.write(f"time for adding {model_name} fk data {end-start} \n") 
+            start = timeit.default_timer()
+            
+            
+            stmts.append(insert_stmt + "\n")
             try:
                 conn.execute(insert_stmt)
                 print(f"inserted foriegn keys in model {model_name} successfully")
             except Exception as e:
                 print(e)
-        '''
-        
-        from sqlalchemy.sql import case
-
-        query(MyTable).filter(
-            MyTable.col1.in_(payload)
-        ).update({
-            MyTable.col2: case(
-                payload,
-                value=MyTable.col1,
-            )
-        }, synchronize_session=False)
-        col2=CASE mytable.col1
-                WHEN 'x' THEN 'y'
-                WHEN 'a' THEN 'b'
-                WHEN 'c' THEN 'd'
-        '''
-    
-        
-        # #insert foriegn keys
-        # for model_name , fks in models_fk.items():
-        #     if len(fks) == 0:continue 
-        #     print("/////////////////")
-        #     print(model_name)
-        #     insert_stmt = "INSERT INTO {0} (".format(model_name)
-        #     values = []
-        #     for fk_name , fk_object in fks.items(): 
-        #         attr = fk_object["ForignKeyTableAttributeName"]
-        #         table = fk_object["ForignKeyTable"]
-                
-        #         select_stmt = "SELECT {0} FROM {1};".format(attr,table)
-        #         try:
-        #             results = list(conn.execute(select_stmt).fetchall())
-        #             insert_stmt += "{0}, ".format(fk_name)
-        #         except Exception as e:
-        #             print(e)
-
-        #         results = list(itertools.chain(*results))
-        #         #print("results",results)
-        #         results = random.choices(results , k = num_of_records)
-        #         values.append(results)
-
-                
-        #     #print("values",values)
-        #     if len(values) > 1:
-        #         values = tuple(zip(*values))
-        #         #values = str(values)[1:-1]
-        #     else:
-        #         values = tuple(zip(values[0]))
-        #         #values = str(values).replace(",)",")")[1:-1]
-
-
-        #     pks = models[model_name]["primaryKey"]
-        #     pk_stmt = ",".join(pks)
-        #     select_stmt = "SELECT {0} FROM {1};".format(pk_stmt,model_name)
-        #     results = tuple(conn.execute(select_stmt).fetchall())[:num_of_records]
-        #     print("pk",results)
-        #     results = tuple(zip(values,results))
-        #     print("////////////////////")
-        #     print(results)
-        #     print("////////////////////")
-        #     print("zipped",values)
-        #     insert_stmt = insert_stmt[:-2] + ')'
-        #     insert_stmt += " VALUES "+ values+";"
-        #     print(insert_stmt)
-
-        #     # try:    
-        #     #     conn.execute(insert_stmt)
-        #     #     print(f"inserted in model {model_name} successfully")
-        #     # except Exception as e:
-        #     #     print(e)
-        #     #     continue
-
             
+            end = timeit.default_timer()
+            with open("timing.txt","a+") as file:
+                file.write(f"time for inserting attr and fk data to DB {end-start} \n") 
 
-
-    with open("./fk.json","w+") as file:
-        json.dump(models_fk , file)    
-
-    with open("./mapped_to_faker.json","w+") as file:
-        json.dump(attr_pk_mapping , file)
+        
+    stmts = '\n'.join(stmts)
+    with open("seeds.sql","w+") as file:
+        file.write(stmts)
     
+
 __main__()

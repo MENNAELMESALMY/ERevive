@@ -52,6 +52,7 @@ from utils import convert_db_model_to_restx_model , serialize \n\
         body_params = []
         query_params = []
         ui_response_model = {}
+        update_model = "data = request.json.copy()\n"
         self.crud_clusters.update({model.lower():[]})
         for attribute in attributes:
             terminal_command = ','
@@ -62,6 +63,7 @@ from utils import convert_db_model_to_restx_model , serialize \n\
             if attribute in primary_keys:
                 parser_create_string+= "{0}_id_parser.add_argument('{1}',type={2},location = 'args')\n".format(model.lower(),attribute,type)
                 query_params.append((attribute,type))
+                update_model+="            data.pop('{0}',None)\n".format(attribute)
                 put_filter_primary_keys+="{0}.{1}==request.json.get('{1}') and ".format(model,attribute)
                 delete_filter_primary_keys+="{0}.{1}=={2}_id_parser.parse_args().get('{1}') and ".format(model,attribute,model.lower())
             body_params.append((attribute,type))
@@ -92,28 +94,28 @@ from utils import convert_db_model_to_restx_model , serialize \n\
             "endpoint_name":"create_"+endpoint_name.lower(),
             "is_single_entity":True
          },
-        # {
-        #     "method": "put",
-        #     "url": endpoint_url,
-        #     "queryParams": [],
-        #     "bodyParams": body_params,
-        #     "response": ui_response_model,
-        #     "ui_name": "update_"+ui_name,
-        #     "cluster_name": model,
-        #     "endpoint_name":"update_"+endpoint_name,
-        #     "is_single_entity":True
-        # },
-        # {
-        #     "method": "delete",
-        #     "url": endpoint_url,
-        #     "queryParams": query_params,
-        #     "bodyParams": [],
-        #     "response": ui_response_model,
-        #     "ui_name": "delete_"+ui_name,
-        #     "cluster_name": model,
-        #     "endpoint_name":"delete_"+endpoint_name,
-        #     "is_single_entity":True
-        # },
+        {
+            "method": "put",
+            "url": endpoint_url.lower(),
+            "queryParams": [],
+            "bodyParams": body_params,
+            "response": ui_response_model,
+            "ui_name": "update_"+ui_name.lower(),
+            "cluster_name": model.lower(),
+            "endpoint_name":"update_"+endpoint_name.lower(),
+            "is_single_entity":True
+        },
+        {
+            "method": "delete",
+            "url": endpoint_url.lower(),
+            "queryParams": query_params,
+            "bodyParams": [],
+            "response": ui_response_model,
+            "ui_name": "delete_"+ui_name.lower(),
+            "cluster_name": model.lower(),
+            "endpoint_name":"delete_"+endpoint_name.lower(),
+            "is_single_entity":True
+        },
         ]
         crud_out = {
             model.lower():endpoint_object
@@ -152,7 +154,8 @@ class {0}Api(Resource):\n\
     @{1}_namespace.expect({1}_model) \n\
     def put(self):\n\
         try:\n\
-            db.session.query({0}).filter({4}).update(request.json) \n\
+            {6}\n\
+            db.session.query({0}).filter({4}).update(data) \n\
             db.session.commit() \n\
             {1}s = db.session.query({0}).filter({4}).first() \n\
             return {1}s.serialize() , 200 \n\
@@ -171,7 +174,7 @@ class {0}Api(Resource):\n\
             print(e)\n\
             return str(e) , 400\n\
 \n\
-'.format(model,model.lower(),model_create_string,parser_create_string,put_filter_primary_keys,delete_filter_primary_keys)
+'.format(model,model.lower(),model_create_string,parser_create_string,put_filter_primary_keys,delete_filter_primary_keys,update_model)
     
         
     def create_api_namespaces(self):

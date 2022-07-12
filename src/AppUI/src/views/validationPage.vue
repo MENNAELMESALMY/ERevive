@@ -337,7 +337,7 @@ export default {
           });
         }
       }
-      // console.log("finalSchema", this.finalSchema);
+      console.log("finalSchema", this.finalSchema);
       let isValid = this.check_validation();
       if (isValid) {
         // send request to server

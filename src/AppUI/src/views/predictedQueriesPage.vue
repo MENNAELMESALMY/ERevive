@@ -4,13 +4,16 @@
     <div class="subTitleCluster">{{ currentClusterName }}</div>
     <div class="content">
       <queries-card
-        v-for="(query, i) in queries"
+        v-for="(query, i) in predictedClusters[this.currentClusterName]"
         :key="i"
-        :query="query.query"
-        :queryName="query.name"
+        :query="query[0].query"
+        :queryName="query[0].ui_name"
         :id="i.toString()"
       />
-      <div class="emptyQueries" v-if="queries.length == 0">
+      <div
+        class="emptyQueries"
+        v-if="predictedClusters[this.currentClusterName].length == 0"
+      >
         <img src="../../public/assets/box.png" alt="emptyBox" />
         <p class="subTitle">OOPS ! No Predicted Queries Found</p>
       </div>
@@ -21,7 +24,7 @@
       </button>
       <button
         class="customBtn"
-        v-if="queries.length > 0"
+        v-if="predictedClusters[this.currentClusterName].length > 0"
         @click="startApplication"
       >
         Proceed
@@ -99,16 +102,8 @@ import { mapState } from "vuex";
 import queriesCard from "../components/queriesCard.vue";
 export default {
   name: "predictedQueriesPage",
-  data() {
-    return {
-      queries: [],
-    };
-  },
   components: {
     queriesCard,
-  },
-  mounted() {
-    this.queries = this.predictedClusters[this.currentClusterName];
   },
   computed: {
     ...mapState({

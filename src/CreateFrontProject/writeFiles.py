@@ -409,7 +409,8 @@ export default {
 }
 .rightContent{
     width: calc(100% - 450px);
-    height:100vh;
+    height: 100%;
+    min-height:100vh;
 }
 </style>
   ''')

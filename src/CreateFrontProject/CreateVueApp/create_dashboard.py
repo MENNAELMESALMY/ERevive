@@ -25,21 +25,31 @@ def generate_dashboard(cluster_name,endpoint,directory,
         elif operator == 'like':operator = 'regex matching (case invariant)'
         elif operator == 'not like':operator = 'regex matching (case invariant)'
         if not operator: operator = 'equal to'
+
+        
         if datatype == 'str':datatype = 'text'
         elif datatype == 'int' or datatype == 'float':datatype = 'number'
         elif datatype=='bool':datatype = 'checkbox'
         elif datatype == 'date':datatype = 'date'
         else: datatype = 'text'
+        dashboard_string += '\t\t<div class="input_section">\n'
         dashboard_string += '\t\t<div class="labels">\n'
-        if aggregate: dashboard_string += '\t\t<label> '+ aggregate+'</label><br>\n'
-        dashboard_string += '\t\t<label> '+ operator +'</label>\n'
         dashboard_string += '\t\t<label>'+ param +'</label>\n'
+        if aggregate: dashboard_string += '\t\t<label> aggregate '+ aggregate+'</label><br>\n'
+        dashboard_string += '\t\t<label> operation '+ operator +'</label>\n'
         dashboard_string += '\t\t</div>\n'
         dashboard_string += '\t\t<div>\n'
-        dashboard_string += f'\t\t<input type="{datatype}" v-model="{param}" class="{datatype}" required>\n'
+
+        if datatype=='checkbox':
+            dashboard_string += f'\t\t<input type="{datatype}" v-model="{param}" class="{datatype}">\n' 
+        else:
+            dashboard_string += f'\t\t<input type="{datatype}" v-model="{param}" class="{datatype}" required>\n'
+        
         if datatype == 'checkbox':
             dashboard_string += '\t\t<label>Set Value</label>\n'
         dashboard_string += '\t\t</div>\n'
+        dashboard_string += '\t\t</div>\n'
+
     dashboard_string += '\t\t</div>\n'  
     dashboard_string +='''
         <input type="submit"
@@ -52,16 +62,19 @@ def generate_dashboard(cluster_name,endpoint,directory,
         <div class="table_nav">
         '''
     dashboard_string += '<h2>'+cluster_name+'</h2>'
-    if is_single_entity:
-        dashboard_string += f'''
-        <div class="buttons">
-            <router-link to="{post_route}" class="button">Add +</router-link>
-            <router-link to="{put_route}" class="button">edit</router-link>
-            <button class="button" @click='delete_entity'>delete</button>
-		</div>
-        '''
+    # if is_single_entity:
+    #     dashboard_string += f'''
+    #     <div class="buttons">
+    #         <router-link to="{post_route}" class="button">Add +</router-link>
+    #         <router-link to="{put_route}" class="button">edit</router-link>
+    #         <button class="button" @click='delete_entity'>delete</button>
+	# 	</div>
+    #     '''
     dashboard_string +=    '''
     </div>
+    '''
+    dashboard_string += '<h3>'+endpoint_name+'</h3>'
+    dashboard_string += '''
     <div>
         <table class="dashboard_table">
         <tr v-if='dashboard_data.length>0'>\n'''

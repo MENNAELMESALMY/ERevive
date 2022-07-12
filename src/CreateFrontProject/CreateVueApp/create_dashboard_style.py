@@ -81,10 +81,13 @@ def create_dashboard_style(route):
         th,td{
             padding: 10px 3px;
          }
-        .data_rows{
+        .data_rows {
             border-bottom: 1px solid rgba(175, 175, 175, 0.889);
             margin:15px;
             transition-duration: 0.4s;
+            i {
+                cursor: pointer;
+            }
          }
         .data_rows:hover {
             box-shadow: 0 5px 15px rgb(168, 167, 167);

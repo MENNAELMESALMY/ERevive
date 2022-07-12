@@ -1,5 +1,5 @@
 def generate_dashboard(cluster_name,endpoint,directory,
-    is_single_entity=False,delete_route='',put_route='',post_route=''):
+    is_single_entity,delete_route,delete_keys,put_route,put_keys):
 
     table_headers_orig = list(endpoint['response'].keys())
 
@@ -61,14 +61,6 @@ def generate_dashboard(cluster_name,endpoint,directory,
         <div class="table_nav">
         '''
     dashboard_string += '<h2>'+cluster_name+'</h2>'
-    if is_single_entity:
-        dashboard_string += f'''
-        <div class="buttons">
-            <router-link to="{post_route}" class="button">Add +</router-link>
-            <router-link to="{put_route}" class="button">edit</router-link>
-            <button class="button" @click='delete_entity'>delete</button>
-		</div>
-        '''
     dashboard_string +=    '''
     </div>
     <div>
@@ -80,6 +72,28 @@ def generate_dashboard(cluster_name,endpoint,directory,
     dashboard_string +=  "<tr v-for='(row,i) in dashboard_data' :key='i' class='data_rows'>\n"
     for header in table_headers_orig:
         dashboard_string += '\t\t\t<td>{{row.' + header + '}}</td>\n'
+    
+    if is_single_entity:
+        dashboard_string += f'''
+                <td>
+                    <router-link :to="{put_route}/'''
+
+        for idx,key in enumerate(put_keys):
+            dashboard_string += f'row.{key}'
+            if idx != len(put_keys)-1:
+                dashboard_string += "'_'"
+        # dashboard_string += 'row.is_single_entity"'
+        dashboard_string +='''class="button">
+                        <i class="fa fa-edit"></i>
+                    </router-link>
+                </td>'''
+        dashboard_string += '''
+                <td>
+                    <i @click='delete_object(row.is_single_entity)' class="fa fa-trash" aria-hidden="true">
+                    </i>
+                </td>
+                '''
+
     dashboard_string += '\t\t</tr>'
     dashboard_string += '''
         </table>
@@ -118,6 +132,14 @@ def generate_dashboard(cluster_name,endpoint,directory,
     for param,_,_,_ in query_params:
         dashboard_string += "'"+param+"'" +': this.' + param.replace('.','_').replace(' ','_') + ',\n\t\t'
 
+    dashboard_string += '''
+      });
+    },
+
+    delete_object(id) {
+    '''
+    dashboard_string+= 'this.$store.dispatch("'+\
+        cluster_name +'/'+endpoint_name +'",\n\t\t {id:id\n\t\t'
     dashboard_string += '''
       });
     }

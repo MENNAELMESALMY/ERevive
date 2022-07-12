@@ -40,16 +40,13 @@ def load_model():
 def rankQueriesSimilarities(quiries_keywords,quiries,er):
     model = load_model()
     quiries_scores = []
-    print(er)
-    er_list = []
+    er_keys = []
     for keyword in er:
         try:
-            er_list.append(model.get_vector(keyword))
+            er_keys.append(model.get_vector(keyword))
         except Exception as e:
-            print(e)
             continue
-    er = er_list
-
+    er = er_keys
     er_mat = np.array(er).T
     filtered_quiries=[]
     for idx,q in enumerate(quiries):
@@ -384,7 +381,7 @@ def rankCluster(cluster,queries,ngrams,unigram):
         getAttrsProps(whereAttrs,"whereScore",query,whereAttrsNgrams,unigram["whereAtrrsDict"]) 
         getAttrsProps(selectAttrs,"selectScore",query,selectAttrsNgrams,unigram["selectAttrsDict"])
         cluster_queries.append(query)
-    sorted_queries = sorted(cluster_queries, key=lambda k: k['selectScore']+k['whereScore'], reverse=True)
+    sorted_queries = sorted(cluster_queries, key=lambda k: k['whereScore'], reverse=True)
     return list(sorted_queries)
 def rankTopk(ranked_queries,maxNumOfQueries):
     entitiesGrams = loadEntitiesGrams()

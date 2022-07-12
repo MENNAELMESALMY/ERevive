@@ -1,6 +1,6 @@
 import json
 import tracemalloc
-from .queryConstruction import constructQuery, queryStructure
+from .queryConstruction import constructQuery, prepareClusters, queryStructure
 from .globalVars import *
 import timeit
 from collections import Counter
@@ -23,7 +23,7 @@ def getMappedQueries(schemaGraph,rankedQueriesBySimilarity,testSchema,entityDict
     for q in rankedQueriesBySimilarity:
         mappedEntites, mappedAttributes, goals,mappedEntitesDict,bestJoin =  mapToSchema(schemaGraph,q[0],testSchema,entityDict,schemaEntityNames)
         coverage = queryCoverage(mappedAttributes)
-        query = constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,goals,q[0],bestJoin,testSchema)
+        query = constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,goals,q[0],bestJoin)
                
         queries.append(query)
         #print("mappedAttributes: ",mappedAttributes)
@@ -45,7 +45,6 @@ def outQueries(outFileQueries,outFileClusters,allQueries):
     for cluster in allQueries:
         clusterQueries = []
         for query in cluster["queries"]:
-            #print(query)
             clusterQueries.append([query,queryStructure(query),query["origQuery"]["query"]])
         finalClusters.append(clusterQueries)
 
@@ -133,11 +132,24 @@ def suggest_queries(testSchema):
     entityDict = constructDictionary(testSchema)
     queries = getMappedQueries(schemaGraph,rankedQueriesBySimilarity,testSchema,entityDict,schemaEntityNames)
     clusteredQueries = getClusteredQueries(queries)
-    mergedClusters = getMergdClusters(clusteredQueries,queries)
+
+    mergedClusters = getMergdClusters(clusteredQueries,queries,testSchema)
+    mergedClusters = getMergdClusters(mergedClusters,queries,testSchema)
+    
     rankedQueries = getRankedQueries(mergedClusters,queries)
     outQueries("finalMergedQueries.json","finalMergedClusters.json",rankedQueries)
-    rankedQueries = getRankedQueries(clusteredQueries,queries)
-    outQueries("finalQueries.json","finalClusters.json",rankedQueries)
+
+
+    return rankedQueries , schemaGraph , testSchema , entityDict , schemaEntityNames
+
+def getMappedQuery(schemaGraph,query,testSchema,entityDict,schemaEntityNames):
+    mappedEntites, mappedAttributes, goals,mappedEntitesDict,bestJoin =  mapToSchema(schemaGraph,query,testSchema,entityDict,schemaEntityNames)
+    coverage = queryCoverage(mappedAttributes)
+    query = constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,goals,query,bestJoin)
+    return query
+    
+
+    
 
 
 # handle alias nada,nihal

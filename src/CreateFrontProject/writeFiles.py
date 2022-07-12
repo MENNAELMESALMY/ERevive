@@ -758,7 +758,7 @@ requirments = [
     }
 ]
 ##########################
-# f = open('../userInterfaceInfo.json','r')
+# f = open('userInterfaceInfo.json','r')
 # requirments = json.load(f)
 # f.close()
 

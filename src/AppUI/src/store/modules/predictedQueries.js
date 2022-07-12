@@ -36,46 +36,48 @@ const mutations = {
   },
   deleteQuery(state, queryObject) {
     let queries = state.predictedClusters[state.currentClusterName];
-    queries.filter(
+    state.predictedClusters[state.currentClusterName] = queries.filter(
       (item) =>
-        item.ui_name !== queryObject.queryName &&
-        item.query[0] !== queryObject.query
+        item[0].ui_name !== queryObject.queryName &&
+        item[0].query !== queryObject.query
+    );
+
+    console.log(
+      "state.predictedClusters[state.currentClusterName]",
+      state.predictedClusters[state.currentClusterName]
     );
   },
   editQuery(state, queryObject) {
     let queries = state.predictedClusters[state.currentClusterName];
     queries.map((item) => {
       if (
-        item.ui_name == queryObject.oldQueryName &&
-        item.query[0] == queryObject.oldQuery
+        item[0].ui_name == queryObject.oldQueryName &&
+        item[0].query == queryObject.oldQuery
       ) {
-        item.query[0] = queryObject.query;
-        item.ui_name = queryObject.queryName;
-        item.is_updated = true;
+        item[0].query = queryObject.query;
+        item[0].ui_name = queryObject.queryName;
+        item[0].is_updated = true;
       }
     });
   },
   addNewQuery(state, queryObject) {
-    let queries = state.predictedClusters[state.currentClusterName];
-    let copiedObject = queries[0];
     let newObject = {
       ui_name: queryObject.queryName,
-      query: [queryObject.query],
-      is_updated: false,
-      ...copiedObject,
+      query: queryObject.query,
+      is_updated: true,
     };
-    queries.push(newObject);
+    state.predictedClusters[state.currentClusterName].push([newObject, {}]);
   },
   setCurrentCluster(state, clusterName) {
     state.currentClusterName = clusterName;
   },
   setSearchEngineQueries(state, clusters) {
-    state.testSchema = clusters.searchOut.testSchema;
-    state.schemaGraph = clusters.searchOut.schemaGraph;
-    state.entityDict = clusters.searchOut.entityDict;
-    state.schemaEntityNames = clusters.searchOut.schemaEntityNames;
-    state.clusters = Object.keys(clusters.searchOut.clusters);
-    state.predictedClusters = clusters.searchOut.clusters;
+    state.testSchema = clusters.testSchema;
+    state.schemaGraph = clusters.schemaGraph;
+    state.entityDict = clusters.entityDict;
+    state.schemaEntityNames = clusters.schemaEntityNames;
+    state.clusters = Object.keys(clusters.clusters);
+    state.predictedClusters = clusters.clusters;
   },
   setAppFinished(state, finished) {
     state.appFinished = finished;
@@ -110,6 +112,29 @@ const actions = {
         console.log(error);
       });
   },
+  postStartApplication({ commit, state }) {
+    let systemData = {
+      forms: state.formData,
+      systemData: {
+        systemName: state.systemName,
+        systemDescription: state.systemDescription,
+        databaseName: state.databaseName,
+        databaseUsername: state.databaseUsername,
+        databasePassword: state.databasePassword,
+      },
+      clusters: state.predictedClusters,
+      testSchema: state.testSchema,
+    };
+    axios
+      .post("/application", systemData)
+      .then(() => {
+        commit("setAppFinished", true);
+        router.push("/lastPage");
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  },
   postValidate({ commit, state }) {
     let updatedClusters = {
       testSchema: state.testSchema,
@@ -124,35 +149,13 @@ const actions = {
         if (response.status == 200) {
           commit("setLoadingTitle", "Creating Application ...");
           router.push("/loadingPage");
-          this.postStartApplication();
+          this.dispatch("predictedQueries/postStartApplication");
         }
       })
       .catch((error) => {
         console.log(error);
         commit("setQueriesErrors", error.response.data);
         router.push("/queriesErrors");
-      });
-  },
-  postStartApplication({ commit, state }) {
-    let systemData = {
-      forms: state.formData,
-      systemData: {
-        systemName: state.systemName,
-        systemDescription: state.systemDescription,
-        databaseName: state.databaseName,
-        databaseUsername: state.databaseUsername,
-        databasePassword: state.databasePassword,
-      },
-      clusters: state.predictedClusters,
-    };
-    axios
-      .post("/application", systemData)
-      .then(() => {
-        commit("setAppFinished", true);
-        router.push("/lastPage");
-      })
-      .catch((error) => {
-        console.log(error);
       });
   },
 };

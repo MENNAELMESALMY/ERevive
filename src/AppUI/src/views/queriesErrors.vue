@@ -5,8 +5,8 @@
       <queries-errors-card
         v-for="(query, j) in queriesErrors[cluster]"
         :key="j"
-        :clusterName="query.ui_name"
-        :clusterQuery="query.query[0]"
+        :clusterName="cluster"
+        :clusterQuery="query[0].query"
       />
     </div>
   </div>

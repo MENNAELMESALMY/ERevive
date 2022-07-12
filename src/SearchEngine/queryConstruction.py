@@ -1,6 +1,8 @@
 import random
 
-def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage, goals,origQuery,bestJoin,testSchema):
+from SearchEngine.clustering import updateQueryGroupBy
+
+def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage, goals,origQuery,bestJoin):
     mappedEntitesNames = mappedEntitesDict.values()
     mappedEntitesDict.update({entity:entity for entity in goals if entity not in mappedEntitesNames})
     query = {}
@@ -40,13 +42,14 @@ def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage, go
     attrKeys = ['selectAttrs','groupByAttrs','aggrAttrs','orderByAttrs','whereAttrs','havingAttrs']
     for key in attrKeys:
         query[key] = []
-        currentAttributes = origQuery[key]
+        currentAttributes = list(origQuery[key])
         if currentAttributes == []:
             continue
         ## take same tuples but instead replace attributes by their mapped attributes to schema
         if key == "aggrAttrs" or key == "orderByAttrs":
             for attr in currentAttributes:
                 ## [attr,count]
+                attr = list(attr)
                 if mappedAttributesDict.get(attr[0]) is not None:
                     attr[0] = mappedAttributesDict[attr[0]]
                     query[key].append(attr)
@@ -54,6 +57,7 @@ def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage, go
             ## [attr,condition,attr,...] or [attr,condition,value,...]
             firstAttrIsUpdated = False 
             for attr in currentAttributes:
+                attr = list(attr)
                 if mappedAttributesDict.get(attr[0]) is not None:
                     attr[0] = mappedAttributesDict[attr[0]]
                     firstAttrIsUpdated = True
@@ -69,6 +73,7 @@ def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage, go
         elif key == "havingAttrs":
             ## [aggr,attr,operation]
             for attr in currentAttributes:
+                attr = list(attr)
                 if mappedAttributesDict.get(attr[1]) is not None:
                     attr[1] = mappedAttributesDict[attr[1]]
                     query[key].append(attr)
@@ -80,43 +85,9 @@ def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage, go
             query[key] = list(set(query[key]))
         else:
             query[key] = [list(x) for x in set(tuple(x) for x in query[key])]
-    query = updateQueryGroupBy(query,testSchema)
     return query
 
-def is_agg_in_orderby(aggr_attrs):
-    for attr in aggr_attrs:
-        if attr[1]:
-            return True
-    return False
 
-def getModelsObj(testSchema):
-    models_obj = {}
-    for model in testSchema.values():
-        models_obj.update({
-            model["TableName"]:model["attributes"].keys()
-        })
-    return models_obj
-def updateQueryGroupBy(query,testSchema):
-    agg_in_orderby = is_agg_in_orderby(query["orderByAttrs"])
-    groupByAttrs = set([attr[0] for attr in query["groupByAttrs"]])
-    models_obj = getModelsObj(testSchema)
-    if len(query["aggrAttrs"]) or agg_in_orderby:
-        selectAttrs = set()
-        for attr in query["selectAttrs"]:
-            if attr[0] == '*':
-                for entity in query["entities"]:
-                    attrs = models_obj[entity]
-                    attrs = [entity+'.'+attr for attr in attrs]
-                    selectAttrs.update(attrs)
-                    #print("attrs: ",attrs)
-                    #print()
-            else:
-                selectAttrs.add(attr[0])
-            #selectAttrs = [attr[0] for attr in query["selectAttrs"] if "*" not in attr[0]]
-        #print("final Attrs: ",selectAttrs)
-        groupByAttrs.update(selectAttrs)
-    query["updatedGroupByAttrs"] = list(groupByAttrs)
-    return query
 def addJoinAttrs(joins,whereAttrs):
     sep = 'and'
     for idx,join in enumerate(joins):
@@ -212,3 +183,237 @@ def queryStructure(queryDict):
     query = query.strip()
     query += ";"
     return query
+
+def getModelsObj(testSchema):
+    models_obj = {}
+    for model in testSchema.values():
+        models_obj.update({
+            model["TableName"]:model["attributes"]
+        })
+    return models_obj
+def create_response_model(selectAttrs,aggrAttrs,entities,modelsObject):
+    pythondtypes_restmapping = {
+    "str":"fields.String",
+    "int":"fields.Integer",
+    "float":"fields.Float",
+    "bool":"fields.Boolean",
+    "datetime":"fields.DateTime"
+    }
+    response_model = ""
+    ui_response_model = {}
+    db_selects= []
+
+    if (len(selectAttrs)==1 and selectAttrs[0][0]=="*") or (len(selectAttrs)==0 and len(aggrAttrs)==0):
+        response_model,ui_response_model =  get_astrisk_models(entities,modelsObject)
+        response_model+=","
+        selectAttrs=[]
+
+    all_entities_astrisk=[]
+    sel_len=0
+    for attr in selectAttrs:   
+        if "*" in attr[0]:
+            all_entities_astrisk.append(attr[0].split('.')[0])
+        else:
+            sel_len+=1
+    all_entities_astrisk = list(set(all_entities_astrisk))
+    if len(all_entities_astrisk):
+        response_model,ui_response_model =  get_astrisk_models(all_entities_astrisk,modelsObject)
+        response_model+=","
+    for attr in selectAttrs:
+        attr_name = attr[0]
+        attr_type = attr[1]
+        if "*" in attr:
+            continue
+        db_selects.append((attr_name,attr_type,None))
+
+        if attr_type in pythondtypes_restmapping:
+            response_model+= "'"+attr_name+"' : "+pythondtypes_restmapping[attr_type]+","
+            ui_response_model[attr_name] = attr_type
+        else:
+            response_model+=  "'"+attr_name+"' : fields.String,"
+            ui_response_model[attr_name] = "str"
+            
+    for attr in aggrAttrs:
+        attr_aggregation = attr[1]
+        attr_name = attr[0][0]
+        attr_type = attr[0][1] if ("*" not in attr[0][0] and attr[1] != "count") else "int"
+        db_selects.append((attr_name,attr_type,attr_aggregation))
+        attr_name = attr_aggregation+"_"+ (attr_name if "*" not in attr_name else "all")
+        if attr_name == "count_awards_players.playerID":print(attr)
+        if attr_type in pythondtypes_restmapping:
+            response_model+= "'"+attr_name+"' : "+pythondtypes_restmapping[attr_type]+","
+            ui_response_model[attr_name] = attr_type
+        else:
+            response_model+=  "'"+attr_name+"' : fields.String ,"
+            ui_response_model[attr_name] = "str"
+    response_model = response_model[:-1]
+    return response_model , ui_response_model ,db_selects
+
+def get_astrisk_models(entities,modelsObjects):
+    all_models_response=''
+    all_models_ui_response = {}
+    for entity in entities:
+        attrs = modelsObjects[entity].items()
+        attrs = [(entity+'.'+attr[0],attr[1]) for attr in attrs]        
+        entity_model,entity_ui_model,_ = create_response_model(attrs,[],entities,modelsObjects)
+        all_models_response+=entity_model+","
+        all_models_ui_response.update(entity_ui_model)
+    all_models_response = all_models_response[:-1]
+    return all_models_response , all_models_ui_response
+def get_attr_name_type(attrs,attr_type=None):
+    attr_names = []
+    for attr in attrs:
+        if type(attr[0])!=str:
+            attr_name = attr[0][0] 
+            if attr_type and attr[1] and attr[1] !="":
+                attr_name = attr_name.split('.')[0]+'.'+attr[1]+'_'+attr_name.split('.')[-1]
+        else:
+            attr_name = attr[0]
+            if attr[1] and attr[1] !="":
+                attr_name = attr[1]+"_"+attr_name
+        if attr_name.find('*')!=-1:   
+            attr_name = attr_name.replace('*','all')
+
+        if type(attr[0])!=str and len(attr) > 2 and attr[2] != "value":
+            attr_names.append(attr[2])    
+        attr_names.append(attr_name)
+    return attr_names
+
+def query_renaming(entities,whereAttrs,groupAttrs,orderAttrs,isUpdate=False,is_group_all=False):
+    where_attr = get_attr_name_type(whereAttrs)
+    if not isUpdate:
+        group_attr = get_attr_name_type(groupAttrs)
+    else:
+        group_attr = groupAttrs
+    if is_group_all:
+        group_attr = ["all"]
+
+    order_attr = get_attr_name_type(orderAttrs,"order")
+    where_attr = set([attr[attr.find(".")+1:] for attr in where_attr if attr != "*"])
+    order_attr = set([attr[attr.find(".")+1:] for attr in order_attr if attr != "*"])
+    group_attr = set([attr[attr.find(".")+1:] for attr in group_attr if attr != "*"])
+    endpoint_name = "get"+"_"+"_".join(entities)
+    ui_name = "get "+" ".join(entities)
+
+    
+    if len(where_attr) != 0:
+        endpoint_name += "_filteredby"+"_"+"_".join(where_attr)
+        ui_name += " filtered by "+" , ".join(where_attr)
+    if len(group_attr) != 0:
+        endpoint_name +="_groupedby"+ "_"+"_".join(group_attr)
+        ui_name += " grouped by "+" , ".join(group_attr)
+    if len(order_attr) != 0:
+        endpoint_name +="_orderedby"+ "_"+"_".join(order_attr)
+        ui_name += " ordered by "+" , ".join(order_attr)
+    
+    return endpoint_name,ui_name
+
+def get_aggr_attrs(aggr_attrs):
+    count_attrs = []
+    final_aggr_attr = []
+    remove_counts = False
+    for attr in aggr_attrs:
+        attr_aggregation = attr[1]
+        if attr_aggregation != "count":
+            final_aggr_attr.append(attr)
+        else:
+            count_attrs.append(attr)
+            if "*" in attr[0][0]:
+                final_aggr_attr.append(attr)
+                remove_counts = True
+    
+    if not remove_counts:
+        final_aggr_attr.extend(count_attrs)
+    
+    return final_aggr_attr
+
+def create_query_ui_endpoint(q,modelsObjects):
+    query = q[0]
+    endpoint_name,ui_name = query_renaming(query["entities"],query["whereAttrs"],query["updatedGroupByAttrs"],query["orderByAttrs"],True)
+    endpoint_url = '/'.join(query["entities"])+'/'+endpoint_name
+    endpoint_method = "get"
+    queryParams = []
+    for attr in query["whereAttrs"]:
+        if attr[2] != "value":
+            continue
+        attr_name = attr[0][0]
+        attr_type = attr[0][1]
+        attr_operator = attr[1]
+    
+        queryParams.append((attr_name,attr_type,attr_operator,None))
+
+    for attr in query["havingAttrs"]:
+     
+        attr_name = attr[1][0] if "*" not in attr[1][0] else "having_value"
+        attr_type = attr[1][1] if "*" not in attr[1][0] else "int"
+        attr_operator = attr[2]
+        attr_aggregation = attr[0]
+        
+        queryParams.append((attr_name,attr_type,attr_operator,attr_aggregation))
+
+    for attr in query["orderByAttrs"]:
+        if attr[0][0] == "*" and attr[1] is None:
+            continue
+
+        contain_aggr = len(query["aggrAttrs"]) > 0 or len(query["groupByAttrs"]) > 0
+        attr_name = attr[0][0]
+        attr_type = attr[0][1]
+        attr_aggregation = attr[1]
+        param_name = ""
+        aggr = "_"+attr_aggregation +"_" if attr_aggregation and contain_aggr else ""
+        if attr_name == "*":
+            param_name = "is_order_of"+aggr+"of_rows_desc"
+        else:
+            attr_name = attr_name.split('.')[1]
+            aggr = "_" if not aggr else aggr
+            param_name = "is_order_of"+aggr+attr_name+"_desc"
+        queryParams.append((param_name,"bool",None,attr_aggregation))
+
+    aggrAttrs = get_aggr_attrs(query["aggrAttrs"])
+    response_model , ui_response_model , db_selects = create_response_model(query["selectAttrs"],aggrAttrs,query["entities"],modelsObjects)
+    response_model = "{ "+response_model+" }"
+    endpoint = {
+        "method": endpoint_method,
+        "url": endpoint_url.lower(),
+        "queryParams": queryParams,
+        "bodyParams": [],
+        "response": ui_response_model,
+        "ui_name": ui_name.lower(),
+        "cluster_name": ("_".join(query["entities"])).lower(),
+        "endpoint_name":endpoint_name.lower(),
+        "is_single_entity":len(query["entities"])==1,
+        "query": q[1],
+        "queryObj":query,
+        "is_updated":False,
+    }
+    return response_model , endpoint , db_selects
+    
+def prepareQuery(query,modelsObjects=None,testSchema=None):
+    if modelsObjects is None:
+        modelsObjects = getModelsObj(testSchema)
+    updateQueryGroupBy(query[0],testSchema)
+    resource_model , endpoint_object , _ = create_query_ui_endpoint(query,modelsObjects)  # return to frontend
+    return  endpoint_object ,resource_model
+
+def prepareClusters(clusters,testSchema):
+    modelsObjects = getModelsObj(testSchema)
+    finalClusters = []
+    for cluster in clusters:
+        errors = []
+        finalCluster = []
+        for query in cluster:
+            cartesian = len(query[0]["entities"]) > 1 and len(query[0]["bestJoin"]) == 0
+            hasGroupBy = len(query[0]["groupByAttrs"]) != 0
+            if cartesian and hasGroupBy:
+                continue
+            endpoint_object ,resource_model = prepareQuery(query,modelsObjects,testSchema)  # return to frontend
+       
+            if endpoint_object['endpoint_name'] not in errors:
+                errors.append(endpoint_object['endpoint_name'])
+            else:
+                print("ENDPOINT ALREADY EXISTS\n",query[0],endpoint_object['endpoint_name'])   
+                continue
+            finalCluster.append([endpoint_object,resource_model])
+        finalClusters.append(finalCluster)
+    return finalClusters
+    

@@ -136,8 +136,8 @@ src/SearchEngine/nGrams/entities.pickle
 src/SearchEngine/nGrams/ngrams.pickle
 src/SearchEngine/nGrams/unigram.pickle
 src/Application/api/
-src/ImageProcessing/debugOutput/
 src/CreateFrontProject/FrontCode/
+src/ImageProcessing/debugOutput/
 src/ImageProcessing/connectEntitiesOutput/
 src/ImageProcessing/multivaluesDebug/
 src/SearchEngine/glove_vectors.model.vectors.npy

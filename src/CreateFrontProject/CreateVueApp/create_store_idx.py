@@ -14,7 +14,7 @@ export default new Vuex.Store({
   modules: {
 '''
     for cluster in clusters:
-        store_string += '\t'+cluster + ',\n'
+        store_string += '\t'+cluster+ ',\n'
     store_string +='''
     color_pallete
   },

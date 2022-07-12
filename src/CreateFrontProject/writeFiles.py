@@ -172,6 +172,12 @@ c={}
 with open('../Application/clusters.json') as f:
     c = json.load(f)
 
+tempC= {}
+for key,value in c.items():
+    tempC[key + "_cluster"] = value
+# print(tempC)
+c = tempC
+
 cluster_names = list(c.keys())
 clustersAndQueries = []
 AllQueries = []
@@ -181,7 +187,7 @@ for name in cluster_names:
   for query in c[name]:
     if (query["method"]) == "get":
       tempListGet.append(query["endpoint_name"])
-    templistAllQueries.append(query["endpoint_name"])
+    templistAllQueries.append(query)
   clustersAndQueries.append(tempListGet)
   AllQueries.append(templistAllQueries)
 
@@ -407,6 +413,27 @@ export default {
 }
 </style>
   ''')
+
+
+
+#creating the main page
+for cluster_name in cluster_names:
+  with open(viewsRoute + cluster_name +".vue", 'w') as f:
+    f.write('''
+  <template>
+      <div>
+      </div>
+  </template>
+
+  <script>
+  export default {
+      name:"'''+ cluster_name +'''"
+      };
+  </script>
+
+  <style lang="scss" scoped>
+  </style>
+    ''')
 
 #create SideBar
 with open(componentsRoute + "sideBar.vue", 'w') as f:

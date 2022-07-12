@@ -40,7 +40,16 @@ def load_model():
 def rankQueriesSimilarities(quiries_keywords,quiries,er):
     model = load_model()
     quiries_scores = []
-    er = [model.get_vector(keyword) for keyword in er]
+    print(er)
+    er_list = []
+    for keyword in er:
+        try:
+            er_list.append(model.get_vector(keyword))
+        except Exception as e:
+            print(e)
+            continue
+    er = er_list
+
     er_mat = np.array(er).T
     filtered_quiries=[]
     for idx,q in enumerate(quiries):

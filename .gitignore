@@ -146,3 +146,4 @@ Interface_Vue/createFrontProject/FrontCode/
 *.png
 src/NlpToSql/datasets/*
 src/NlpToSql/not_done_dict/*
+src/SearchEngine/crawler

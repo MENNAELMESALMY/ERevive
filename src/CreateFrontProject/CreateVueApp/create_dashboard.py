@@ -1,18 +1,15 @@
 def generate_dashboard(cluster_name,endpoint,directory,
     is_single_entity=False,delete_route='',put_route='',post_route=''):
-
     table_headers_orig = list(endpoint['response'].keys())
-
     table_headers = [header.replace('.',' ').replace('_',' ')  for header in table_headers_orig]
     table_headers_orig = [header.replace('.','_').replace('_','_')  for header in table_headers_orig]
-
     # cluster_name = endpoint['cluster_name']
     endpoint_name = endpoint['endpoint_name']
     query_params = [(param,d,o,a) for param,d,o,a in endpoint['queryParams']]
     dashboard_string = '''<template>
     <div class="dashboard">
         <div class="sidebar">'''
-        
+
     if len(query_params)>0:
         dashboard_string += '\t\t<p>Filters</p>\n'
     dashboard_string += '\t\t<form @submit.prevent="call_request">\n'
@@ -28,27 +25,22 @@ def generate_dashboard(cluster_name,endpoint,directory,
         elif operator == 'like':operator = 'regex matching (case invariant)'
         elif operator == 'not like':operator = 'regex matching (case invariant)'
         if not operator: operator = 'equal to'
-
         if datatype == 'str':datatype = 'text'
         elif datatype == 'int' or datatype == 'float':datatype = 'number'
         elif datatype=='bool':datatype = 'checkbox'
         elif datatype == 'date':datatype = 'date'
         else: datatype = 'text'
-
         dashboard_string += '\t\t<div class="labels">\n'
         if aggregate: dashboard_string += '\t\t<label> '+ aggregate+'</label><br>\n'
         dashboard_string += '\t\t<label> '+ operator +'</label>\n'
         dashboard_string += '\t\t<label>'+ param +'</label>\n'
         dashboard_string += '\t\t</div>\n'
-
         dashboard_string += '\t\t<div>\n'
         dashboard_string += f'\t\t<input type="{datatype}" v-model="{param}" class="{datatype}" required>\n'
         if datatype == 'checkbox':
             dashboard_string += '\t\t<label>Set Value</label>\n'
         dashboard_string += '\t\t</div>\n'
-
     dashboard_string += '\t\t</div>\n'  
-
     dashboard_string +='''
         <input type="submit"
         value="Call endpoint"
@@ -56,7 +48,6 @@ def generate_dashboard(cluster_name,endpoint,directory,
         >
         </form>
         </div>
-
 <div class="content">
         <div class="table_nav">
         '''
@@ -87,11 +78,9 @@ def generate_dashboard(cluster_name,endpoint,directory,
         </div>
     </div>
 </template>
-
 <style lang="scss" scoped>
 @import "../scss/dashboard.scss";
 </style>
-
 <script>
     import { mapState } from "vuex";
     export default {
@@ -117,7 +106,6 @@ def generate_dashboard(cluster_name,endpoint,directory,
     dashboard_string+= 'this.$store.dispatch("'+cluster_name +'/'+endpoint_name +'",\n\t\t {'
     for param,_,_,_ in query_params:
         dashboard_string += "'"+param+"'" +': this.' + param.replace('.','_').replace(' ','_') + ',\n\t\t'
-
     dashboard_string += '''
       });
     }

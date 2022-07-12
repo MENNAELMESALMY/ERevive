@@ -7,6 +7,11 @@
         @click="routeToPage('homePage')"
       />
       <img
+        src="../../public/assets/sql.png"
+        alt="sqlIcon"
+        @click="routeToPage('database')"
+      />
+      <img
         src="../../public/assets/api.png"
         alt="apiIcon"
         @click="routeToPage('api')"
@@ -78,6 +83,8 @@ export default {
       if (this.appFinished) {
         if (page == "homePage") {
           this.$router.push("/");
+        } else if (page == "database") {
+          this.$router.push("/databaseSeeds");
         } else if (page == "api") {
           window.open("http://localhost:3000/", "_blank");
         } else if (page == "front") {

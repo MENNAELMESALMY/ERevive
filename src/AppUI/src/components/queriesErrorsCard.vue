@@ -32,6 +32,7 @@
     p {
       font-size: 25px;
       color: $darkBlue;
+      word-wrap: break-word;
     }
   }
 }

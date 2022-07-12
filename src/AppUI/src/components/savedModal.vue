@@ -3,11 +3,11 @@
     <div class="popupBody">
       <i class="fa fa-times close" @click="closeModal"></i>
       <div class="content">
-        <h1>System Information</h1>
+        <h1>{{ modalHeader }}</h1>
         <h3>Saved Successfully !</h3>
       </div>
       <div class="btn">
-        <router-link to="/uploadPage">
+        <router-link :to="toPageFromModal">
           <button class="customBtn" @click="closeModal">Proceed</button>
         </router-link>
       </div>
@@ -43,8 +43,15 @@ a:hover {
 </style>
 
 <script>
+import { mapState } from "vuex";
 export default {
   name: "savedModal",
+  computed: {
+    ...mapState({
+      modalHeader: (state) => state.triggerModals.headerModal,
+      toPageFromModal: (state) => state.triggerModals.toPageFromModal,
+    }),
+  },
   methods: {
     closeModal() {
       this.$store.commit("triggerModals/toggleSavedModal");

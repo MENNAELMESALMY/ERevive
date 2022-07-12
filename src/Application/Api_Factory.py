@@ -250,6 +250,7 @@ prefix = "/api" \n\
 API = Blueprint("api", __name__, url_prefix=prefix) \n\
 rest_api= api_namespaces(blueprint=API, url_prefix=prefix,title="Main Api") \n\
 app.register_blueprint(API, url_prefix=prefix) \n\
+\n\
 '
     def create_app_requirements(self):
         return ' \n\
@@ -267,7 +268,7 @@ flask-cors\n\
         return ' \n\
 export PYTHONPATH=$PWD \n\
 export FLASK_APP=__init__.py \n\
-export FLASK_DEBUG=1 \n\
+export FLASK_DEBUG=0 \n\
 . venv/bin/activate \n\
 \n\
 python -m flask run --host=localhost --port=3000 \n\

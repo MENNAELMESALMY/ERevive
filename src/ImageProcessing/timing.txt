@@ -1,0 +1,5 @@
+Preprocessing and shape detection time is 13.976221194999198 
+connect components time is 2.565367629999855
+get relations time is 48.7310366619995
+Cardinality time is 9.640002631000243
+generating schema time is 0.0023521530001744395

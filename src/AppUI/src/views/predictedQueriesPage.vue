@@ -19,7 +19,13 @@
       <button class="customBtn" @click="toggleAddQueryModal">
         Add New Query
       </button>
-      <button class="customBtn" v-if="queries.length > 0">Proceed</button>
+      <button
+        class="customBtn"
+        v-if="queries.length > 0"
+        @click="startApplication"
+      >
+        Proceed
+      </button>
     </div>
   </div>
 </template>
@@ -93,18 +99,29 @@ import { mapState } from "vuex";
 import queriesCard from "../components/queriesCard.vue";
 export default {
   name: "predictedQueriesPage",
+  data() {
+    return {
+      queries: [],
+    };
+  },
   components: {
     queriesCard,
   },
+  mounted() {
+    this.queries = this.predictedClusters[this.currentClusterName];
+  },
   computed: {
     ...mapState({
-      queries: (state) => state.predictedQueries.queries,
+      predictedClusters: (state) => state.predictedQueries.predictedClusters,
       currentClusterName: (state) => state.predictedQueries.currentClusterName,
     }),
   },
   methods: {
     toggleAddQueryModal() {
       this.$store.commit("triggerModals/toggleAddQueryModal");
+    },
+    startApplication() {
+      this.$store.dispatch("predictedQueries/postValidate");
     },
   },
 };

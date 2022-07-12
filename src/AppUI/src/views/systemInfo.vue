@@ -140,12 +140,12 @@ export default {
   methods: {
     submitForm() {
       this.$store.commit("triggerModals/toggleSavedModal");
-      this.$store.commit("systemInput/setSystemInfo", {
+      this.$store.commit("predictedQueries/setSystemInfo", {
         systemName: this.systemName,
         systemDescription: this.systemDescription,
-        dataBaseUserName: this.username,
-        dataBasePassword: this.password,
-        dataBaseName: this.databaseName,
+        databaseUsername: this.username,
+        databasePassword: this.password,
+        databaseName: this.databaseName,
       });
     },
   },

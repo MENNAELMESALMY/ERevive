@@ -274,71 +274,71 @@ export default {
     save_changes() {
       this.finalSchema = {};
       this.formData = {};
-      // for (let key in this.globalSchema) {
-      //   let TableName = this.globalSchema[key]["TableName"];
-      //   this.formData[TableName] = [];
-      //   this.finalSchema[TableName] = {
-      //     TableName: TableName,
-      //     TableType: "",
-      //     attributes: {},
-      //     primaryKey: [],
-      //     ForgeinKey: [],
-      //     isWeak: this.globalSchema[key]["isWeak"],
-      //   };
-      //   for (let attr in this.globalSchema[key]["attributes"]) {
-      //     let attrName = this.globalSchema[key]["attributes"][attr][0];
-      //     let attrDataType = this.globalSchema[key]["attributes"][attr][1];
-      //     let attrIsPrimaryKey = this.globalSchema[key]["attributes"][attr][2];
-      //     let fieldType = this.globalSchema[key]["attributes"][attr][3];
-      //     let listOfValues = this.globalSchema[key]["attributes"][attr][4];
-      //     let minNum = this.globalSchema[key]["attributes"][attr][5];
-      //     let maxNum = this.globalSchema[key]["attributes"][attr][6];
-      //     this.finalSchema[TableName]["attributes"][attrName] = attrDataType;
+      for (let key in this.globalSchema) {
+        let TableName = this.globalSchema[key]["TableName"];
+        this.formData[TableName] = [];
+        this.finalSchema[TableName] = {
+          TableName: TableName,
+          TableType: "",
+          attributes: {},
+          primaryKey: [],
+          ForgeinKey: [],
+          isWeak: this.globalSchema[key]["isWeak"],
+        };
+        for (let attr in this.globalSchema[key]["attributes"]) {
+          let attrName = this.globalSchema[key]["attributes"][attr][0];
+          let attrDataType = this.globalSchema[key]["attributes"][attr][1];
+          let attrIsPrimaryKey = this.globalSchema[key]["attributes"][attr][2];
+          let fieldType = this.globalSchema[key]["attributes"][attr][3];
+          let listOfValues = this.globalSchema[key]["attributes"][attr][4];
+          let minNum = this.globalSchema[key]["attributes"][attr][5];
+          let maxNum = this.globalSchema[key]["attributes"][attr][6];
+          this.finalSchema[TableName]["attributes"][attrName] = attrDataType;
 
-      //     if (attrIsPrimaryKey)
-      //       this.finalSchema[TableName]["primaryKey"].push(attrName);
+          if (attrIsPrimaryKey)
+            this.finalSchema[TableName]["primaryKey"].push(attrName);
 
-      //     this.formData[TableName].push({
-      //       field_name: attrName,
-      //       field_type: fieldType,
-      //       data_type: attrDataType,
-      //       isRequired: true,
-      //       maxRange: parseInt(maxNum),
-      //       minRange: parseInt(minNum),
-      //       options: listOfValues.split(","),
-      //     });
-      //   }
-      //   for (let fk in this.globalSchema[key]["ForgeinKey"]) {
-      //     let ForignKeyTableIdx =
-      //       this.globalSchema[key]["ForgeinKey"][fk]["ForignKeyTableIdx"];
-      //     let attributeIdx =
-      //       this.globalSchema[key]["ForgeinKey"][fk]["attributeIdx"];
-      //     let ForignKeyTableAttributeIdx =
-      //       this.globalSchema[key]["ForgeinKey"][fk][
-      //         "ForignKeyTableAttributeIdx"
-      //       ];
-      //     let ForignKeyTableName =
-      //       this.globalSchema[ForignKeyTableIdx]["TableName"];
-      //     let attributeName =
-      //       this.globalSchema[key]["attributes"][attributeIdx][0];
-      //     let ForignKeyTableAttributeName =
-      //       this.globalSchema[ForignKeyTableIdx]["attributes"][
-      //         ForignKeyTableAttributeIdx
-      //       ][0];
-      //     let patricipaction =
-      //       this.globalSchema[key]["ForgeinKey"][fk]["patricipaction"];
-      //     let dataType = this.globalSchema[key]["attributes"][attributeIdx][1];
-      //     this.finalSchema[TableName]["ForgeinKey"].push({
-      //       attributeName: attributeName,
-      //       ForignKeyTable: ForignKeyTableName,
-      //       ForignKeyTableAttributeName: ForignKeyTableAttributeName,
-      //       patricipaction: patricipaction,
-      //       dataType: dataType,
-      //     });
-      //   }
-      // }
-      // console.log("finalSchema", this.finalSchema);
-      let isValid = true; //this.check_validation();
+          this.formData[TableName].push({
+            field_name: attrName,
+            field_type: fieldType,
+            data_type: attrDataType,
+            isRequired: true,
+            maxRange: parseInt(maxNum),
+            minRange: parseInt(minNum),
+            options: listOfValues.split(","),
+          });
+        }
+        for (let fk in this.globalSchema[key]["ForgeinKey"]) {
+          let ForignKeyTableIdx =
+            this.globalSchema[key]["ForgeinKey"][fk]["ForignKeyTableIdx"];
+          let attributeIdx =
+            this.globalSchema[key]["ForgeinKey"][fk]["attributeIdx"];
+          let ForignKeyTableAttributeIdx =
+            this.globalSchema[key]["ForgeinKey"][fk][
+              "ForignKeyTableAttributeIdx"
+            ];
+          let ForignKeyTableName =
+            this.globalSchema[ForignKeyTableIdx]["TableName"];
+          let attributeName =
+            this.globalSchema[key]["attributes"][attributeIdx][0];
+          let ForignKeyTableAttributeName =
+            this.globalSchema[ForignKeyTableIdx]["attributes"][
+              ForignKeyTableAttributeIdx
+            ][0];
+          let patricipaction =
+            this.globalSchema[key]["ForgeinKey"][fk]["patricipaction"];
+          let dataType = this.globalSchema[key]["attributes"][attributeIdx][1];
+          this.finalSchema[TableName]["ForgeinKey"].push({
+            attributeName: attributeName,
+            ForignKeyTable: ForignKeyTableName,
+            ForignKeyTableAttributeName: ForignKeyTableAttributeName,
+            patricipaction: patricipaction,
+            dataType: dataType,
+          });
+        }
+      }
+      console.log("finalSchema", this.finalSchema);
+      let isValid = this.check_validation();
       if (isValid) {
         // send request to server
         // console.log("validation success");

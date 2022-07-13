@@ -131,12 +131,26 @@ def suggest_queries(testSchema):
 
     entityDict = constructDictionary(testSchema)
     queries = getMappedQueries(schemaGraph,rankedQueriesBySimilarity,testSchema,entityDict,schemaEntityNames)
+    with open('getMappedQueries.json','w') as file:
+        jsonObj = json.dumps(queries)
+        file.write(jsonObj)
     clusteredQueries = getClusteredQueries(queries)
 
-    mergedClusters = getMergdClusters(clusteredQueries,queries,testSchema)
-    mergedClusters = getMergdClusters(mergedClusters,queries,testSchema)
+    finalClusters = []
+    for cluster in clusteredQueries:
+        clusterQueries = []
+        for idx in cluster:
+            query = queries[idx]
+            clusterQueries.append([query,queryStructure(query),query["origQuery"]["query"]])
+        finalClusters.append(clusterQueries)
+    with open('clusteredQueries.json','w') as file:
+        jsonObj = json.dumps(finalClusters)
+        file.write(jsonObj)
+
+    #mergedClusters = getMergdClusters(clusteredQueries,queries,testSchema)
+    #mergedClusters = getMergdClusters(mergedClusters,queries,testSchema)
     
-    rankedQueries = getRankedQueries(mergedClusters,queries)
+    rankedQueries = getRankedQueries(clusteredQueries,queries)
     outQueries("finalMergedQueries.json","finalMergedClusters.json",rankedQueries)
 
 

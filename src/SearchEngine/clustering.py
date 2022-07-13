@@ -124,11 +124,11 @@ def getMergdClusters(clusteredQueries,queries,testSchema):
                 queries[whereCluster[0]]["groupByAttrs"] = newGroupByAttrs
             else:
                 queries[whereCluster[0]]["groupByAttrs"] = []
-                
-            if len(queries[whereCluster[0]]["selectAttrs"])==1 and queries[whereCluster[0]]["selectAttrs"][0][0]=="*"\
-                and len(queries[whereCluster[0]]["aggrAttrs"])==0 and len(queries[whereCluster[0]]["groupByAttrs"])==0 \
-                    and len(queries[whereCluster[0]]["orderByAttrs"])==0:
-                    continue
+            if len(queries[whereCluster[0]]["entities"])==1:
+                if len(queries[whereCluster[0]]["selectAttrs"])==1 and queries[whereCluster[0]]["selectAttrs"][0][0]=="*"\
+                    and len(queries[whereCluster[0]]["aggrAttrs"])==0 and len(queries[whereCluster[0]]["groupByAttrs"])==0 \
+                        and len(queries[whereCluster[0]]["orderByAttrs"])==0 and len(queries[whereCluster[0]]["havingAttrs"])==0:
+                        continue
             if queries[whereCluster[0]].get("updatedGroupByAttrs") is None:
                 updateQueryGroupBy(queries[whereCluster[0]],testSchema)
             newCluster.append(whereCluster[0])

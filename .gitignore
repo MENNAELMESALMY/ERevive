@@ -150,3 +150,7 @@ src/NlpToSql/not_done_dict/*
 src/SearchEngine/crawler
 src/SearchEngine/glove_vectors.model
 src/SearchEngine/glove_vectors.model.vectors.npy
+src/SearchEngine/debugConstructedQueries.json
+src/SearchEngine/nGrams/nGrams.zip
+src/SearchEngine/nGrams/ngrams/ngrams.pickle
+src/SearchEngine/nGrams/ngrams/unigram.pickle

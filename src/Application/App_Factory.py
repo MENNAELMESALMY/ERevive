@@ -36,8 +36,8 @@ def get_clusters():
     return clusters
     
 # Create Models method
-def Create_Application(schema,clusters,user="nada",password = "Ringmybells5",db="default"):
-#def Create_Application(schema,user="root",password = "admin<3Super",db="department"):
+#def Create_Application(schema,clusters,user="nada",password = "Ringmybells5",db="default"):
+def Create_Application(schema,clusters,user="root",password = "admin<3Super",db="blogs"):
     #print("Creating Application: ",schema)
     Create_Directory('api')
     os.chdir('api')

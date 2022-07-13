@@ -47,6 +47,7 @@ def updateNewQuery(query):
     except Exception as e:
         raise Exception(e)
 
+
 dummy = {
     "DEPARTMENT": {
         "TableName": "DEPARTMENT",
@@ -210,6 +211,10 @@ dummy = {
         "isWeak": False
     }
 }
+
+with open("./ImageProcessing/final_schema.json","r") as file:
+    dummy = json.load(file)
+
 @app.route('/imageprocessing', methods=['POST'])
 def get_image():
     rm_file = "rm -rf common/outImageProcessing.json"
@@ -232,8 +237,9 @@ def get_ipoutput():
 
 @app.post('/searchengine')
 def get_search_engine():    
-    finalSchema = request.json['schema']
-    #finalSchema = dummy
+    #finalSchema = request.json['schema']
+    finalSchema = dummy
+    print(finalSchema)
     rankedQueries, schemaGraph , testSchema , entityDict , schemaEntityNames = start_search_engine(finalSchema)
     clusters = []
     for cluster in rankedQueries:
@@ -255,7 +261,7 @@ def get_search_engine():
 
     return jsonify(searchOut) , 200
 
-
+import json
 @app.post('/validate')
 def get_validate():
     searchOut = request.json
@@ -264,6 +270,12 @@ def get_validate():
     schemaGraph = searchOut.get('schemaGraph')
     entityDict = searchOut.get('entityDict')
     os.chdir('SearchEngine')
+    print(searchOut)
+    try:
+        with open("finalSchema.json","w+") as file:
+            json.dump(searchOut,file)
+    except Exception as e:
+        print(e)
 
     OneHotVocab,_ = init(finalSchema)
     init_one_hot_vocab(OneHotVocab)
@@ -314,7 +326,8 @@ def get_validate():
 def start_creating_application(final_schema,clusters,user_name,password,db_name):
     os.chdir('Application')
     print("start creating application")
-    Create_Application(final_schema,clusters,user_name,password,db_name)
+    #Create_Application(final_schema,clusters,user_name,password,db_name)
+    Create_Application(final_schema,clusters)
     process = Process(target=lambda: os.system('python3 run.py &'))
     process.start()
     print("end creating application")

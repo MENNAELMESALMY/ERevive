@@ -34,7 +34,7 @@ def generate_large_cards(cluster_name,endpoint,directory,
         elif datatype=='bool':datatype = 'checkbox'
         elif datatype == 'date':datatype = 'date'
         else: datatype = 'text'
-
+        card_string += '\t\t<div class="input_section">\n'
         card_string += '\t\t<div class="labels">\n'
         if aggregate: card_string += '\t\t<label> '+ aggregate+'</label><br>\n'
         card_string += '\t\t<label> '+ operator +'</label>\n'
@@ -42,10 +42,15 @@ def generate_large_cards(cluster_name,endpoint,directory,
         card_string += '\t\t</div>\n'
 
         card_string += '\t\t<div>\n'
-        card_string += f'\t\t<input type="{datatype}" v-model="{param}" class="{datatype}" required>\n'
+        if datatype=='bool':
+            card_string += f'\t\t<input type="{datatype}" v-model="{param}" class="{datatype}">\n' 
+        else:
+            card_string += f'\t\t<input type="{datatype}" v-model="{param}" class="{datatype}" required>\n'
         if datatype == 'checkbox':
             card_string += '\t\t<label>Set Value</label>\n'
         card_string += '\t\t</div>\n'
+        card_string += '\t\t</div>\n'
+        
 
     card_string += '\t\t</div>\n'  
 
@@ -53,7 +58,7 @@ def generate_large_cards(cluster_name,endpoint,directory,
         <input type="submit"
         value="Call endpoint"
         class="button"
-        @click='call_request'>
+        @click.prevent='call_request'>
         </form>
         </div>
 
@@ -61,19 +66,22 @@ def generate_large_cards(cluster_name,endpoint,directory,
         <div class="table_nav">
         '''
     card_string += '<h2>'+cluster_name+'</h2>'
-    if is_single_entity:
-        card_string += f'''
-        <div class="buttons">
-            <router-link to="{post_route}" class="button">Add +</router-link>
-            <router-link to="{put_route}" class="button">edit</router-link>
-            <button class="button" @click='delete_entity'>delete</button>
-		</div>
-        '''
+    # if is_single_entity:
+    #     card_string += f'''
+    #     <div class="buttons">
+    #         <router-link to="{post_route}" class="button">Add +</router-link>
+    #         <router-link to="{put_route}" class="button">edit</router-link>
+    #         <button class="button" @click='delete_entity'>delete</button>
+	# 	</div>
+    #     '''
     card_string +=    '''
     </div>
+    '''
+    card_string += '<h3>'+endpoint_name+'</h3>'
+    card_string +='''
     <div>
 
-        <div class='main_cards'>\n'''
+    <div class='main_cards'>\n'''
     card_string += "\t\t<div v-for='(row,i) in card_data' :key='i'  class='big_card'>"
     for header in table_headers_orig:
         card_string += '\t\t\t<div class="attribute">'+header+' : {{row.' + header + '}}</div>\n'

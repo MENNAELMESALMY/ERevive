@@ -51,6 +51,12 @@ const routes = [
           name: "{query}",
           component: {query},
           '''
+        elif fullQuery['method'] == 'post':
+          routing_string += f'''
+          path: "post_{cluster}",
+          name: "{query}",
+          component: {query},
+          '''
         else:
           routing_string += f'''
           path: "{cluster}_{query}",

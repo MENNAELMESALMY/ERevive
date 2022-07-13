@@ -73,7 +73,10 @@
               v-model="attr[0]"
               required
             />
-            <select v-model="attr[1]">
+            <select
+              v-model="attr[1]"
+              @change="dataTypeChange(entityIdx, index)"
+            >
               <option
                 v-for="dataType in dataTypes"
                 :value="dataType"
@@ -82,30 +85,36 @@
                 {{ dataType }}
               </option>
             </select>
-            <select v-model="attr[3]">
+            <select
+              v-model="attr[3]"
+              :key="componentKey + 8888888"
+              @change="componentKey = (componentKey + 1) % 2"
+            >
               <option
-                v-for="fieldType in fieldTypes"
+                v-for="fieldType in attr[7]"
                 :value="fieldType"
                 :key="fieldType"
               >
                 {{ fieldType }}
               </option>
             </select>
-            <div v-if="requireOptions.includes(attr[3])">
-              <p>Enter list of options as comma separated string</p>
-              <input type="text" v-model="attr[4]" />
-              <!-- <input @change="change_name" type="text" v-model="attr[4]" /> -->
-            </div>
-            <div v-if="attr[3] == 'number'">
-              <label>Minimum number</label>
-              <!-- <input @change="change_name" v-model="attr[5]" type="number" /> -->
-              <input v-model="attr[5]" type="number" />
-            </div>
+            <div :key="componentKey + entityIdx + index + 90000">
+              <div v-if="requireOptions.includes(attr[3])">
+                <p>Enter list of options as comma separated string</p>
+                <input type="text" v-model="attr[4]" />
+                <!-- <input @change="change_name" type="text" v-model="attr[4]" /> -->
+              </div>
+              <div v-if="attr[3] == 'number'">
+                <label>Minimum number</label>
+                <!-- <input @change="change_name" v-model="attr[5]" type="number" /> -->
+                <input v-model="attr[5]" type="number" />
+              </div>
 
-            <div v-if="attr[3] == 'number'">
-              <label>Maximum number</label>
-              <!-- <input @change="change_name" v-model="attr[6]" type="number" /> -->
-              <input v-model="attr[6]" type="number" />
+              <div v-if="attr[3] == 'number'">
+                <label>Maximum number</label>
+                <!-- <input @change="change_name" v-model="attr[6]" type="number" /> -->
+                <input v-model="attr[6]" type="number" />
+              </div>
             </div>
 
             <div>
@@ -228,7 +237,7 @@ export default {
         "radiobutton",
         "textarea",
       ],
-      requireOptions: ["checkbox", "list", "radiobutton"],
+      requireOptions: ["list", "radiobutton"],
       globalSchema: {},
       finalSchema: {},
       formData: {},
@@ -236,6 +245,32 @@ export default {
     };
   },
   methods: {
+    dataTypeChange(entityIdx, index) {
+      let dataType = this.globalSchema[entityIdx]["attributes"][index][1];
+      if (dataType == "int" || dataType == "float") {
+        this.globalSchema[entityIdx]["attributes"][index][7] = ["number"];
+        this.globalSchema[entityIdx]["attributes"][index][3] = "number";
+      } else if (dataType == "datetime") {
+        this.globalSchema[entityIdx]["attributes"][index][7] = ["date"];
+        this.globalSchema[entityIdx]["attributes"][index][3] = "date";
+      } else if (dataType == "bool") {
+        this.globalSchema[entityIdx]["attributes"][index][7] = ["checkbox"];
+        this.globalSchema[entityIdx]["attributes"][index][3] = "checkbox";
+      } else {
+        this.globalSchema[entityIdx]["attributes"][index][7] = [
+          "text",
+          "email",
+          "password",
+          "tel",
+          "url",
+          "list",
+          "radiobutton",
+          "textarea",
+        ];
+        this.globalSchema[entityIdx]["attributes"][index][3] = "text";
+      }
+      this.componentKey = (this.componentKey + 1) % 2;
+    },
     add_entity() {
       this.entityCount =
         parseInt(Object.keys(this.globalSchema).slice(-1)[0]) + 1;
@@ -243,7 +278,9 @@ export default {
       this.globalSchema[this.entityCount] = {
         TableName: name,
         TableType: "",
-        attributes: { 0: ["default_pk", "str", true, "text", "", 0, 100] },
+        attributes: {
+          0: ["default_pk", "str", true, "text", "", 0, 100, this.fieldTypes],
+        },
         primaryKey: [],
         ForgeinKey: [],
         isWeak: false,
@@ -252,11 +289,6 @@ export default {
     },
     change_name() {
       this.componentKey = (this.componentKey + 1) % 2;
-      // const el_id = event.target.id;
-      // document.getElementById(el_id).focus();
-      // setTimeout(function () {
-      //   document.getElementById(el_id).focus();
-      // }, 0);
     },
     delete_entity(entityIdx) {
       for (let key in this.globalSchema) {
@@ -298,6 +330,9 @@ export default {
           if (attrIsPrimaryKey)
             this.finalSchema[TableName]["primaryKey"].push(attrName);
 
+          let options = listOfValues.split(",");
+          if (fieldType == "checkbox") options = [attrName];
+
           this.formData[TableName].push({
             field_name: attrName,
             field_type: fieldType,
@@ -305,7 +340,7 @@ export default {
             isRequired: true,
             maxRange: parseInt(maxNum),
             minRange: parseInt(minNum),
-            options: listOfValues.split(","),
+            options: options,
           });
         }
         for (let fk in this.globalSchema[key]["ForgeinKey"]) {
@@ -337,7 +372,7 @@ export default {
           });
         }
       }
-      console.log("finalSchema", this.finalSchema);
+      console.log("finalSchema", this.finalSchema, this.formData);
       let isValid = this.check_validation();
       if (isValid) {
         // send request to server
@@ -373,6 +408,7 @@ export default {
         "",
         0,
         100,
+        this.fieldTypes,
       ];
       this.componentKey = (this.componentKey + 1) % 2;
     },
@@ -560,14 +596,38 @@ export default {
       };
       let attrIndex = 0;
       for (let attr in attributes) {
+        let formType = "text";
+        let formOptions = [
+          "text",
+          "email",
+          "password",
+          "tel",
+          "url",
+          "checkbox",
+          "list",
+          "radiobutton",
+          "textarea",
+        ];
+        if (attributes[attr] == "int" || attributes[attr] == "float") {
+          formType = "number";
+          formOptions = ["number"];
+        } else if (attributes[attr] == "datetime") {
+          formType = "date";
+          formOptions = ["date"];
+        } else if (attributes[attr] == "bool") {
+          formOptions = ["checkbox"];
+          formType = "checkbox";
+        }
+
         this.globalSchema[TableIdx]["attributes"][attrIndex] = [
           attr,
           attributes[attr],
           primaryKey.includes(attr),
-          "text",
+          formType,
           "",
           0,
           100,
+          formOptions,
         ];
         attrIndex += 1;
       }

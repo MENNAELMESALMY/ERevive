@@ -142,6 +142,7 @@ src/ImageProcessing/connectEntitiesOutput/
 src/ImageProcessing/multivaluesDebug/
 src/SearchEngine/glove_vectors.model.vectors.npy
 src/SearchEngine/glove_vectors.model
+src/ImageProcessing/output
 Interface_Vue/createFrontProject/FrontCode/
 #*.png
 src/NlpToSql/datasets/*

@@ -1,9 +1,11 @@
 from click import command
+from sklearn import cluster
 from .Api_Factory import ApiFactory
+from .generateModel import createAllModels
 import json
 import os
 import stat
-from .generateModel import createAllModels
+
 def Create_Directory(directory):
     path = os.path.join(os.getcwd(), directory) 
     os.umask(0)
@@ -530,6 +532,7 @@ def create_query_api_logic(endpoint_object,query,models_obj):
     will_print = False
     orderby_attr = "\\\n\t\t\t\t.order_by(" if len(query["orderByAttrs"]) else ""
     for attr in query["orderByAttrs"]: # [["teams.tmID", "str"], ""]
+        original_attr = attr
         if attr[0][0] == "*" and not attr[1] : continue
         attr_name = attr[0][0] if "*" not in attr[0][0] else ""
         attr_aggregation = attr[1]
@@ -540,10 +543,12 @@ def create_query_api_logic(endpoint_object,query,models_obj):
             # print("MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM")
 
         aggr = "_"+attr_aggregation +"_" if (attr_aggregation and (is_group_by or contains_aggr)) else ""
-        if attr[0][0] == "*":
+        if "*" in attr[0][0]: #if attr[0][0] == "*"
             param_name = "is_order_of"+aggr+"of_rows_desc"
         else:
             aggr = "_" if not aggr else aggr
+            #print("original attr:",original_attr)
+            #print("attr_name",attr_name)
             param_name = "is_order_of"+aggr+attr_name.split('.')[1]+"_desc"
 
         variable_name = attr_name.split('.')[1] + "_" if attr_name else ""
@@ -680,7 +685,7 @@ def query_renaming(entities,whereAttrs,groupAttrs,orderAttrs,isUpdate=False,is_g
         group_attr = groupAttrs
     if is_group_all:
         group_attr = ["all"]
-    print("order_attr",orderAttrs)
+    #print("order_attr",orderAttrs)
     order_attr = get_attr_name_type(orderAttrs,"order")
     #print("orrdderd by before" , order_attr)
     where_attr = set([attr[attr.find(".")+1:] for attr in where_attr if attr != "*"])
@@ -783,7 +788,10 @@ def create_api_init(api,cluster_imports,clusters_init):
         f.write("\n\
     return rest_plus_api")
 
-# with open("/home/hager/college/GP/GP/src/ImageProcessing/output/schema.json") as file:
+# with open("/home/hager/college/GP/GP/src/ImageProcessing/final_schema.json") as file:
 #     schema = json.load(file)
 
-# Create_Application(schema) 
+# with open("/home/hager/college/GP/GP/src/ImageProcessing/cluster.json") as file:
+#     clusters = json.load(file)
+
+# Create_Application(schema,clusters) 

@@ -11,6 +11,7 @@ import predictedQueriesPage from "../views/predictedQueriesPage.vue";
 import clustersPage from "../views/clustersPage.vue";
 import schemaPage from "../views/schemaPage.vue";
 import queriesErrors from "../views/queriesErrors.vue";
+import databaseSeeds from "../views/databaseSeeds.vue";
 import lastPage from "../views/lastPage.vue";
 
 Vue.use(VueRouter);
@@ -78,6 +79,12 @@ const routes = [
         path: "/queriesErrors",
         name: "queriesErrors",
         component: queriesErrors,
+        children: [],
+      },
+      {
+        path: "/databaseSeeds",
+        name: "databaseSeeds",
+        component: databaseSeeds,
         children: [],
       },
       {

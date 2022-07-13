@@ -172,8 +172,14 @@ c={}
 with open('../Application/clusters.json') as f:
     c = json.load(f)
 
+tempC= {}
+for key,value in c.items():
+    tempC[key + "_cluster"] = value
+# print(tempC)
+c = tempC
+
 cluster_names = list(c.keys())
-clustersAndQueries = []
+clustersAndQueries = {}
 AllQueries = []
 for name in cluster_names:
   tempListGet = []
@@ -181,8 +187,8 @@ for name in cluster_names:
   for query in c[name]:
     if (query["method"]) == "get":
       tempListGet.append(query["endpoint_name"])
-    templistAllQueries.append(query["endpoint_name"])
-  clustersAndQueries.append(tempListGet)
+    templistAllQueries.append(query)
+  clustersAndQueries[name] = tempListGet
   AllQueries.append(templistAllQueries)
 
 
@@ -402,11 +408,138 @@ export default {
     justify-content: space-between;
 }
 .rightContent{
-    width: calc(100% - 250px);
-    height:100vh;
+    width: calc(100% - 450px);
+    height: 100%;
+    min-height:100vh;
 }
 </style>
   ''')
+
+#creating query card
+with open(componentsRoute + "queryCard.vue", 'w') as f:
+  f.write('''
+<template>
+  <div class="queryCard">
+    <router-link :to="'/App/' + clusterName + '_' + queryName">
+      <div class="content">
+        <h3>{{ queryName }}</h3>
+      </div>
+    </router-link>
+  </div>
+</template>
+
+<style lang="scss" scoped>
+.queryCard{
+  width: 80%;
+  padding: 10px;
+  margin: 30px;
+  margin-left: 100px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+  transition: all 0.3s ease 0s;
+  &:hover {
+  transform: translateY(-3px);
+  }
+  .content{
+      width: 100%;
+      height: 100%;
+      h3{
+          font-size: 20px;
+          font-weight: 700;
+          color: #0f1136;
+          word-wrap: break-word;
+          width: 100%;
+          height: 100%;
+      }
+  }
+}
+a{
+  text-decoration: none;
+}
+</style>
+
+<script>
+export default {
+    name: "queryCard",
+    props:{
+        queryName: {
+            type: String,
+            required: true
+        },
+        clusterName: {
+            type: String,
+            required: true
+        }
+    },
+};
+</script>
+  ''')
+
+
+#creating the main page
+for cluster_name in cluster_names:
+  with open(viewsRoute + cluster_name +".vue", 'w') as f:
+    f.write('''
+<template>
+    <div class="''' + cluster_name + '''">
+      <div class="title">''' + cluster_name + '''</div>
+      <query-card v-for="(query, i) in queries" :key="i" :queryName="query" clusterName="''' + cluster_name + '''" />
+      <router-link to="/App/post_''' + cluster_name +'''">
+        <button class="addBtn">Add Query</button>
+      </router-link>
+    </div>
+</template>
+
+<script>
+import queryCard from '../components/queryCard.vue';
+export default {
+    name:"'''+ cluster_name +'''",
+    data(){
+      return{
+        ''' + f'''
+        queries:  {clustersAndQueries[cluster_name]} ''' + '''
+      }
+    },
+    components: {
+      queryCard,
+  },
+    };
+</script>
+
+<style lang="scss" scoped>
+.''' + cluster_name + '''{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+.title{
+  font-size: 30px;
+  font-weight: 700;
+  margin-top: 30px;
+  margin-bottom: 20px;
+  color: #0f1136;
+}
+.addBtn{
+  width: 100%;
+  background-color: #0f1136;
+  color: white;
+  font-size: 18px;
+  padding: 14px 20px;
+  margin: 17px 20px 50px 0;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+  &:hover {
+    background-color: #ffc809;
+    transform: scale(1.05);
+  }
+}
+</style>
+    ''')
 
 #create SideBar
 with open(componentsRoute + "sideBar.vue", 'w') as f:
@@ -420,16 +553,11 @@ with open(componentsRoute + "sideBar.vue", 'w') as f:
   f.write('''
     <ul class="clutsers">
       <li v-for="(card, i) in clustersNames" :key="i" class="cluster">
-        <div class="clusterName" :title="card" :id="'clustersID' + i" @click="openClusterQueries('clustersID' + i,'queriesID' + i)">
-           {{ card.substring(0, 19) + "..." }}
+      <router-link :to="'/App/' + card">
+        <div class="clusterName" :title="card" :id="'clustersID' + i">
+           {{ card.substring(0, 53) }}
         </div>
-        <ul class="queries" :id="'queriesID' + i">
-          <li v-for="(item, j) in clusters[i]" :key="j" class="query">
-            <router-link :to="'/App/' + card + '/' + item">
-              <span class="queryName" :title="item">{{ item.substring(0, 19) + "..."}}</span>
-            </router-link>
-          </li>
-        </ul>
+      </router-link>
       </li>
     </ul>
     <div class="footer">
@@ -445,34 +573,10 @@ export default{
 ''')
   f.write(f'''
         clustersNames: {cluster_names},
-        clusters: {clustersAndQueries},
         ''')
   f.write('''
         };
     },
-    methods: {
-    openClusterQueries(clusterid,queryid) {
-      if (document.getElementById(queryid).style.display == "none"){
-        document.getElementById(queryid).style.display = "block";
-        document.getElementById(clusterid).style.backgroundColor = "rgba(200,206,206,0.1)";
-        document.getElementById(clusterid).onmouseover = function() {
-          document.getElementById(clusterid).style.backgroundColor = "rgba(200,206,206,0.1)";
-        }
-        document.getElementById(clusterid).onmouseout = function() {
-          document.getElementById(clusterid).style.backgroundColor = "rgba(200,206,206,0.1)";
-        }
-      }else{
-        document.getElementById(queryid).style.display = "none";
-        document.getElementById(clusterid).style.backgroundColor = "#0f1136";
-        document.getElementById(clusterid).onmouseover = function() {
-          document.getElementById(clusterid).style.backgroundColor = "rgba(200,206,206,0.1)";
-        }
-        document.getElementById(clusterid).onmouseout = function() {
-          document.getElementById(clusterid).style.backgroundColor = "#0f1136";
-        }
-      }
-    },
-  },
 };
 </script>
 
@@ -481,7 +585,7 @@ export default{
   color: white;
   background-color: #0f1136;
   float: left;
-  width: 230px;
+  width: 430px;
   position: fixed;
   z-index: 1;
   top: 0;
@@ -509,22 +613,11 @@ export default{
   text-align: center;
   font-weight: 700;
 }
-.clutsers,
-.queries {
-  margin: 0;
-  padding: 0;
-}
 .clutsers {
-  padding-top: 20px;
+  padding-top: 10px;
+  padding-left: 5px;
 }
-.queries {
-  margin-top: 15px;
-  margin-bottom: 15px;
-  display: none;
-  transition: all 0.4s ease;
-}
-.cluster,
-.query {
+.cluster {
   margin: 0;
   padding: 0;
   padding-left: 5px;
@@ -534,7 +627,6 @@ export default{
   a {
     color: white;
     text-decoration: none;
-    padding-left: 10px;
   }
 }
 .clusterName {
@@ -550,14 +642,6 @@ export default{
   &:hover {
     background-color: rgb(200, 206, 206, 0.1);
     border-radius: 7px;
-  }
-}
-.query {
-  padding-top: 12px;
-  width: 90%;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  &:hover {
-    background-color: rgb(200, 206, 206, 0.1);
   }
 }
 </style>
@@ -758,9 +842,9 @@ requirments = [
     }
 ]
 ##########################
-# f = open('userInterfaceInfo.json','r')
-# requirments = json.load(f)
-# f.close()
+f = open('userInterfaceInfo.json','r')
+requirments = json.load(f)
+f.close()
 
 # create components
 for cluster_name,endpoints in c.items():
@@ -789,12 +873,13 @@ for cluster_name,endpoints in c.items():
  
     elif endpoint["method"] == "post":
       if is_single_entity:
-        print(cluster_name)
+        cluster_name = cluster_name.split('_')[0]
         createForm(requirments,cluster_name,endpoint, filePath)
 
-    # elif endpoint["method"] == "put":
-    #   filePath = componentsRoute + "edit_" +endpoint["endpoint_name"] + ".vue"
-    #   createForm(requirments,cluster_name,endpoint, filePath)
+    elif endpoint["method"] == "put":
+      filePath = componentsRoute + endpoint["endpoint_name"] + ".vue"
+      cluster_name = cluster_name.split('_')[0]
+      createForm(requirments,cluster_name,endpoint, filePath)
 
 #Index code generation
 with open('FrontCode/src/index.html', 'w') as f:

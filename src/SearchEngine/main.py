@@ -153,6 +153,8 @@ def suggest_queries(testSchema):
     rankedQueries = getRankedQueries(clusteredQueries,queries)
     outQueries("finalMergedQueries.json","finalMergedClusters.json",rankedQueries)
 
+    
+
 
     return rankedQueries , schemaGraph , testSchema , entityDict , schemaEntityNames
 

@@ -5,9 +5,12 @@ import home from "../views/home.vue";
 import main_page from "../views/main_page.vue";
 '''
     imports = []
+    for cluster in clusters:
+      imports.append('import '+cluster+' from "../views/'+cluster+'.vue";')
     for queries in clustersAndQueries:
       for query in queries:
-        imports.append('import '+query+' from "../components/'+query+'.vue";')
+        if query['method'] == 'delete': continue
+        imports.append('import '+query['endpoint_name']+' from "../components/'+query['endpoint_name']+'.vue";')
     imports = list(set(imports))
     routing_string += "\n".join(imports)
     routing_string += '''
@@ -25,15 +28,42 @@ const routes = [
     '''
     i = 0
     for cluster in clusters:
-      for query in clustersAndQueries[i]:
+      routing_string += '''
+        {
+        '''
+      routing_string += f'''
+        path: "{cluster}",
+        name: "{cluster}",
+        component: {cluster},
+        '''
+      routing_string += '''
+        },
+        '''
+      for fullQuery in clustersAndQueries[i]:
+        if fullQuery['method'] == 'delete': continue
+        query = fullQuery['endpoint_name']
         routing_string += '''
         {
         '''
-        routing_string += f'''
-        path: "{cluster}/{query}",
-        name: "{query}",
-        component: {query},
-        '''
+        if fullQuery['method'] == 'put':
+          routing_string += f'''
+          path: "{cluster}_{query}/:id",
+          name: "{query}",
+          component: {query},
+          '''
+        elif fullQuery['method'] == 'post':
+          routing_string += f'''
+          path: "post_{cluster}",
+          name: "{query}",
+          component: {query},
+          '''
+        else:
+          routing_string += f'''
+          path: "{cluster}_{query}",
+          name: "{query}",
+          component: {query},
+          '''
+
         routing_string += '''
         },
         '''

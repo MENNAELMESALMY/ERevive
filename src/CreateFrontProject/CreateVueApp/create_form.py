@@ -12,7 +12,7 @@ def createForm (requirments,cluster_name,endpoint,filePath):
     <div class="form">
         <form @submit.prevent="submitForm">
         ''') 
-        for req in requirments:
+        for req in requirments[cluster_name]:
             file.write(f'''
             <h2>{req["field_name"]}</h2>
             ''')
@@ -199,7 +199,7 @@ form {
   padding: 20px;
   border: 1px solid #ccc;
   background-color: #f1f1f1;
-  border-radius: 7px;
+  //border-radius: 7px;
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
 h2 {
@@ -317,7 +317,7 @@ export default {
     data(){
         return{
         ''')
-        for req in requirments:
+        for req in requirments[cluster_name]:
             if req["field_type"] == "text" or req["field_type"] == "email" or req["field_type"] == "tel" or req["field_type"] == "url" or req["field_type"] == "password" or req["field_type"] == "number":
                 file.write(f'''
             {req["field_name"].replace(' ','_')}:"",
@@ -349,7 +349,7 @@ export default {
         submitForm(){
             let formData = {
         ''')
-        for req in requirments:
+        for req in requirments[cluster_name]:
             if req["field_type"] == "text" or req["field_type"] == "email" or req["field_type"] == "tel" or req["field_type"] == "url" or req["field_type"] == "password" or req["field_type"] == "number":
                 file.write(f'''
             {req["field_name"].replace(' ','_')}:this.{req["field_name"].replace(' ','_')},

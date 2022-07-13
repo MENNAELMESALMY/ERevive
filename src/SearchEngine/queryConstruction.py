@@ -104,7 +104,10 @@ def addJoinAttrs(joins,whereAttrs):
     joins.extend(whereAttrs)
     return joins
 
+import json
 def queryStructure(queryDict):
+    # ob = {}
+    # ob["query"] = queryDict
     query = "SELECT "
     ## concatenate aggregation functions
     if len(queryDict["aggrAttrs"]) > 0:
@@ -140,10 +143,17 @@ def queryStructure(queryDict):
             keepEnd = whereAttr[3]
             if whereAttr[3] == "None":
                 whereAttr[3] = ""
-            if whereAttr[2]!="value":
-                whereAttr[2] = whereAttr[2][0]
-            whereAttr = [whereAttr[0][0],whereAttr[1],whereAttr[2],whereAttr[3]]
-            whereAttr = ' '.join(whereAttr)
+
+            if isinstance(whereAttr[2], str) and whereAttr[2]!="value":
+                whereAttr = [whereAttr[0],whereAttr[1],whereAttr[2],whereAttr[3]]
+                whereAttr = ' '.join(whereAttr)
+
+            else:
+                if whereAttr[2]!="value":
+                    whereAttr[2] = whereAttr[2][0]
+                whereAttr = [whereAttr[0][0],whereAttr[1],whereAttr[2],whereAttr[3]]
+                whereAttr = ' '.join(whereAttr)
+            
             if query[-1] == " ":
                 query = query[:-1]
             query = query + " " + whereAttr
@@ -182,6 +192,10 @@ def queryStructure(queryDict):
 
     query = query.strip()
     query += ";"
+    # ob["constructed"] = query
+    # with open("debugConstructedQueries.json","a+") as file:
+    #     json.dump(ob,file)
+
     return query
 
 def getModelsObj(testSchema):

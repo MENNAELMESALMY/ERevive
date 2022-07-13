@@ -21,6 +21,7 @@ const state = {
   loadingTitle: "Image Processing is Running ....",
   queriesErrors: {},
   errorsClusters: [],
+  setSeeds: false,
 };
 
 const mutations = {
@@ -113,6 +114,11 @@ const actions = {
       });
   },
   postStartApplication({ commit, state }) {
+    console.log("systemName", state.systemName);
+    console.log("systemDescription", state.systemDescription);
+    console.log("databaseName", state.databaseName);
+    console.log("databaseUsername", state.databaseUsername);
+    console.log("databasePassword", state.databasePassword);
     let systemData = {
       forms: state.formData,
       systemData: {
@@ -156,6 +162,16 @@ const actions = {
         console.log(error);
         commit("setQueriesErrors", error.response.data);
         router.push("/queriesErrors");
+      });
+  },
+  postAddSeeds({ state }) {
+    axios
+      .post("/seeds")
+      .then(() => {
+        state.setSeeds = true;
+      })
+      .catch((error) => {
+        console.log(error);
       });
   },
 };

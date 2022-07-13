@@ -5,6 +5,7 @@ def create_dashboard_style(route):
 .dashboard{
     display:flex;
     height: 100%;
+    min-height:100vh;
     .sidebar{
         display: flex;
         flex-wrap: wrap;
@@ -12,6 +13,7 @@ def create_dashboard_style(route):
         max-width:250px;
         background-color: rgba(241, 241, 241, 0.554);
         height: 100%;
+        min-height:100vh;
         align-content: flex-start;
         padding: 20px;
         .labels{
@@ -24,6 +26,8 @@ def create_dashboard_style(route):
                 border-radius: 20px;
                 margin: 3px;
                 color:rgb(255, 255, 255) ;
+                max-width: 250;
+                line-break: anywhere;
             }
             label:nth-child(3n-1){background-color: #b09638;}
             label:nth-child(3n+0){background-color: #e18d96;}
@@ -64,7 +68,11 @@ def create_dashboard_style(route):
             color: black; 
             border: 2px solid #b09638;
           }
-          
+          .input_section{
+            border-bottom: 1px solid rgb(200, 200, 200);
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+          }
     }
     .dashboard_table{
         margin:20px;
@@ -81,10 +89,13 @@ def create_dashboard_style(route):
         th,td{
             padding: 10px 3px;
          }
-        .data_rows{
+        .data_rows {
             border-bottom: 1px solid rgba(175, 175, 175, 0.889);
             margin:15px;
             transition-duration: 0.4s;
+            i {
+                cursor: pointer;
+            }
          }
         .data_rows:hover {
             box-shadow: 0 5px 15px rgb(168, 167, 167);
@@ -93,7 +104,7 @@ def create_dashboard_style(route):
     .table_nav{
         display:flex;
         justify-content: space-between;
-        min-width: calc(100vw - 550px);
+        min-width: calc(100vw - 700px);
         .buttons{
             display: flex;
             justify-content: space-evenly;
@@ -111,7 +122,7 @@ def create_dashboard_style(route):
               }
         }
     }
-    h2{
+    h2,h3,h4{
         margin: 20px;
     }
 }
@@ -139,5 +150,6 @@ input[type=text]:focus,input[type=number]:focus,input[type=date]:focus{
     height: 17px;
     cursor: pointer;
   }  
+
     ''')
     f.close()

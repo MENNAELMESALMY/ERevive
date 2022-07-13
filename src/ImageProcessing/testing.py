@@ -56,10 +56,10 @@ def relation_statistics(relations):
             cardenality.append(e["cardinality"].upper())
             partici_count += 1
 
-        cardenality_count += 1
         if len(cardenality) > 2:
             detected["naryRelation"]+=1
         elif len(cardenality) == 2:
+            cardenality_count += 1
             if "1" in cardenality and ("N" in cardenality or "M" in cardenality):
                 detected["oneToMany"]+=1
             elif cardenality[0] in ["N","M"] and cardenality[1] in ["N","M"]:
@@ -78,7 +78,7 @@ def relation_statistics(relations):
     detected["oneToOne"] = int((detected["oneToOne"]/cardenality_count)*100)
     detected["oneToMany"] = int((detected["oneToMany"]/cardenality_count)*100)
     detected["manyToMany"] = int((detected["manyToMany"]/cardenality_count)*100)
-    detected["naryRelation"] = int((detected["naryRelation"]/cardenality_count)*100)
+    #detected["naryRelation"] = int((detected["naryRelation"]/cardenality_count)*100)
 
     return detected
 

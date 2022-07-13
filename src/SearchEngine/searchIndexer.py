@@ -66,7 +66,7 @@ def oneHotVocabEncoding(vocab):
         for word in synList:
             if word in OneHotVocab.keys(): 
                 newWord = False
-                break
+                continue
             oneHotVec = np.zeros(len(vocab.keys()))
             oneHotVec[idx] = 1.0
             OneHotVocab[word] = oneHotVec

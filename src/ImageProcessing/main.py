@@ -93,7 +93,7 @@ def process_image(img_dir):
         print("######### Start Types Prediction #########")
         dataTypesArr = predictWordsTypes(textArr)
         #print(dataTypesDic)
-        #print(textArr)
+        print(textArr)
         print(len(textArr),len(dataTypesArr),len(shapes))
         textArr, dataTypesArr = addDefaultNames(shapes, textArr, dataTypesArr)
         print(len(textArr),len(dataTypesArr),len(shapes))

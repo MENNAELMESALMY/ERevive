@@ -386,7 +386,7 @@ export default {
 }
 </script>   
         ''')
-            
+
 
 # requirments = [
 #     {

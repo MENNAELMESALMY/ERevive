@@ -4,7 +4,7 @@ from .searchIndexer import oneHotVocabEncoding
 from .joiner import constructGraph
 OneHotVocab = {}
 schemaGraph = {}
-def init(testSchema):
+def init(testSchema=None):
     global OneHotVocab
     global schemaGraph
 
@@ -12,7 +12,7 @@ def init(testSchema):
         vocab_words = json.load(file)
         print("loading data done")
         OneHotVocab = oneHotVocabEncoding(vocab_words)
-
-    schemaGraph = constructGraph(testSchema)
+    if testSchema:
+        schemaGraph = constructGraph(testSchema)
     return OneHotVocab ,schemaGraph
     

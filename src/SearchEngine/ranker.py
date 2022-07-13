@@ -79,11 +79,15 @@ def rankQueriesSimilarities(quiries_keywords,quiries,er):
 @lru_cache(maxsize=None)
 def mapEntity(entityKeywords,schemaEntityNames):
     #print("mapEntity",entity,schemaEntityNames)
-    entityKeywordsSplit = entityKeywords.split("_")
+    entityKeywordsSplit = cleanEntityName(entityKeywords)
+    #if "department" in entityKeywords:
+    #    print("mapEntity",entityKeywords,schemaEntityNames,entityKeywordsSplit)
     MaxMatchScore,MappedEntity  = 0,None
     for entity in schemaEntityNames:
         cleanName = cleanEntityName(entity)
         matchScore = getMatchScore(entityKeywordsSplit,cleanName)
+        #if "department" in entityKeywords:
+        #    print("scores",entityKeywords,entity,cleanName,matchScore,MaxMatchScore,MappedEntity)
         if matchScore > MaxMatchScore:
             MaxMatchScore = matchScore
             MappedEntity = [entity]
@@ -175,15 +179,18 @@ def getAllAttributes(query):
     for key in query.keys():
         if query[key] == []:
             continue
+        #print(key,query[key])
         if key in attrKeys:
             attributes.update(set(query[key]))
         elif key in attrKeysAggr:
             zipIndex = 1 if key =="havingAttrs" else 0
             attNames = set(list(zip(*query[key]))[zipIndex])
+            #print(key,attNames)
             attributes.update(attNames)
         elif key == 'whereAttrs':
             whereAttributes = [[atr[0],atr[2]] if atr[2]!="value" else [atr[0]]  for atr in query[key]]
             attNames = set(flattenList(whereAttributes))
+            #print(key,attNames)
             attributes.update(attNames)
     return attributes
 
@@ -191,12 +198,17 @@ def getAllAttributes(query):
 def mapToSchema(schemaGraph,query,schema,entityDict,schemaEntityNames):
     ##################Remember mapped Entities
     initSchemaGraph(schemaGraph)
+    #test_entities= ["department", "location"]
+    #query_entities = query['entities']
+
     mappedEntitesDict,mappedEntities = mapEntities(tuple(query['entities']),tuple(schemaEntityNames))
    
     mappedEntitesNames = [ v for k,v in mappedEntitesDict.items()]
     #mappedEntitesNames = ["players","teams","coaches","awards_coaches"]
     start = timeit.default_timer()
     bestJoin , goals = connectEntities(tuple(mappedEntitesNames))
+    #if len(query_entities)==2 and query_entities[0]=="department" and query_entities[1]=="location":
+    #    print("query AHO: ",query , "mapedEntitesDict: ",mappedEntitesDict , "mappedEntities: ",mappedEntities, "bestJoin: ",bestJoin, "goals: ",goals)
 
     #print(mappedEntitesNames)
     #print(bestJoin,goals,mappedEntitesNames)
@@ -244,7 +256,7 @@ def mapToSchema(schemaGraph,query,schema,entityDict,schemaEntityNames):
                 entity = mappedEntitesDict[entity]
                 if attribute[0] == "*":
                     if len(query['entities']) == 1: entity = None
-                    mappedAttributes.append((entity,"*",0,attribute[0],origAttribute[0],None))
+                    mappedAttributes.append((entity,"*",0,attribute[0],origAttribute,None))
                     continue
 
                 mapping = mapAttr([entity],attribute,entityDict,schema,origAttribute)
@@ -407,6 +419,8 @@ def rankTopk(ranked_queries,maxNumOfQueries):
         top_ranked_queries.append({'len':len(ranked_query),'score':cluster_score,'queries':ranked_query})
         if cluster_score > maxClusterScore:
             maxClusterScore = cluster_score
+
+    maxClusterScore = max(1,maxClusterScore)
     for cluster in top_ranked_queries:
         if len(cluster["queries"])<10:
             continue

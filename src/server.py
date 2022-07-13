@@ -215,6 +215,10 @@ dummy = {
 with open("./ImageProcessing/final_schema.json","r") as file:
     dummy = json.load(file)
 
+# with open('CreateFrontProject/userInterfaceInfo.json','w') as file:
+#     dummy_forms = json.load(file)
+
+
 @app.route('/imageprocessing', methods=['POST'])
 def get_image():
     rm_file = "rm -rf common/outImageProcessing.json"
@@ -237,8 +241,10 @@ def get_ipoutput():
 
 @app.post('/searchengine')
 def get_search_engine():    
-    #finalSchema = request.json['schema']
-    finalSchema = dummy
+    finalSchema = request.json['schema'] #dummy
+    with open("debugConstructedQueries.json","w+") as file:
+        json.dump({},file)
+
     print(finalSchema)
     rankedQueries, schemaGraph , testSchema , entityDict , schemaEntityNames = start_search_engine(finalSchema)
     clusters = []
@@ -249,7 +255,13 @@ def get_search_engine():
         clusters.append(clusterQueries)
     finalClusters = prepareClusters(clusters,finalSchema)
     outClusters = {}
+    print(finalClusters)
+    with open('finalClustersError.json','w+') as file:
+        json.dump(finalClusters,file)
+
     for cluster in finalClusters:
+        if len(cluster) == 0 or len(cluster[0]) == 0 or len(cluster[0][0]) == 0:
+            continue
         outClusters[cluster[0][0]["cluster_name"]] = cluster   
     searchOut = {
         "testSchema":testSchema,
@@ -345,7 +357,8 @@ def get_application():
     systemData = request.json.get('systemData')
     clusters = request.json.get('clusters')
     finalSchema = request.json.get('testSchema')
-    with open('CreateFrontProject/userInterfaceInfo.json','w') as file:
+
+    with open('CreateFrontProject/userInterfaceInfo.json','w+') as file:
         json.dump(forms,file)
 
     start_creating_application(finalSchema,clusters,systemData.get('databaseUsername'),systemData.get('databasePassword'),systemData.get('databaseName'))

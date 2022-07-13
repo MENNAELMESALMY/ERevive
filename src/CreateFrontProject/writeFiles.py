@@ -873,13 +873,48 @@ for cluster_name,endpoints in c.items():
  
     elif endpoint["method"] == "post":
       if is_single_entity:
-        cluster_name = cluster_name.split('_')[0]
+        #print(cluster_name)
+        cluster_name = cluster_name.replace("_cluster","")
+        #print(cluster_name)
         createForm(requirments,cluster_name,endpoint, filePath)
+      else:
+        with open(filePath, 'a') as file: 
+          file.write('''
+<template>
+    <div class="form"></div>
+</template>
+
+<style></style>
+
+<script>
+export default {
+    name:"form"
+}
+</script>
+        ''')
 
     elif endpoint["method"] == "put":
       filePath = componentsRoute + endpoint["endpoint_name"] + ".vue"
-      cluster_name = cluster_name.split('_')[0]
-      createForm(requirments,cluster_name,endpoint, filePath)
+      if is_single_entity:
+        #print(cluster_name)
+        cluster_name = cluster_name.replace("_cluster","")
+        #print(cluster_name)
+        createForm(requirments,cluster_name,endpoint, filePath)
+      else:
+        with open(filePath, 'a') as file: 
+          file.write('''
+<template>
+    <div class="form"></div>
+</template>
+
+<style></style>
+
+<script>
+export default {
+    name:"form"
+}
+</script>
+        ''')
 
 #Index code generation
 with open('FrontCode/src/index.html', 'w') as f:

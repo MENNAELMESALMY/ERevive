@@ -106,8 +106,8 @@ def addJoinAttrs(joins,whereAttrs):
 
 import json
 def queryStructure(queryDict):
-    # ob = {}
-    # ob["query"] = queryDict
+    ob = {}
+    ob["query"] = queryDict
     query = "SELECT "
     ## concatenate aggregation functions
     if len(queryDict["aggrAttrs"]) > 0:
@@ -192,9 +192,9 @@ def queryStructure(queryDict):
 
     query = query.strip()
     query += ";"
-    # ob["constructed"] = query
-    # with open("debugConstructedQueries.json","a+") as file:
-    #     json.dump(ob,file)
+    ob["constructed"] = query
+    with open("debugConstructedQueries.json","a+") as file:
+        json.dump(ob,file)
 
     return query
 
@@ -394,7 +394,7 @@ def create_query_ui_endpoint(q,modelsObjects):
         "response": ui_response_model,
         "ui_name": ui_name.lower(),
         "cluster_name": ("_".join(query["entities"])).lower(),
-        "endpoint_name":endpoint_name.lower(),
+        "endpoint_name":endpoint_name.lower()+"_"+str(query["idx"]),
         "is_single_entity":len(query["entities"])==1,
         "query": q[1],
         "queryObj":query,
@@ -415,11 +415,13 @@ def prepareClusters(clusters,testSchema):
     for cluster in clusters:
         errors = []
         finalCluster = []
+        idx = 0
         for query in cluster:
             cartesian = len(query[0]["entities"]) > 1 and len(query[0]["bestJoin"]) == 0
             hasGroupBy = len(query[0]["groupByAttrs"]) != 0
             if cartesian and hasGroupBy:
                 continue
+            query[0]["idx"] = idx
             endpoint_object ,resource_model = prepareQuery(query,modelsObjects,testSchema)  # return to frontend
        
             if endpoint_object['endpoint_name'] not in errors:
@@ -428,6 +430,7 @@ def prepareClusters(clusters,testSchema):
                 print("ENDPOINT ALREADY EXISTS\n",query[0],endpoint_object['endpoint_name'])   
                 continue
             finalCluster.append([endpoint_object,resource_model])
+            idx+=1
         finalClusters.append(finalCluster)
     return finalClusters
     

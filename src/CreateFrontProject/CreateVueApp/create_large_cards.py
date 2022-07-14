@@ -42,12 +42,16 @@ def generate_large_cards(cluster_name,endpoint,directory,
         card_string += '\t\t</div>\n'
 
         card_string += '\t\t<div>\n'
-        if datatype=='bool':
-            card_string += f'\t\t<input type="{datatype}" v-model="{param}" class="{datatype}">\n' 
+        if operator == 'between':
+            card_string += f'\t\t<input placeholder="from" type="{datatype}" v-model="{param}[0]" class="{datatype}" required>\n'
+            card_string += f'\t\t<input placeholder="to" type="{datatype}" v-model="{param}[1]" class="{datatype}" required>\n'
         else:
-            card_string += f'\t\t<input type="{datatype}" v-model="{param}" class="{datatype}" required>\n'
-        if datatype == 'checkbox':
-            card_string += '\t\t<label>Set Value</label>\n'
+            if datatype=='checkbox':
+                card_string += f'\t\t<input type="{datatype}" v-model="{param}" class="{datatype}">\n' 
+                card_string += '\t\t<label>Set Value</label>\n'
+            else:
+                card_string += f'\t\t<input type="{datatype}" v-model="{param}" class="{datatype}" required>\n'
+
         card_string += '\t\t</div>\n'
         card_string += '\t\t</div>\n'
         
@@ -115,8 +119,11 @@ def generate_large_cards(cluster_name,endpoint,directory,
     data: function () {
     return {
 '''
-    for param,_,_,_ in query_params:
-        card_string += '\t\t'+param.replace('.','_').replace(' ','_') + ':' + '"",\n'
+    for param,_,op,_ in query_params:
+        if op == 'between':
+            card_string += '\t\t'+param.replace('.','_').replace(' ','_') + ':' + '[0,100],\n'
+        else:
+            card_string += '\t\t'+param.replace('.','_').replace(' ','_') + ':' + '"",\n'
     card_string += '''
     };
     },

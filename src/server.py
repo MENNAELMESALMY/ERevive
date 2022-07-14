@@ -212,8 +212,6 @@ dummy = {
     }
 }
 
-with open("./ImageProcessing/final_schema.json","r") as file:
-    dummy = json.load(file)
 
 @app.route('/imageprocessing', methods=['POST'])
 def get_image():

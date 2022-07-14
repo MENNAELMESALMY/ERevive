@@ -108,9 +108,9 @@ def generate_dashboard(cluster_name,endpoint,directory,
 '''
     for param,_,op,_ in query_params:
         if op == 'between':
-            card_string += '\t\t'+param.replace('.','_').replace(' ','_') + ':' + '[0,100],\n'
+            dashboard_string += '\t\t'+param.replace('.','_').replace(' ','_') + ':' + '[0,100],\n'
         else:
-            card_string += '\t\t'+param.replace('.','_').replace(' ','_') + ':' + '"",\n'
+            dashboard_string += '\t\t'+param.replace('.','_').replace(' ','_') + ':' + '"",\n'
     
     dashboard_string += '''
     };

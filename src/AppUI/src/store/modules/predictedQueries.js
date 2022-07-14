@@ -88,7 +88,8 @@ const mutations = {
     state.systemDescription = systemObject.systemDescription;
     state.databaseName = systemObject.databaseName;
     state.databaseUsername = systemObject.databaseUsername;
-    state.datbasePassword = systemObject.databasePassword;
+    state.databasePassword = systemObject.databasePassword;
+    console.log(state);
   },
   setQueriesErrors(state, errors) {
     state.queriesErrors = errors;

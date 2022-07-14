@@ -147,7 +147,7 @@ export default {
       this.$store.commit("predictedQueries/setSystemInfo", {
         systemName: this.systemName,
         systemDescription: this.systemDescription,
-        databasedatabasePasswordUsername: this.username,
+        databaseUsername: this.username,
         databasePassword: this.password,
         databaseName: this.databaseName,
       });

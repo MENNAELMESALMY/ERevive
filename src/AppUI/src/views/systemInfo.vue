@@ -148,7 +148,7 @@ export default {
         systemName: this.systemName,
         systemDescription: this.systemDescription,
         databasedatabasePasswordUsername: this.username,
-        : this.password,
+        databasePassword: this.password,
         databaseName: this.databaseName,
       });
       this.$router.push("/uploadPage");

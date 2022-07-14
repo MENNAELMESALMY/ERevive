@@ -285,7 +285,7 @@ flask-cors\n\
         return ' \n\
 export PYTHONPATH=$PWD \n\
 export FLASK_APP=__init__.py \n\
-export FLASK_DEBUG=0 \n\
+export FLASK_DEBUG=1 \n\
 . venv/bin/activate \n\
 \n\
 python -m flask run --host=localhost --port=3000 \n\
@@ -299,6 +299,7 @@ pip install -r requirements.txt \n\
 '
     def create_app_utils(self):
         return ' \n\
+from datetime import datetime \n\
 from flask_restx import fields \n\
 def convert_db_model_to_restx_model(model): \n\
 \n\
@@ -330,6 +331,9 @@ def serialize_result(res):\n\
     serialized_result = res_dict.copy()\n\
     for attr_key, attr_value in res_dict.items():\n\
         print(attr_key, attr_value)\n\
+        if isinstance(attr_value,datetime): \n\
+            serialized_result[attr_key] = str(attr_value) \n\
+            attr_value = str(attr_value) \n\
         if hasattr(attr_value, "__dict__"):\n\
             model_dict = attr_value.serialize()\n\
             model_dict_updated = {}\n\

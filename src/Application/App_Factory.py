@@ -37,7 +37,7 @@ def get_clusters():
     
 # Create Models method
 #def Create_Application(schema,clusters,user="nada",password = "Ringmybells5",db="default"):
-def Create_Application(schema,clusters,user="root",password = "admin<3Super",db="company"):
+def Create_Application(schema,clusters,user="root",password = "admin<3Super",db="new_company"):
     #print("Creating Application: ",schema)
     Create_Directory('api')
     os.chdir('api')
@@ -625,10 +625,11 @@ def create_resource(resource_model, endpoint_object,api_file,namespace_name,pars
             #     print("???????????????????????????????????????????????????????/")
             #     print(param)
             #     print(endpoint_object)
+            attr_type = "str" if param[1] == "datetime" else param[1]
             if param[2] in ["in","between"]:
-                parser += endpoint_object["endpoint_name"].lower()+"_parser.add_argument('"+param[0]+"', type="+param[1]+", required=True,action='append', location='args')\n"
+                parser += endpoint_object["endpoint_name"].lower()+"_parser.add_argument('"+param[0]+"', type="+attr_type+", required=True,action='append', location='args')\n"
             else:
-                parser += endpoint_object["endpoint_name"].lower()+"_parser.add_argument('"+param[0]+"', type="+param[1]+", required=True, location='args')\n"
+                parser += endpoint_object["endpoint_name"].lower()+"_parser.add_argument('"+param[0]+"', type="+attr_type+", required=True, location='args')\n"
     resource = "\
 {4}\n\
 @{1}.route('/{3}', methods=['GET'])\n\

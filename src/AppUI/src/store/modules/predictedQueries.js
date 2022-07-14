@@ -88,7 +88,8 @@ const mutations = {
     state.systemDescription = systemObject.systemDescription;
     state.databaseName = systemObject.databaseName;
     state.databaseUsername = systemObject.databaseUsername;
-    state.datbasePassword = systemObject.databasePassword;
+    state.databasePassword = systemObject.databasePassword;
+    console.log(state);
   },
   setQueriesErrors(state, errors) {
     state.queriesErrors = errors;
@@ -97,21 +98,22 @@ const mutations = {
 };
 
 const actions = {
-  postSearchEngineQueries({ commit, state }, payload) {
-    let schema = {
-      schema: payload.finalSchema,
-    };
+  async postSearchEngineQueries({ commit, state }, payload) {
+    let schema = { schema: payload.finalSchema };
+    console.log("sending schema", schema);
     state.formData = payload.formData;
-    axios
-      .post("/searchengine", schema)
-      .then((response) => {
-        console.log("search Engine Output", response.data);
-        commit("setSearchEngineQueries", response.data);
-        router.push("/clustersPage");
-      })
-      .catch((error) => {
-        console.log(error);
+    try {
+      let response = await axios({
+        method: "post",
+        url: "/searchengine",
+        headers: {},
+        data: schema,
       });
+      commit("setSearchEngineQueries", response.data);
+      router.push("/clustersPage");
+    } catch (error) {
+      console.log(error);
+    }
   },
   postStartApplication({ commit, state }) {
     console.log("systemName", state.systemName);
@@ -131,6 +133,7 @@ const actions = {
       clusters: state.predictedClusters,
       testSchema: state.testSchema,
     };
+    console.log("systemData", systemData);
     axios
       .post("/application", systemData)
       .then(() => {

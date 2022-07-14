@@ -40,13 +40,16 @@ def generate_dashboard(cluster_name,endpoint,directory,
         dashboard_string += '\t\t</div>\n'
         dashboard_string += '\t\t<div>\n'
 
-        if datatype=='checkbox':
-            dashboard_string += f'\t\t<input type="{datatype}" v-model="{param}" class="{datatype}">\n' 
+        if operator == 'between':
+            dashboard_string += f'\t\t<input placeholder="from" type="{datatype}" v-model="{param}[0]" class="{datatype}" required>\n'
+            dashboard_string += f'\t\t<input placeholder="to" type="{datatype}" v-model="{param}[1]" class="{datatype}" required>\n'
         else:
-            dashboard_string += f'\t\t<input type="{datatype}" v-model="{param}" class="{datatype}" required>\n'
+            if datatype=='checkbox':
+                dashboard_string += f'\t\t<input type="{datatype}" v-model="{param}" class="{datatype}">\n' 
+                dashboard_string += '\t\t<label>Set Value</label>\n'
+            else:
+                dashboard_string += f'\t\t<input type="{datatype}" v-model="{param}" class="{datatype}" required>\n'
         
-        if datatype == 'checkbox':
-            dashboard_string += '\t\t<label>Set Value</label>\n'
         dashboard_string += '\t\t</div>\n'
         dashboard_string += '\t\t</div>\n'
 
@@ -103,8 +106,12 @@ def generate_dashboard(cluster_name,endpoint,directory,
     data: function () {
     return {
 '''
-    for param,_,_,_ in query_params:
-        dashboard_string += '\t\t'+param.replace('.','_').replace(' ','_') + ':' + '"",\n'
+    for param,_,op,_ in query_params:
+        if op == 'between':
+            dashboard_string += '\t\t'+param.replace('.','_').replace(' ','_') + ':' + '[0,100],\n'
+        else:
+            dashboard_string += '\t\t'+param.replace('.','_').replace(' ','_') + ':' + '"",\n'
+    
     dashboard_string += '''
     };
     },

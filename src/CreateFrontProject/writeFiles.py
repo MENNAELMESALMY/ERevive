@@ -485,7 +485,7 @@ for cluster_name in cluster_names:
       <div class="title">''' + cluster_name + '''</div>
       <query-card v-for="(query, i) in queries" :key="i" :queryName="query" clusterName="''' + cluster_name + '''" />
       <router-link to="/App/post_''' + cluster_name +'''">
-        <button class="addBtn">Add Query</button>
+        <button class="addBtn">Add Object</button>
       </router-link>
     </div>
 </template>

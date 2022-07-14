@@ -143,7 +143,7 @@ export default {
   },
   methods: {
     submitForm() {
-      this.$store.commit("triggerModals/toggleSavedModal");
+      // this.$store.commit("triggerModals/toggleSavedModal");
       this.$store.commit("predictedQueries/setSystemInfo", {
         systemName: this.systemName,
         systemDescription: this.systemDescription,
@@ -151,6 +151,7 @@ export default {
         databasePassword: this.password,
         databaseName: this.databaseName,
       });
+      this.$router.push("/uploadPage");
     },
   },
 };

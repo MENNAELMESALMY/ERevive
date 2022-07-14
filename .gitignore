@@ -144,6 +144,7 @@ src/SearchEngine/glove_vectors.model.vectors.npy
 src/SearchEngine/glove_vectors.model
 src/ImageProcessing/output/
 Interface_Vue/createFrontProject/FrontCode/
+notebooks/preparingDatasets/finalOutputs/
 *.png
 src/NlpToSql/datasets/*
 src/NlpToSql/not_done_dict/*
@@ -152,6 +153,8 @@ src/SearchEngine/glove_vectors.model
 src/SearchEngine/glove_vectors.model.vectors.npy
 src/SearchEngine/debugConstructedQueries.json
 src/SearchEngine/nGrams/nGrams.zip
+src/SearchEngine/nGrams/nGrams
+src/SearchEngine/nGrams/
 src/SearchEngine/nGrams/ngrams/ngrams.pickle
 src/SearchEngine/nGrams/ngrams/unigram.pickle
 notebooks/preparingDatasets/finalOutputs_old/

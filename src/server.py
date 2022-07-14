@@ -239,11 +239,8 @@ def get_ipoutput():
 
 @app.post('/searchengine')
 def get_search_engine():    
-    finalSchema = request.json['schema'] #dummy
-    with open("debugConstructedQueries.json","w+") as file:
-        json.dump({},file)
-
-    print(finalSchema)
+    finalSchema =request.json['schema'] # dummy
+   
     rankedQueries, schemaGraph , testSchema , entityDict , schemaEntityNames = start_search_engine(finalSchema)
     clusters = []
     for cluster in rankedQueries:
@@ -253,9 +250,7 @@ def get_search_engine():
         clusters.append(clusterQueries)
     finalClusters = prepareClusters(clusters,finalSchema)
     outClusters = {}
-    #print(finalClusters)
-    with open('finalClustersError.json','w+') as file:
-        json.dump(finalClusters,file)
+
 
     for cluster in finalClusters:
         if len(cluster) == 0 or len(cluster[0]) == 0 or len(cluster[0][0]) == 0:
@@ -336,8 +331,7 @@ def get_validate():
 def start_creating_application(final_schema,clusters,user_name,password,db_name):
     os.chdir('Application')
     print("start creating application")
-    #Create_Application(final_schema,clusters,user_name,password,db_name)
-    Create_Application(final_schema,clusters)
+    Create_Application(final_schema,clusters,user_name,password,db_name)
     process = Process(target=lambda: os.system('python3 run.py &'))
     process.start()
     print("end creating application")
@@ -355,7 +349,7 @@ def get_application():
     systemData = request.json.get('systemData')
     clusters = request.json.get('clusters')
     finalSchema = request.json.get('testSchema')
-
+    print("systemData",systemData)
     with open('CreateFrontProject/userInterfaceInfo.json','w+') as file:
         json.dump(forms,file)
 

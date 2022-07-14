@@ -268,15 +268,14 @@ def cardinality(relations,img,binarizedImg):
         for path in relation["paths"]:
             rows = [p[0] for p in path]
             cols = [p[1] for p in path]
-            img[rows,cols]=255 
-
+            img[rows,cols]=255
+            binarizedImg[rows,cols]=255
         c2 = 0
         contour = []
         for point in relation["contour_cardinality"][0]:
             contour.append([point[1],point[0]])
         contour = np.array(contour)
         max_right,max_left,max_top,max_bottom = getMaxBorders(contour)
-     
         for entity in relation["entities"]:
             centerX = x + w//2
             centerY = y + h//2
@@ -320,7 +319,9 @@ def get_relation_cardinality(cardinality_img):
     cardinality_img = 255 - cardinality_img
     contours = cv.findContours(cardinality_img, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)[0]
     cardinality_img = 255 - cardinality_img
-    for contour in contours:
+    num = min(len(contours),10)
+    contours = sorted(contours, key=cv.contourArea, reverse=True)[:num]
+    for idx,contour in enumerate(contours):
         x,y,w,h= cv.boundingRect(contour)
         textImage = cardinality_img[y:y+h,x:x+w].copy()
         textImage = cv.copyMakeBorder(textImage, 2, 2, 2, 2,  cv.BORDER_CONSTANT, None, (255,255,255))

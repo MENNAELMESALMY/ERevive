@@ -212,8 +212,6 @@ dummy = {
     }
 }
 
-with open("./ImageProcessing/final_schema.json","r") as file:
-    dummy = json.load(file)
 
 # with open('CreateFrontProject/userInterfaceInfo.json','w') as file:
 #     dummy_forms = json.load(file)

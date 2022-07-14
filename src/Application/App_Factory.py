@@ -1,5 +1,3 @@
-from click import command
-from sklearn import cluster
 from .Api_Factory import ApiFactory
 from .generateModel import createAllModels
 import json

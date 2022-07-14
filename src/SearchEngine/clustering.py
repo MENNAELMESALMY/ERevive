@@ -20,6 +20,7 @@ def updateQueryGroupBy(query,testSchema):
     agg_in_orderby = is_agg_in_orderby(query["orderByAttrs"])
     groupByAttrs = set([attr[0] for attr in query["groupByAttrs"]])
     models_obj = getModelsObj(testSchema)
+    datatypes={}
     if len(query["aggrAttrs"]) or agg_in_orderby:
         orderByAttrs = [atr[0] for atr in query["orderByAttrs"] if not atr[1] or atr[1]==""]
         groupAttrs = orderByAttrs + query["selectAttrs"]
@@ -32,8 +33,11 @@ def updateQueryGroupBy(query,testSchema):
                     selectAttrs.update(attrs)
             else:
                 selectAttrs.add(attr[0])
+                datatypes[attr[0]] = attr[1]
         groupByAttrs.update(selectAttrs)
+    groupByAttrs = list(groupByAttrs)
     query["updatedGroupByAttrs"] = list(groupByAttrs)
+    query["groupByAttrs"] = [(attr,datatypes.get(attr,None)) for attr in groupByAttrs]
     return query
 
 def getClusteredQueries(queries):

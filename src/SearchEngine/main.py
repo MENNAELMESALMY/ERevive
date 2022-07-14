@@ -147,14 +147,11 @@ def suggest_queries(testSchema):
         jsonObj = json.dumps(finalClusters)
         file.write(jsonObj)
 
-    #mergedClusters = getMergdClusters(clusteredQueries,queries,testSchema)
+    mergedClusters = getMergdClusters(clusteredQueries,queries,testSchema)
     #mergedClusters = getMergdClusters(mergedClusters,queries,testSchema)
-    
-    rankedQueries = getRankedQueries(clusteredQueries,queries)
+
+    rankedQueries = getRankedQueries(mergedClusters,queries)
     outQueries("finalMergedQueries.json","finalMergedClusters.json",rankedQueries)
-
-    
-
 
     return rankedQueries , schemaGraph , testSchema , entityDict , schemaEntityNames
 

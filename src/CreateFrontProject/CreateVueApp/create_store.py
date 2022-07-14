@@ -5,9 +5,15 @@ const state = {
 '''
     for endpoint in endpoints:
         store_string += '\t\t'+endpoint["endpoint_name"] + ':' + '[],\n'
-     
+
+    store_string += '\t\t cur_item_in_store:{},\n'
     store_string += '''
 };
+const mutations = {
+    setCurObj(state, obj) {
+        state.cur_item_in_store = obj;
+    },
+}
 
 const actions = {
 '''
@@ -38,7 +44,12 @@ const actions = {
             }
             '''
             store_string += '\t\t\tstate.'+endpoint["endpoint_name"]+' = store_data;\n'
-        store_string += '\t\t} catch (error) {\n\t\t\tconsole.log(error)\n\t\t}},\n'
+        if endpoint['method'] == 'get':
+            store_string += '''}catch(error){
+            console.log(error);
+            state.'''+endpoint["endpoint_name"]+' = [];\n}},'
+        else:
+            store_string += '\t\t} catch (error) {\n\t\t\tconsole.log(error)\n\t\t}},\n'
 
     store_string += '''
     };
@@ -46,6 +57,7 @@ const actions = {
 export default {
   namespaced: true,
   state,
+  mutations,
   actions,
 };
     '''

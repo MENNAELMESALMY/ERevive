@@ -848,14 +848,12 @@ f.close()
 
 # create components
 for cluster_name,endpoints in c.items():
-  get_endpoint=''
+  get_endpoint = "get_"+ cluster_name.replace("_cluster","").lower()
   delete_endpoint=''
   put_endpoint=''
   pks=[]
   for endpoint in endpoints:
-    if endpoint["method"] == "get" and endpoint['is_single_entity'] == True:
-      get_endpoint =  endpoint["endpoint_name"]
-    elif endpoint["method"] == "delete": 
+    if endpoint["method"] == "delete": 
       delete_endpoint = endpoint["endpoint_name"]
       pks = endpoint["queryParams"]
     elif endpoint["method"] == "put": 
@@ -874,7 +872,7 @@ for cluster_name,endpoints in c.items():
         #print(cluster_name)
         temp_cluster_name = cluster_name.replace("_cluster","")
         #print(cluster_name)
-        createForm(requirments,temp_cluster_name,endpoint, filePath)
+        createForm(requirments,temp_cluster_name,endpoint, filePath,False,get_endpoint,[])
       else:
         with open(filePath, 'a') as file: 
           file.write('''

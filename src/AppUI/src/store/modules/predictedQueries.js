@@ -131,6 +131,7 @@ const actions = {
       clusters: state.predictedClusters,
       testSchema: state.testSchema,
     };
+    console.log("systemData", systemData);
     axios
       .post("/application", systemData)
       .then(() => {

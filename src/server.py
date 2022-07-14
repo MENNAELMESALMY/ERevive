@@ -349,7 +349,7 @@ def get_application():
     systemData = request.json.get('systemData')
     clusters = request.json.get('clusters')
     finalSchema = request.json.get('testSchema')
-
+    print("systemData",systemData)
     with open('CreateFrontProject/userInterfaceInfo.json','w+') as file:
         json.dump(forms,file)
 

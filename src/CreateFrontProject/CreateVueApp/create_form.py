@@ -1,4 +1,4 @@
-def createForm (requirments,cluster_name,endpoint,filePath):
+def createForm (requirments,cluster_name,endpoint,filePath,isPut=False,get_endpoint='',pks=[]):
     responsiveList = []
     textinput = False
     textarea = False
@@ -123,13 +123,13 @@ def createForm (requirments,cluster_name,endpoint,filePath):
                 if req["isRequired"] == True:
                     for option in req["options"]:
                         file.write(f'''
-            <input type="radio" id="radiobuttonId" value={option} v-model= "radio_buttons" required/>
+            <input type="radio" id="radiobuttonId" value={option} v-model= "{req["field_name"].replace(' ','_')}" required/>
             <label>{option}</label>
                         ''')
                 else:
                     for option in req["options"]:
                         file.write(f'''
-            <input type="radio" id="radiobuttonId" value={option} v-model= "radio_buttons" />
+            <input type="radio" id="radiobuttonId" value={option} v-model= "{req["field_name"].replace(' ','_')}" />
             <label>{option}</label>
                         ''')
             elif req["field_type"] == "checklist":
@@ -137,34 +137,34 @@ def createForm (requirments,cluster_name,endpoint,filePath):
                 if req["isRequired"] == True:
                     for option in req["options"]:
                         file.write(f'''
-            <input type="checkbox" id="checkboxId" value={option} v-model= "check_list" required/>
+            <input type="checkbox" id="checkboxId" value={option} v-model= "{req["field_name"].replace(' ','_')}" required/>
             <label>{option}</label>
                         ''')
                 else:
                     for option in req["options"]:
                         file.write(f'''
-            <input type="checkbox" id="checkboxId" value={option} v-model= "check_list" />
+            <input type="checkbox" id="checkboxId" value={option} v-model= "{req["field_name"].replace(' ','_')}" />
             <label>{option}</label>
                         ''')
             elif req["field_type"] == "textarea":
                 textarea = True
                 if req["isRequired"] == True:
                     file.write(f'''
-            <textarea id="textareaId" placeholder="Enter {req["field_name"]}" v-model= "text_area" required></textarea>
+            <textarea id="textareaId" placeholder="Enter {req["field_name"]}" v-model= "{req["field_name"].replace(' ','_')}" required></textarea>
                     ''')
                 else:
                     file.write(f'''
-            <textarea id="textareaId" placeholder="Enter {req["field_name"]}" v-model= "text_area" ></textarea>
+            <textarea id="textareaId" placeholder="Enter {req["field_name"]}" v-model= "{req["field_name"].replace(' ','_')}" ></textarea>
                     ''')
             elif req["field_type"] == "list":
                 if req["isRequired"] == True:
                     file.write(f'''
-            <select id="textinputId" v-model="select_list" required>
+            <select id="textinputId" v-model="{req["field_name"].replace(' ','_')}" required>
                 <option value="" disabled selected>Select {req["field_name"]}</option>
                     ''')
                 else:
                     file.write(f'''
-            <select id="textinputId" v-model="select_list">
+            <select id="textinputId" v-model="{req["field_name"].replace(' ','_')}">
                 <option value="" disabled selected>Select {req["field_name"]}</option>
                     ''')
                 for option in req["options"]:
@@ -176,17 +176,17 @@ def createForm (requirments,cluster_name,endpoint,filePath):
                 dateinput = True
                 if req["isRequired"] == True:
                     file.write(f'''
-            <input type="date" id="inputdateId" v-model= "date" required/>
+            <input type="date" id="inputdateId" v-model= "{req["field_name"].replace(' ','_')}" required/>
             <br />
                     ''')
                 else:
                     file.write(f'''
-            <input type="date" id="inputdateId" v-model= "date" />
+            <input type="date" id="inputdateId" v-model= "{req["field_name"].replace(' ','_')}" />
             <br />
                     ''')
         file.write('''
-            <input type="submit" id="submitbuttonId" />
-            <input type="reset" id="submitbuttonId" />
+            <input type="submit" id="submitbuttonId" value="submit" />
+            <input type="reset" id="submitbuttonId" value="reset"/>
         </form>
     </div>
 </template>
@@ -195,7 +195,7 @@ def createForm (requirments,cluster_name,endpoint,filePath):
 <style lang="scss" scoped>
 form {
   width: 80%;
-  margin: auto;
+  margin: 20px auto;
   padding: 20px;
   border: 1px solid #ccc;
   background-color: #f1f1f1;
@@ -310,179 +310,110 @@ label {
 }
 </style>
         ''')
-        file.write('''
-<script>
-export default {
-    name:"formDesign",
-    data(){
-        return{
-        ''')
-        for req in requirments[cluster_name]:
-            if req["field_type"] == "text" or req["field_type"] == "email" or req["field_type"] == "tel" or req["field_type"] == "url" or req["field_type"] == "password" or req["field_type"] == "number":
+        if not isPut:
+            file.write('''
+    <script>
+    export default {
+        name:"formDesign",
+        data(){
+            return{
+            ''')
+            for req in requirments[cluster_name]:
                 file.write(f'''
-            {req["field_name"].replace(' ','_')}:"",
-        ''')
-            elif req["field_type"] == "radiobutton":
+                {req["field_name"].replace(' ','_')}:"",
+            ''')
+                
+            file.write('''
+        }
+        },
+        methods:{
+            submitForm(){
+                let formData = {
+            ''')
+            for req in requirments[cluster_name]:
                 file.write(f'''
-            radio_buttons:"",
-        ''')
-            elif req["field_type"] == "checklist":
-                file.write(f'''
-            check_list:[],
-        ''')
-            elif req["field_type"] == "textarea":
-                file.write(f'''
-            text_area:"",
-        ''')
-            elif req["field_type"] == "list":
-                file.write(f'''
-            select_list:null,
-        ''')
-            elif req["field_type"] == "date":
-                file.write(f'''
-            date:"",
-        ''')
-        file.write('''
-      }
-    },
-    methods:{
-        submitForm(){
-            let formData = {
-        ''')
-        for req in requirments[cluster_name]:
-            if req["field_type"] == "text" or req["field_type"] == "email" or req["field_type"] == "tel" or req["field_type"] == "url" or req["field_type"] == "password" or req["field_type"] == "number":
-                file.write(f'''
-            {req["field_name"].replace(' ','_')}:this.{req["field_name"].replace(' ','_')},
-        ''')
-            elif req["field_type"] == "radiobutton":
-                file.write(f'''
-            radio_buttons:this.radio_buttons,
-        ''')
-            elif req["field_type"] == "checklist":
-                file.write(f'''
-            check_list:this.check_list,
-        ''')
-            elif req["field_type"] == "textarea":
-                file.write(f'''
-            text_area:this.text_area,
-        ''')
-            elif req["field_type"] == "list":
-                file.write(f'''
-            select_list:this.select_list,
-        ''')
-            elif req["field_type"] == "date":
-                file.write(f'''
-            date:this.date,
-        ''')
-        file.write('''
+                {req["field_name"].replace(' ','_')}:this.{req["field_name"].replace(' ','_')},
+            ''')
+            file.write('''
+                }
+            ''')
+            file.write(f'''
+                this.$store.dispatch("{cluster_name}_cluster/{endpoint["endpoint_name"]}", formData);
+            ''')
+            file.write('''
             }
-        ''')
-        file.write(f'''
-            this.$store.dispatch("{cluster_name}/{endpoint["endpoint_name"]}", formData);
-        ''')
-        file.write('''
         }
     }
-}
-</script>   
-        ''')
-            
+    </script>   
+            ''')
+        else:
+            file.write('''
+    <script>
+    import { mapState } from "vuex";
 
-# requirments = [
-#     {
-#         "field_name": "First Name",
-#         "field_type": "text",
-#         "isRequired": True,
-#         "maxRange": 0,
-#         "minRange": 0,
-#         "options": []
-#     },
-#     {
-#         "field_name": "Last Name",
-#         "field_type": "text",
-#         "isRequired": True,
-#         "maxRange": 0,
-#         "minRange": 0,
-#         "options": []
-#     },
-#     {
-#         "field_name": "Email",
-#         "field_type": "email",
-#         "isRequired": True,
-#         "maxRange": 0,
-#         "minRange": 0,
-#         "options": []
-#     },
-#     {
-#         "field_name": "Phone Number",
-#         "field_type": "tel",
-#         "isRequired": True,
-#         "maxRange": 0,
-#         "minRange": 0,
-#         "options": []
-#     },
-#     {
-#         "field_name": "Password",
-#         "field_type": "password",
-#         "isRequired": True,
-#         "maxRange": 0,
-#         "minRange": 0,
-#         "options": []
-#     },
-#     {
-#         "field_name": "Github Url",
-#         "field_type": "url",
-#         "isRequired": True,
-#         "maxRange": 0,
-#         "minRange": 0,
-#         "options": []
-#     },
-#     {
-#         "field_name": "Age",
-#         "field_type": "number",
-#         "isRequired": True,
-#         "maxRange": 40,
-#         "minRange": 18,
-#         "options": []
-#     },
-#     {
-#         "field_name": "Gender",
-#         "field_type": "radiobutton",
-#         "isRequired": True,
-#         "maxRange": 0,
-#         "minRange": 0,
-#         "options": ["Male","Female"]
-#     },
-#     {
-#         "field_name": "Subjects",
-#         "field_type": "list",
-#         "isRequired": True,
-#         "maxRange": 0,
-#         "minRange": 0,
-#         "options": ["Math","Physics","Machine Learning","Data Science"]
-#     },
-#     {
-#         "field_name": "Languages",
-#         "field_type": "checklist",
-#         "isRequired": False,
-#         "maxRange": 0,
-#         "minRange": 0,
-#         "options": ["Arabic","English","French"]
-#     },
-#     {
-#         "field_name": "Description",
-#         "field_type": "textarea",
-#         "isRequired": False,
-#         "maxRange": 0,
-#         "minRange": 0,
-#         "options": []
-#     },
-#     {
-#         "field_name": "Birth Date",
-#         "field_type": "date",
-#         "isRequired": False,
-#         "maxRange": 0,
-#         "minRange": 0,
-#         "options": []
-#     }
-# ]
+    export default {
+        name:"formDesign",
+        data(){
+            return{
+            ''')
+            for req in requirments[cluster_name]:
+                file.write(f'''
+                {req["field_name"].replace(' ','_')}:"",
+            ''')
+            file.write('''
+        }
+        },
+        methods:{
+            submitForm(){
+                let formData = {
+            ''')
+            for req in requirments[cluster_name]:
+                file.write(f'''
+                {req["field_name"].replace(' ','_')}:this.{req["field_name"].replace(' ','_')},
+            ''')
+
+            file.write('''
+                }
+            ''')
+            file.write(f'''
+                this.$store.dispatch("{cluster_name}_cluster/{endpoint["endpoint_name"]}", formData);
+            ''')
+            file.write('''
+            }
+            },
+            computed: {
+            ...mapState({
+            ''')
+            file.write(f'''
+            fulldata: state => state.{cluster_name}_cluster.{get_endpoint},''')
+            file.write('''
+            }),},
+            ''')
+            file.write('''
+            mounted() {
+                let id = this.$route.params.id;
+                const arrayIds = id.slice(0, -1).split("_");
+                let obj = this.fulldata.filter(function(elem) {
+                return (''')
+            match_obj_string = ""
+            for i,[pk,_] in enumerate(pks):
+                if i!=len(pks)-1:
+                    match_obj_string += f"elem.{pk} == arrayIds[{i}] && "
+                else:
+                    match_obj_string += f"elem.{pk} == arrayIds[{i}]"
+
+            file.write(match_obj_string)
+
+            file.write(''')
+                })[0];
+            ''')
+
+            link_data_string = ""
+            for req in requirments[cluster_name]:
+                link_data_string += f"this.{req['field_name']}=obj.{req['field_name']};\n"
+            file.write(link_data_string)
+            file.write('''
+                },
+            }
+        </script>   
+                ''')

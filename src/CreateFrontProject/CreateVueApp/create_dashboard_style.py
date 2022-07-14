@@ -87,7 +87,7 @@ def create_dashboard_style(route):
             color: rgb(133, 133, 133);
         }
         th,td{
-            padding: 10px 3px;
+            padding: 10px 12px;
          }
         .data_rows {
             border-bottom: 1px solid rgba(175, 175, 175, 0.889);

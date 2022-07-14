@@ -848,38 +848,36 @@ f.close()
 
 # create components
 for cluster_name,endpoints in c.items():
-
-  post_endpoint=''
   get_endpoint=''
   delete_endpoint=''
   put_endpoint=''
+  pks=[]
   for endpoint in endpoints:
-    if endpoint["method"] == "post":post_endpoint = '/App/' + cluster_name + '/' + endpoint["endpoint_name"]
-    elif endpoint["method"] == "get":get_endpoint = '/App/' + cluster_name + '/' + endpoint["endpoint_name"]
-    elif endpoint["method"] == "delete": delete_endpoint ='/App/' + cluster_name + '/' + endpoint["endpoint_name"]
-    elif endpoint["method"] == "put": put_endpoint = '/App/' + cluster_name + '/' + endpoint["endpoint_name"]
-
+    if endpoint["method"] == "get" and endpoint['is_single_entity'] == True:
+      get_endpoint =  endpoint["endpoint_name"]
+    elif endpoint["method"] == "delete": 
+      delete_endpoint = endpoint["endpoint_name"]
+      pks = endpoint["queryParams"]
+    elif endpoint["method"] == "put": 
+      put_endpoint = endpoint["endpoint_name"]
   for endpoint in endpoints:
     is_single_entity = endpoint['is_single_entity']
     filePath = componentsRoute + endpoint["endpoint_name"] + ".vue"
     if endpoint["method"] == "get":
-      # if len(endpoint["response"])<5:
-      #   generate_cards(endpoint, filePath)
-      # elif 5<=len(endpoint["response"]) < 9:
-      if len(endpoint["response"]) < 9:
-        generate_dashboard(cluster_name,endpoint, filePath,is_single_entity,delete_endpoint,put_endpoint,post_endpoint)
+      if len(endpoint["response"]) < 1:
+        generate_dashboard(cluster_name,endpoint, filePath,is_single_entity,delete_endpoint,put_endpoint,pks)
       else:
-        generate_large_cards(cluster_name,endpoint, filePath,is_single_entity,delete_endpoint,put_endpoint,post_endpoint)
+        generate_large_cards(cluster_name,endpoint, filePath,is_single_entity,delete_endpoint,put_endpoint,pks)
  
     elif endpoint["method"] == "post":
       if is_single_entity:
-        cluster_name = cluster_name.split('_')[0]
-        createForm(requirments,cluster_name,endpoint, filePath)
+        temp_cluster_name = cluster_name.split('_')[0]
+        createForm(requirments,temp_cluster_name,endpoint, filePath)
 
     elif endpoint["method"] == "put":
       filePath = componentsRoute + endpoint["endpoint_name"] + ".vue"
-      cluster_name = cluster_name.split('_')[0]
-      createForm(requirments,cluster_name,endpoint, filePath)
+      temp_cluster_name = cluster_name.split('_')[0]
+      createForm(requirments,temp_cluster_name,endpoint, filePath,True,get_endpoint,pks)
 
 #Index code generation
 with open('FrontCode/src/index.html', 'w') as f:

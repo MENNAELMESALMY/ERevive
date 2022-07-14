@@ -1,5 +1,5 @@
 def generate_large_cards(cluster_name,endpoint,directory,
-    is_single_entity=False,delete_route='',put_route='',post_route=''):
+    is_single_entity,delete_endpoint,put_endpoint,pks):
 
     table_headers_orig = list(endpoint['response'].keys())
 
@@ -66,14 +66,6 @@ def generate_large_cards(cluster_name,endpoint,directory,
         <div class="table_nav">
         '''
     card_string += '<h2>'+cluster_name+'</h2>'
-    # if is_single_entity:
-    #     card_string += f'''
-    #     <div class="buttons">
-    #         <router-link to="{post_route}" class="button">Add +</router-link>
-    #         <router-link to="{put_route}" class="button">edit</router-link>
-    #         <button class="button" @click='delete_entity'>delete</button>
-	# 	</div>
-    #     '''
     card_string +=    '''
     </div>
     '''
@@ -82,9 +74,22 @@ def generate_large_cards(cluster_name,endpoint,directory,
     <div>
 
     <div class='main_cards'>\n'''
-    card_string += "\t\t<div v-for='(row,i) in card_data' :key='i'  class='big_card'>"
+
+    card_string += "\t\t<div v-for='(row,i) in card_data' :key='i'  class='card_wrapper'>"
+
+    card_string += "\t\t<div class='big_card'>"
+
     for header in table_headers_orig:
         card_string += '\t\t\t<div class="attribute">'+header+' : {{row.' + header + '}}</div>\n'
+    
+    card_string += '\t\t</div>'
+
+    if(is_single_entity):
+        card_string += '''
+            <div class="card_header">
+                <i  @click="route_edit(row)" class="fa fa-edit editIcon"></i>
+                <i  @click="delete_obj(row)" class="fa fa-trash trashIcon" aria-hidden="true"></i>
+            </div>\n'''
     card_string += '\t\t</div>'
     card_string += '''
         </div>
@@ -99,11 +104,13 @@ def generate_large_cards(cluster_name,endpoint,directory,
 @import "../scss/dashboard.scss";
 @import "../scss/big_card.scss";
 </style>
+'''
 
+    card_string += '''
 <script>
     import { mapState } from "vuex";
     export default {
-    name: "big_cards",
+    name: "dashBoard",
     props: {},
     data: function () {
     return {
@@ -125,9 +132,28 @@ def generate_large_cards(cluster_name,endpoint,directory,
     card_string+= 'this.$store.dispatch("'+cluster_name +'/'+endpoint_name +'",\n\t\t {'
     for param,_,_,_ in query_params:
         card_string += "'"+param+"'" +': this.' + param.replace('.','_').replace(' ','_') + ',\n\t\t'
-
     card_string += '''
       });
+    },
+    async delete_obj(obj) {
+    '''
+    card_string+= 'await this.$store.dispatch("'+cluster_name +'/'+delete_endpoint +'",\n\t\t {'
+    for pk,_ in pks:
+        card_string += pk +': obj.' + pk + ',\n\t\t'
+    card_string += '''
+      });
+      this.call_request();
+    },
+    route_edit(obj) {
+    '''
+    card_string+= 'let route = "'+cluster_name +'_'+put_endpoint +'/"'
+    for pk,_ in pks:
+        card_string += '+obj.' + pk + '+"_"'
+
+    card_string += ''';
+    this.$router.push({
+      path: route,
+    });
     }
     }
     };

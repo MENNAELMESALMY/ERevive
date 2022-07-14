@@ -112,7 +112,10 @@ def createAllModels(objectsList):
             file.write("\n\tdef serialize(self):\n")
             file.write("\t\treturn{\n")
             for attr in outPutList[item]:
-                file.write(f'\t\t\t"{attr}": self.{attr},\n')
+                if modelsObjects[item]["attributes"][attr] == "datetime":
+                    file.write(f'\t\t\t"{attr}": str(self.{attr}),\n')
+                else:
+                    file.write(f'\t\t\t"{attr}": self.{attr},\n')
             file.write("\t\t}\n")
     return outPutList ,modelsObjects
 

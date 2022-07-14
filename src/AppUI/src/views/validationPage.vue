@@ -340,7 +340,7 @@ export default {
             field_name: attrName,
             field_type: fieldType,
             data_type: attrDataType,
-            isRequired: true,
+            isRequired: attrIsPrimaryKey,
             maxRange: parseInt(maxNum),
             minRange: parseInt(minNum),
             options: options,
@@ -453,6 +453,28 @@ export default {
       this.globalSchema[entityIdx]["ForgeinKey"].splice(fkIndex, 1);
       this.componentKey = (this.componentKey + 1) % 2;
     },
+    check_is_valid_name(name, err) {
+      const specialChars = `/[!@#$%^&*()+-=[]{};':"\\|,.<>/?]+/;`;
+      // var format = `/[\`!@#$%^&*()+\-=\[\]{};':"\\|,.<>\/?~]/;`;
+      let isValid = true;
+      if (name == "") {
+        this.errors.push(err + " is empty");
+        return false;
+      }
+      // console.log(name.charAt(0), name.includes(format));
+      if ("0" <= name.charAt(0) && name.charAt(0) <= "9") {
+        this.errors.push(err + " cannot start with a number");
+        isValid = false;
+      }
+      let hasSpecial = specialChars
+        .split("")
+        .some((char) => name.includes(char));
+      if (hasSpecial) {
+        this.errors.push(err + " cannot contain special characters");
+        isValid = false;
+      }
+      return isValid;
+    },
     check_validation() {
       this.errors = [];
       for (let key in this.finalSchema) {
@@ -460,15 +482,13 @@ export default {
         let attributes = this.finalSchema[key]["attributes"];
         let primaryKey = this.finalSchema[key]["primaryKey"];
         let ForgeinKey = this.finalSchema[key]["ForgeinKey"];
-        if (TableName == "") {
-          this.errors.push("TableName is empty");
+        if (!this.check_is_valid_name(TableName, "TableName" + TableName))
           continue;
-        }
         for (let attr in attributes)
-          if (attr == "")
-            this.errors.push(
-              "AttributeName in Table " + TableName + " is empty"
-            );
+          this.check_is_valid_name(
+            attr,
+            "Attribute Name " + attr + " in Table " + TableName
+          );
 
         if (primaryKey.length == 0)
           this.errors.push("Table " + TableName + " has no primary key");

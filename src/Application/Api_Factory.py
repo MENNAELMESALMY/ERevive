@@ -139,9 +139,13 @@ class {0}Api(Resource):\n\
         try:\n\
             if {7}:\n\
                 {1} = db.session.query({0}).filter({5}).first() \n\
+                if not {1}: \n\
+                    return "not found" , 404\n\
                 return {1}.serialize() , 200 \n\
             else:\n\
                 {1}s = db.session.query({0}).all()\n\
+                if not {1}s: \n\
+                    return "no data found" , 404\n\
                 {1}s = [row.serialize() for row in {1}s]\n\
                 return {1}s , 200 \n\
         except Exception as e:\n\
@@ -175,6 +179,8 @@ class {0}Api(Resource):\n\
     def delete(self):\n\
         try:\n\
             {1}s = db.session.query({0}).filter({5}).first() \n\
+            if not {1}s:\n\
+                return "not found" , 404\n\
             db.session.query({0}).filter({5}).delete() \n\
             db.session.commit() \n\
             return {1}s.serialize() , 200 \n\
@@ -293,6 +299,7 @@ pip install -r requirements.txt \n\
 '
     def create_app_utils(self):
         return ' \n\
+from datetime import datetime \n\
 from flask_restx import fields \n\
 def convert_db_model_to_restx_model(model): \n\
 \n\
@@ -324,6 +331,9 @@ def serialize_result(res):\n\
     serialized_result = res_dict.copy()\n\
     for attr_key, attr_value in res_dict.items():\n\
         print(attr_key, attr_value)\n\
+        if isinstance(attr_value,datetime): \n\
+            serialized_result[attr_key] = str(attr_value) \n\
+            attr_value = str(attr_value) \n\
         if hasattr(attr_value, "__dict__"):\n\
             model_dict = attr_value.serialize()\n\
             model_dict_updated = {}\n\

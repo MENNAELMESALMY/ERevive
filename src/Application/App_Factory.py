@@ -290,7 +290,7 @@ def create_query_api_logic(endpoint_object,query,models_obj):
     parser = endpoint_object["endpoint_name"].lower()
     parse_args=""
     if len(params):
-        parse_args = "args = {0}_parser.parse_args()\n".format(parser)
+        parse_args = "args = {0}_{1}_parser.parse_args()\n".format(parser,query["idx"])
 
     #get select attrs
     db_query = "results = db.session.query("
@@ -544,6 +544,7 @@ def create_query_api_logic(endpoint_object,query,models_obj):
 
         aggr = "_"+attr_aggregation +"_" if (attr_aggregation and (is_group_by or contains_aggr)) else ""
         if "*" in attr[0][0]: #if attr[0][0] == "*"
+            aggr = "_"+attr_aggregation +"_"
             param_name = "is_order_of"+aggr+"of_rows_desc"
         else:
             aggr = "_" if not aggr else aggr
@@ -574,14 +575,14 @@ def create_query_api_logic(endpoint_object,query,models_obj):
 
     #------------------------------------------------------------------
 
-    # endpoint_name,ui_name = query_renaming(query["entities"],query["whereAttrs"],groupByAttrs,query["orderByAttrs"],True,is_group_all)
-    # endpoint_url = '/'.join(query["entities"])+'/'+endpoint_name
-    # parse_args = parse_args.replace(parser,endpoint_name.lower())
-    # endpoint_object.update({
-    #     "endpoint_name":endpoint_name.lower()+"_"+str(query["idx"]),
-    #     "ui_name":ui_name.lower(),
-    #     "url":endpoint_url.lower(),
-    #     }) 
+    endpoint_name,ui_name = query_renaming(query["entities"],query["whereAttrs"],groupByAttrs,query["orderByAttrs"],True,is_group_all)
+    endpoint_url = '/'.join(query["entities"])+'/'+endpoint_name
+    parse_args = parse_args.replace(parser,endpoint_name.lower())
+    endpoint_object.update({
+        "endpoint_name":endpoint_name.lower()+"_"+str(query["idx"]),
+        "ui_name":ui_name.lower(),
+        "url":endpoint_url.lower(),
+        }) 
 
     #------------------------------------------------------------------
 

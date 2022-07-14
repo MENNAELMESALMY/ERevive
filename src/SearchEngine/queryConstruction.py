@@ -376,15 +376,20 @@ def create_query_ui_endpoint(q,modelsObjects):
         attr_name = attr[0][0]
         attr_type = attr[0][1]
         attr_aggregation = attr[1]
+        print(attr_aggregation)
         param_name = ""
         aggr = "_"+attr_aggregation +"_" if attr_aggregation and contain_aggr else ""
-        if attr_name == "*":
+
+        if "*" in attr_name:
+            aggr = "_"+attr_aggregation +"_"
             param_name = "is_order_of"+aggr+"of_rows_desc"
         else:
             attr_name = attr_name.split('.')[1]
             aggr = "_" if not aggr else aggr
             param_name = "is_order_of"+aggr+attr_name+"_desc"
         queryParams.append((param_name,"bool",None,attr_aggregation))
+
+    #print(queryParams)
 
     aggrAttrs = get_aggr_attrs(query["aggrAttrs"])
     response_model , ui_response_model , db_selects = create_response_model(query["selectAttrs"],aggrAttrs,query["entities"],modelsObjects)

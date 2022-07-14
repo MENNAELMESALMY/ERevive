@@ -12,6 +12,7 @@ import clustersPage from "../views/clustersPage.vue";
 import schemaPage from "../views/schemaPage.vue";
 import queriesErrors from "../views/queriesErrors.vue";
 import databaseSeeds from "../views/databaseSeeds.vue";
+import nlpToSqlPage from "../views/nlpToSqlPage.vue";
 import lastPage from "../views/lastPage.vue";
 
 Vue.use(VueRouter);
@@ -85,6 +86,12 @@ const routes = [
         path: "/databaseSeeds",
         name: "databaseSeeds",
         component: databaseSeeds,
+        children: [],
+      },
+      {
+        path: "/nlpToSqlPage",
+        name: "nlpToSqlPage",
+        component: nlpToSqlPage,
         children: [],
       },
       {

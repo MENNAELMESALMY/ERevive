@@ -140,20 +140,18 @@ test_schema = {
   },
   
 import json
-from pickle import FALSE
 import spacy
 nlp = spacy.load('en_core_web_sm')
-from nlpUtils import *
-from collections import deque
+#from .nlpUtils import *
+import re
+
 
 conjunctions = ['and','or',',','and/or','also']
-whQuestions = [ "what", "when", "where", "who", "whom", "which", "whose", "why" , "how"]
-notList = ["doesnot" , "doesn't" , "donot" , "don't" , "havenot" , "haven't" , "hasnot" , "hasn't", "isnot" , "isn't" , "arenot" , "aren't", "didnot" , "didn't" , "willnot" , "willn't" , "cannot" , "can't" , "couldnot" , "couldn't" , "wouldnot" , "wouldn't"]
 order_direction = ["descending" ,"desc", "descendingly"] #as by default will sort ASC
 order_dict = ["order" , "sort" , "arrange"]
 group_by_dict = ["every", "each"]
 
-def cleanup_question(question):
+def cleanup_question(question,stop_words):
     '''
     tokensize / lemmetization / ..... (question)
     '''
@@ -218,7 +216,7 @@ def separate_values_in_question(question):
   return values_list  
 
 def get_conjunction_set_type(conjunctions_set,query_dict\
-          ,values_list,conditions_dict,where_dict):
+          ,values_list,conditions_dict,where_dict,agg_dict):
   typesCount = {
     "g": 0,
     "a" : 0,
@@ -277,7 +275,7 @@ def get_conjunction_set_type(conjunctions_set,query_dict\
         setType = k
   return setType,tempConjunctions
 
-def get_conjunctions_sets(tokens,query_dict,values_list,conditions_dict,where_dict):
+def get_conjunctions_sets(tokens,query_dict,values_list,conditions_dict,where_dict,agg_dict):
   #tokens without stopwords and prepositions except conjunctions and negations
   sets_count = {'g':0,'a':0,'e':0,'garbage':0,'w':0,'v':0,'c':0,'o':0,'d':0,"gb":0}
   reconstructed_question = tokens[0]
@@ -292,10 +290,10 @@ def get_conjunctions_sets(tokens,query_dict,values_list,conditions_dict,where_di
       if tokens[i+1] not in cur_set: cur_set.append(tokens[i+1])
       i+=1
     elif len(cur_set) > 0:
-      conj_type,new_names = get_conjunction_set_type(cur_set,query_dict,values_list,conditions_dict,where_dict)
+      conj_type,new_names = get_conjunction_set_type(cur_set,query_dict,values_list,conditions_dict,where_dict,agg_dict)
       if conj_type == 'garbage':
         for el in cur_set :
-          conj_type,new_names = get_conjunction_set_type([el],query_dict,values_list,conditions_dict,where_dict)
+          conj_type,new_names = get_conjunction_set_type([el],query_dict,values_list,conditions_dict,where_dict,agg_dict)
           set_name = conj_type +'_'+str(sets_count[conj_type])
           reconstructed_question += " " + set_name
           sets_count[conj_type] += 1
@@ -309,14 +307,14 @@ def get_conjunctions_sets(tokens,query_dict,values_list,conditions_dict,where_di
       continue
     if len(cur_set)==0 and i+1 < len(tokens) and tokens[i+1] not in conjunctions:
       # reconstructed_question  += " " + tokens[i]
-      conj_type,new_names = get_conjunction_set_type([tokens[i]],query_dict,values_list,conditions_dict,where_dict)
+      conj_type,new_names = get_conjunction_set_type([tokens[i]],query_dict,values_list,conditions_dict,where_dict,agg_dict)
       set_name = conj_type  + '_' + str(sets_count[conj_type])
       reconstructed_question += " " + set_name
       sets_count[conj_type] += 1
       conjunctions_sets[set_name] = new_names
     i+=1
   if tokens[-2] not in conjunctions:
-    conj_type,new_names = get_conjunction_set_type([tokens[-1]],query_dict,values_list,conditions_dict,where_dict)
+    conj_type,new_names = get_conjunction_set_type([tokens[-1]],query_dict,values_list,conditions_dict,where_dict,agg_dict)
     set_name = conj_type + '_' + str(sets_count[conj_type])
     reconstructed_question += " " + set_name
     sets_count[conj_type] += 1
@@ -508,7 +506,6 @@ def get_where_group_order_by_filters(reconstructed_question,query_dict,conjuncti
   tempOrderList = []
   whereAggrList = []
   finalWhereAggrsList = []
-  usedWhereAggrs = []
   inWhere = False
   groupbyFound = False
   orderbyFound = False
@@ -563,7 +560,6 @@ def get_where_group_order_by_filters(reconstructed_question,query_dict,conjuncti
   print("finalWhereAggrsList",finalWhereAggrsList)
   for rel in finalWhereAggrsList:
     if (len(rel) == 2):
-      usedWhereAggrs = list(conjunctions_sets[rel[1]])
       for aggr in list(conjunctions_sets[rel[0]]):
         for attr in list(conjunctions_sets[rel[1]]):
           query_dict["whereAggr"].append([aggr,attr])
@@ -595,7 +591,7 @@ def get_where_group_order_by_filters(reconstructed_question,query_dict,conjuncti
 
   #################### get group by #######################
   query_dict["groupby"].extend(tempGroupList)
-  return usedWhereAggrs
+
 
 def get_select_attributes(query_dict,reconstructed_question,conjunctions_sets):
   words = reconstructed_question.split()
@@ -705,33 +701,6 @@ def get_query_from_question(query_dict,usedAggrAttrs):
     
 
 
-# load json file
-with open('done_dict/agg_dict.json') as f:
-  agg_dict = json.load(f)
-
-with open('stop_words.json') as f:
-  stop_words = json.load(f)
-
-with open('done_dict/where_dict.json') as f:
-  where_dict = json.load(f)
-
-with open('done_dict/conditions_dict.json') as f:
-  conditions_dict = json.load(f)
-
-# print("conditions_dict",conditions_dict)
-
-# sentence = "get names of employees who are in the department of sales"
-sentence = "get minimum and maximum and average of salary and age of the employee"
-sentence = "get minimum and maximum and average of salary and age of the employee where first_name and last_name not equal (mona)"
-sentence = "get first_name and last_name then minimum and maximum and average of salary and age of the employee for each salary where salary greater than (250) and age greater than (25) sorted by age desc then first_name then salary desc"
-#sentence = "get salary of employee which is greater than (200) and less than (500)"
-#sentence = "get first_name of employee where his salary exceeds the average of salary"
-#sentence = "get first_name of employee whose first_name doesn't start with (N)"
-#sentence = "get first_name and last_name of employee whose age in range of (20) to (30) and salary smaller than (2000)"
-# sentence = "get salary and age of the employee where salary greater than (250)"
-sentence = "get first_name of employees with salary equal to the greatest salary"
-
-
 query_dict = {
   "entities":[],
   "attributes": [],
@@ -742,78 +711,55 @@ query_dict = {
   "whereAggr": [],
   "selectAttrs": []
 }
-values = separate_values_in_question(sentence)
-tokens_dict,tokens = cleanup_question(sentence)
-match_tokens_to_schema(tokens_dict,test_schema[0],query_dict)
-# print(tokens)
-tokens = get_conditions_filters(tokens,conditions_dict)
-# get_direction_order_by(tokens)
-# print("gggggggggggggggggggggggggggggg",tokens)
-conjunctions_sets,reconstructed_question = get_conjunctions_sets(tokens,query_dict,values,conditions_dict,where_dict)
-# print(conjunctions_sets,reconstructed_question)
-# get_where_filters(reconstructed_question,query_dict,conjunctions_sets)
-# get_order_by_filters(reconstructed_question,query_dict,conjunctions_sets)
-# get_group_by_filters(reconstructed_question,query_dict,conjunctions_sets)
-usedWhereAggrs = get_where_group_order_by_filters(reconstructed_question,query_dict,conjunctions_sets)
-print("usedWhereAggrs ===>",usedWhereAggrs)
-print("---------------------------------------------------------------")
-print(conjunctions_sets)
-print("----------------------------------")
-get_select_attributes(query_dict,reconstructed_question,conjunctions_sets)
-usedAggrAttrs = get_aggregates_in_question(query_dict,reconstructed_question,conjunctions_sets)
-print(query_dict)
-finalQuery = get_query_from_question(query_dict,usedAggrAttrs)
-print("----------------------------------")
-print("finalQuery =>>>> ", finalQuery)
-# print("query_dict",query_dict)
-# print("values",values)
-# displacy.render(doc, style='dep')
-# print(treeRoot,tree)
 
 
-# print("tokens ",tokens_dict)
-# print("--------------------------------------------")
-# print("after matching",query_dict)
-
-
-# doc = nlp(sentence)
-# # print(f"{'Node (from)-->':<15} {'Relation':^10} {'-->Node (to)':>15}\n")
-# tree = {token.text:[] for token in doc}
-# treeRoot = None
-# for token in doc:
-#     print("{:<15} {:^10} {:>15}".format(str(token.head.text), str(token.dep_), str(token.text)))
-#     if token.dep_ == 'ROOT':
-#         treeRoot = token.text
-#         continue
-#     tree[token.head.text].append((token.dep_,token.text))
-
-# DFS(tree, treeRoot, query_dict)
-
-'''
-at the beginig (from user) values and numbers in () and we separate 
-1- replace from dictionaries (groupby / orderby / where) by verbs
-2- TODO:tokenize (without cleaning words) to detect entities and attributes => (belong to detected entities)
-3- if more than one entity => use tree (to get relations)
-4- if aggreggation => use tree ,having => on same attributes of aggregation
-5- replace groupby / orderby / where conditions with verbs and use tree to detect their attributes
-6- construct query
+######################################## test sentences ########################################
+# sentence = "get names of employees who are in the department of sales"
+sentence = "get minimum and maximum and average of salary and age of the employee"
+sentence = "get minimum and maximum and average of salary and age of the employee where first_name and last_name not equal (mona)"
+sentence = "get first_name and last_name then minimum and maximum and average of salary and age of the employee for each salary where salary greater than (250) and age greater than (25) sorted by age desc then first_name then salary desc"
+#sentence = "get salary of employee which is greater than (200) and less than (500)"
+#sentence = "get first_name of employee where his salary exceeds the average of salary"
+#sentence = "get first_name of employee whose first_name doesn't start with (N)"
+#sentence = "get first_name and last_name of employee whose age in range of (20) to (30) and salary smaller than (2000)"
+# sentence = "get salary and age of the employee where salary greater than (250)"
+sentence = "get first_name of employees with salary equal to the greatest salary"
+sentence = "get first_name and last_name of employees whose first_name starts with (Nihal)"
 
 
 
-1- traverse branches to get all nouns related to each other , 
-store level (also where keyword existed before)(to detect where attributes) ,
-relation (conj) => attributes
-relation (amod) => aggregation (with checking aggregation dictionary),
-try to find our values belong to which attribute
-2- loop over all nouns detected to detect our entity, attributes, where attributes, aggregation
-3- having => on same attributes of aggregation
-4- groupby 
-5- orderby , sort => see dictionary for keywords (asecnding , descending)  ==> attributes ?????
+def convertNlpToSQLQuery(sentence,finalSchema):
+
+  # load json files
+  with open('done_dict/agg_dict.json') as f:
+    agg_dict = json.load(f)
+
+  with open('stop_words.json') as f:
+    stop_words = json.load(f)
+
+  with open('done_dict/where_dict.json') as f:
+    where_dict = json.load(f)
+
+  with open('done_dict/conditions_dict.json') as f:
+    conditions_dict = json.load(f)
+
+  print(finalSchema)
+  values = separate_values_in_question(sentence)
+  tokens_dict,tokens = cleanup_question(sentence,stop_words)
+  match_tokens_to_schema(tokens_dict,finalSchema,query_dict)
+  tokens = get_conditions_filters(tokens,conditions_dict)
+  conjunctions_sets,reconstructed_question = get_conjunctions_sets(tokens,query_dict,values,conditions_dict,where_dict,agg_dict)
+  get_where_group_order_by_filters(reconstructed_question,query_dict,conjunctions_sets)
+  get_select_attributes(query_dict,reconstructed_question,conjunctions_sets)
+  print(conjunctions_sets)
+  print(reconstructed_question)
+  usedAggrAttrs = get_aggregates_in_question(query_dict,reconstructed_question,conjunctions_sets)
+  finalQuery = get_query_from_question(query_dict,usedAggrAttrs)
+  return finalQuery
 
 
-TODO later:
-see if there is attribute mapped to more than one entity (use tree to detect the related one to question)
-'''
+finalQuery = convertNlpToSQLQuery(sentence,test_schema[0])
+print("finalQuery ==> " , finalQuery)
 
 '''
 #TODO: don't use all attributes in select   ==> done

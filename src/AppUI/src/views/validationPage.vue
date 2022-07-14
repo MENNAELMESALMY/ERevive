@@ -157,7 +157,10 @@
 
             <select
               v-model="fk['ForignKeyTableIdx']"
-              @change="fk['ForignKeyTableAttributeIdx'] = 0"
+              @change="
+                (fk['ForignKeyTableAttributeIdx'] = 0),
+                  (componentKey = (componentKey + 1) % 2)
+              "
             >
               <option
                 v-for="(

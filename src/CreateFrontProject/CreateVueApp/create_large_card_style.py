@@ -9,11 +9,36 @@ def create_large_card_style(route):
   padding: 20px;
   margin: auto;
 }
+.card_wrapper{
+  display: flex;
+  box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+  justify-content: space-between;
+  margin: 20px;
+  .card_header{
+    width: 100px;
+    display: flex;
+  }
+  .fa{
+    margin:7px;
+    cursor: pointer;
+  }
+  .trashIcon, .editIcon{
+      font-size: 20px;
+      padding: 3px;
+      cursor: pointer;
+      color: rgb(133, 133, 133);
+      transition-duration: 0.4s;
+      &:hover{
+          color: #0f1136;
+      }
+  }
+
+}
+
 .big_card{
   display: flex;
   flex-wrap: wrap;
   margin: 20px;
-  box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
   padding: 10px;
 }
 .attribute{

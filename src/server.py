@@ -212,8 +212,6 @@ dummy = {
     }
 }
 
-with open("./ImageProcessing/final_schema.json","r") as file:
-    dummy = json.load(file)
 
 # with open('CreateFrontProject/userInterfaceInfo.json','w') as file:
 #     dummy_forms = json.load(file)
@@ -241,11 +239,8 @@ def get_ipoutput():
 
 @app.post('/searchengine')
 def get_search_engine():    
-    finalSchema = request.json['schema'] #dummy
-    with open("debugConstructedQueries.json","w+") as file:
-        json.dump({},file)
-
-    print(finalSchema)
+    finalSchema =request.json['schema'] # dummy
+   
     rankedQueries, schemaGraph , testSchema , entityDict , schemaEntityNames = start_search_engine(finalSchema)
     clusters = []
     for cluster in rankedQueries:
@@ -255,9 +250,7 @@ def get_search_engine():
         clusters.append(clusterQueries)
     finalClusters = prepareClusters(clusters,finalSchema)
     outClusters = {}
-    print(finalClusters)
-    with open('finalClustersError.json','w+') as file:
-        json.dump(finalClusters,file)
+
 
     for cluster in finalClusters:
         if len(cluster) == 0 or len(cluster[0]) == 0 or len(cluster[0][0]) == 0:
@@ -282,7 +275,7 @@ def get_validate():
     schemaGraph = searchOut.get('schemaGraph')
     entityDict = searchOut.get('entityDict')
     os.chdir('SearchEngine')
-    print(searchOut)
+    #print(searchOut)
     try:
         with open("finalSchema.json","w+") as file:
             json.dump(searchOut,file)
@@ -302,7 +295,7 @@ def get_validate():
         updatedCluster = []
         for query in cluster:
             if query[0]["is_updated"]:
-                print("query[0]",query[0])
+                #print("query[0]",query[0])
                 endpoint_name = query[0]["ui_name"].replace(' ','_')
                 name = {
                     "ui_name":query[0]["ui_name"],
@@ -319,11 +312,11 @@ def get_validate():
                     constructedQuery = queryStructure(mappedQuery)
                     preparedQuery = prepareQuery([mappedQuery,constructedQuery],testSchema=finalSchema)
                     query = preparedQuery
-                    print(query[0])
+                    #print(query[0])
                     query[0]["ui_name"] = name["ui_name"]
                     query[0]["endpoint_name"] = name["endpoint_name"]
                     query[0]["url"] = name["url"]
-                    print(query[0])
+                    #print(query[0])
             updatedCluster.append(query)
         if len(clustersErrors[cluster[0][0]["cluster_name"]]) == 0:
             clustersErrors.pop(cluster[0][0]["cluster_name"])
@@ -338,8 +331,7 @@ def get_validate():
 def start_creating_application(final_schema,clusters,user_name,password,db_name):
     os.chdir('Application')
     print("start creating application")
-    #Create_Application(final_schema,clusters,user_name,password,db_name)
-    Create_Application(final_schema,clusters)
+    Create_Application(final_schema,clusters,user_name,password,db_name)
     process = Process(target=lambda: os.system('python3 run.py &'))
     process.start()
     print("end creating application")
@@ -357,7 +349,7 @@ def get_application():
     systemData = request.json.get('systemData')
     clusters = request.json.get('clusters')
     finalSchema = request.json.get('testSchema')
-
+    print("systemData",systemData)
     with open('CreateFrontProject/userInterfaceInfo.json','w+') as file:
         json.dump(forms,file)
 

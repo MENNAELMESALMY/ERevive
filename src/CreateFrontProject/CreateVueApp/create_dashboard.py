@@ -1,5 +1,5 @@
 def generate_dashboard(cluster_name,endpoint,directory,
-    is_single_entity=False,delete_route='',put_route='',post_route=''):
+    is_single_entity,delete_endpoint,put_endpoint,pks):
     table_headers_orig = list(endpoint['response'].keys())
     table_headers = [header.replace('.',' ').replace('_',' ')  for header in table_headers_orig]
     table_headers_orig = [header.replace('.','_').replace('_','_')  for header in table_headers_orig]
@@ -40,13 +40,16 @@ def generate_dashboard(cluster_name,endpoint,directory,
         dashboard_string += '\t\t</div>\n'
         dashboard_string += '\t\t<div>\n'
 
-        if datatype=='checkbox':
-            dashboard_string += f'\t\t<input type="{datatype}" v-model="{param}" class="{datatype}">\n' 
+        if operator == 'between':
+            dashboard_string += f'\t\t<input placeholder="from" type="{datatype}" v-model="{param}[0]" class="{datatype}" required>\n'
+            dashboard_string += f'\t\t<input placeholder="to" type="{datatype}" v-model="{param}[1]" class="{datatype}" required>\n'
         else:
-            dashboard_string += f'\t\t<input type="{datatype}" v-model="{param}" class="{datatype}" required>\n'
+            if datatype=='checkbox':
+                dashboard_string += f'\t\t<input type="{datatype}" v-model="{param}" class="{datatype}">\n' 
+                dashboard_string += '\t\t<label>Set Value</label>\n'
+            else:
+                dashboard_string += f'\t\t<input type="{datatype}" v-model="{param}" class="{datatype}" required>\n'
         
-        if datatype == 'checkbox':
-            dashboard_string += '\t\t<label>Set Value</label>\n'
         dashboard_string += '\t\t</div>\n'
         dashboard_string += '\t\t</div>\n'
 
@@ -62,14 +65,6 @@ def generate_dashboard(cluster_name,endpoint,directory,
         <div class="table_nav">
         '''
     dashboard_string += '<h2>'+cluster_name+'</h2>'
-    # if is_single_entity:
-    #     dashboard_string += f'''
-    #     <div class="buttons">
-    #         <router-link to="{post_route}" class="button">Add +</router-link>
-    #         <router-link to="{put_route}" class="button">edit</router-link>
-    #         <button class="button" @click='delete_entity'>delete</button>
-	# 	</div>
-    #     '''
     dashboard_string +=    '''
     </div>
     '''
@@ -84,6 +79,15 @@ def generate_dashboard(cluster_name,endpoint,directory,
     dashboard_string +=  "<tr v-for='(row,i) in dashboard_data' :key='i' class='data_rows'>\n"
     for header in table_headers_orig:
         dashboard_string += '\t\t\t<td>{{row.' + header + '}}</td>\n'
+    if is_single_entity:
+        dashboard_string += '''
+                <td class="editIcon" @click="route_edit(row)">
+                    <i class="fa fa-edit"></i>
+                </td>
+                <td class="trashIcon"  @click="delete_obj(row)">
+                    <i class="fa fa-trash" aria-hidden="true"></i>
+                </td>
+        '''
     dashboard_string += '\t\t</tr>'
     dashboard_string += '''
         </table>
@@ -102,8 +106,12 @@ def generate_dashboard(cluster_name,endpoint,directory,
     data: function () {
     return {
 '''
-    for param,_,_,_ in query_params:
-        dashboard_string += '\t\t'+param.replace('.','_').replace(' ','_') + ':' + '"",\n'
+    for param,_,op,_ in query_params:
+        if op == 'between':
+            dashboard_string += '\t\t'+param.replace('.','_').replace(' ','_') + ':' + '[0,100],\n'
+        else:
+            dashboard_string += '\t\t'+param.replace('.','_').replace(' ','_') + ':' + '"",\n'
+    
     dashboard_string += '''
     };
     },
@@ -121,6 +129,26 @@ def generate_dashboard(cluster_name,endpoint,directory,
         dashboard_string += "'"+param+"'" +': this.' + param.replace('.','_').replace(' ','_') + ',\n\t\t'
     dashboard_string += '''
       });
+    },
+    async delete_obj(obj) {
+    '''
+    dashboard_string+= 'await this.$store.dispatch("'+cluster_name +'/'+delete_endpoint +'",\n\t\t {'
+    for pk,_ in pks:
+        dashboard_string += pk +': obj.' + pk + ',\n\t\t'
+    dashboard_string += '''
+      });
+      this.call_request();
+    },
+    route_edit(obj) {
+    '''
+    dashboard_string+= 'let route = "'+cluster_name +'_'+put_endpoint +'/"'
+    for pk,_ in pks:
+        dashboard_string += '+obj.' + pk + '+"_"'
+
+    dashboard_string += ''';
+    this.$router.push({
+      path: route,
+    });
     }
     }
     };

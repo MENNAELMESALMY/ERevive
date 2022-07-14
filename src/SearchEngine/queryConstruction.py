@@ -236,7 +236,7 @@ def create_response_model(selectAttrs,aggrAttrs,entities,modelsObject):
     for attr in selectAttrs:
         attr_name = attr[0]
         attr_type = attr[1]
-        if "*" in attr:
+        if "*" in attr[0]:
             continue
         db_selects.append((attr_name,attr_type,None))
 
@@ -344,6 +344,9 @@ def get_aggr_attrs(aggr_attrs):
 def create_query_ui_endpoint(q,modelsObjects):
     query = q[0]
     endpoint_name,ui_name = query_renaming(query["entities"],query["whereAttrs"],query["updatedGroupByAttrs"],query["orderByAttrs"],True)
+    endpoint_name = endpoint_name.lower()+"_"+str(query["idx"])
+    ui_name = str(query["idx"]) + "-" + ui_name
+
     endpoint_url = '/'.join(query["entities"])+'/'+endpoint_name
     endpoint_method = "get"
     queryParams = []
@@ -388,13 +391,13 @@ def create_query_ui_endpoint(q,modelsObjects):
     response_model = "{ "+response_model+" }"
     endpoint = {
         "method": endpoint_method,
-        "url": endpoint_url.lower(),
+        "url": endpoint_url,
         "queryParams": queryParams,
         "bodyParams": [],
         "response": ui_response_model,
         "ui_name": ui_name.lower(),
         "cluster_name": ("_".join(query["entities"])).lower(),
-        "endpoint_name":endpoint_name.lower()+"_"+str(query["idx"]),
+        "endpoint_name":endpoint_name,
         "is_single_entity":len(query["entities"])==1,
         "query": q[1],
         "queryObj":query,

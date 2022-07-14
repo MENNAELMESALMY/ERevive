@@ -255,7 +255,7 @@ def get_search_engine():
         clusters.append(clusterQueries)
     finalClusters = prepareClusters(clusters,finalSchema)
     outClusters = {}
-    print(finalClusters)
+    #print(finalClusters)
     with open('finalClustersError.json','w+') as file:
         json.dump(finalClusters,file)
 
@@ -282,7 +282,7 @@ def get_validate():
     schemaGraph = searchOut.get('schemaGraph')
     entityDict = searchOut.get('entityDict')
     os.chdir('SearchEngine')
-    print(searchOut)
+    #print(searchOut)
     try:
         with open("finalSchema.json","w+") as file:
             json.dump(searchOut,file)
@@ -302,7 +302,7 @@ def get_validate():
         updatedCluster = []
         for query in cluster:
             if query[0]["is_updated"]:
-                print("query[0]",query[0])
+                #print("query[0]",query[0])
                 endpoint_name = query[0]["ui_name"].replace(' ','_')
                 name = {
                     "ui_name":query[0]["ui_name"],
@@ -319,11 +319,11 @@ def get_validate():
                     constructedQuery = queryStructure(mappedQuery)
                     preparedQuery = prepareQuery([mappedQuery,constructedQuery],testSchema=finalSchema)
                     query = preparedQuery
-                    print(query[0])
+                    #print(query[0])
                     query[0]["ui_name"] = name["ui_name"]
                     query[0]["endpoint_name"] = name["endpoint_name"]
                     query[0]["url"] = name["url"]
-                    print(query[0])
+                    #print(query[0])
             updatedCluster.append(query)
         if len(clustersErrors[cluster[0][0]["cluster_name"]]) == 0:
             clustersErrors.pop(cluster[0][0]["cluster_name"])

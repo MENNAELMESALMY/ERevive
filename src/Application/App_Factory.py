@@ -572,14 +572,18 @@ def create_query_api_logic(endpoint_object,query,models_obj):
     db_query = db_query+".all()"
     #if hereJoins and len(query["bestJoin"]) == 1:
 
-    endpoint_name,ui_name = query_renaming(query["entities"],query["whereAttrs"],groupByAttrs,query["orderByAttrs"],True,is_group_all)
-    endpoint_url = '/'.join(query["entities"])+'/'+endpoint_name
-    parse_args = parse_args.replace(parser,endpoint_name.lower())
-    endpoint_object.update({
-        "endpoint_name":endpoint_name.lower(),
-        "ui_name":ui_name.lower(),
-        "url":endpoint_url.lower(),
-        }) 
+    #------------------------------------------------------------------
+
+    # endpoint_name,ui_name = query_renaming(query["entities"],query["whereAttrs"],groupByAttrs,query["orderByAttrs"],True,is_group_all)
+    # endpoint_url = '/'.join(query["entities"])+'/'+endpoint_name
+    # parse_args = parse_args.replace(parser,endpoint_name.lower())
+    # endpoint_object.update({
+    #     "endpoint_name":endpoint_name.lower()+"_"+str(query["idx"]),
+    #     "ui_name":ui_name.lower(),
+    #     "url":endpoint_url.lower(),
+    #     }) 
+
+    #------------------------------------------------------------------
 
     #if will_print:
     #    print("MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM")

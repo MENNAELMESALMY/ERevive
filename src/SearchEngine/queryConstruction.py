@@ -1,6 +1,6 @@
 import random
 
-#from SearchEngine.clustering import updateQueryGroupBy
+from SearchEngine.clustering import updateQueryGroupBy
 
 def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage, goals,origQuery,bestJoin):
     mappedEntitesNames = mappedEntitesDict.values()

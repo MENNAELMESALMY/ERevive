@@ -419,6 +419,8 @@ def rankTopk(ranked_queries,maxNumOfQueries):
         top_ranked_queries.append({'len':len(ranked_query),'score':cluster_score,'queries':ranked_query})
         if cluster_score > maxClusterScore:
             maxClusterScore = cluster_score
+
+    maxClusterScore = max(1,maxClusterScore)
     for cluster in top_ranked_queries:
         if len(cluster["queries"])<10:
             continue

@@ -864,20 +864,55 @@ for cluster_name,endpoints in c.items():
     is_single_entity = endpoint['is_single_entity']
     filePath = componentsRoute + endpoint["endpoint_name"] + ".vue"
     if endpoint["method"] == "get":
-      if len(endpoint["response"]) < 1:
+      if len(endpoint["response"]) < 9:
         generate_dashboard(cluster_name,endpoint, filePath,is_single_entity,delete_endpoint,put_endpoint,pks)
       else:
         generate_large_cards(cluster_name,endpoint, filePath,is_single_entity,delete_endpoint,put_endpoint,pks)
  
     elif endpoint["method"] == "post":
       if is_single_entity:
-        temp_cluster_name = cluster_name.split('_')[0]
+        #print(cluster_name)
+        temp_cluster_name = cluster_name.replace("_cluster","")
+        #print(cluster_name)
         createForm(requirments,temp_cluster_name,endpoint, filePath)
+      else:
+        with open(filePath, 'a') as file: 
+          file.write('''
+<template>
+    <div class="form"></div>
+</template>
+
+<style></style>
+
+<script>
+export default {
+    name:"form"
+}
+</script>
+        ''')
 
     elif endpoint["method"] == "put":
       filePath = componentsRoute + endpoint["endpoint_name"] + ".vue"
-      temp_cluster_name = cluster_name.split('_')[0]
-      createForm(requirments,temp_cluster_name,endpoint, filePath,True,get_endpoint,pks)
+      if is_single_entity:
+        #print(cluster_name)
+        temp_cluster_name = cluster_name.replace("_cluster","")
+        #print(cluster_name)
+        createForm(requirments,temp_cluster_name,endpoint, filePath,True,get_endpoint,pks)
+      else:
+        with open(filePath, 'a') as file: 
+          file.write('''
+<template>
+    <div class="form"></div>
+</template>
+
+<style></style>
+
+<script>
+export default {
+    name:"form"
+}
+</script>
+        ''')
 
 #Index code generation
 with open('FrontCode/src/index.html', 'w') as f:

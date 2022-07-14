@@ -49,6 +49,7 @@ from utils import convert_db_model_to_restx_model , serialize \n\
         primary_keys = self.modelsObjects[model]['primaryKey']
         put_filter_primary_keys = ""
         delete_filter_primary_keys = ""
+        get_check = ""
         body_params = []
         query_params = []
         ui_response_model = {}
@@ -66,12 +67,14 @@ from utils import convert_db_model_to_restx_model , serialize \n\
                 update_model+="            data.pop('{0}',None)\n".format(attribute)
                 put_filter_primary_keys+="{0}.{1}==request.json.get('{1}') and ".format(model,attribute)
                 delete_filter_primary_keys+="{0}.{1}=={2}_id_parser.parse_args().get('{1}') and ".format(model,attribute,model.lower())
+                get_check += "{0}_id_parser.parse_args().get('{1}') and ".format(model.lower(),attribute)
             body_params.append((attribute,type))
             model_create_string+='{0} = request.json.get("{0}")'.format(attribute)+terminal_command   
         endpoint_name,ui_name = model,model
         endpoint_url = '/'+model.lower()
         put_filter_primary_keys = put_filter_primary_keys[:-4]
         delete_filter_primary_keys = delete_filter_primary_keys[:-4]
+        get_check = get_check[:-4]
         endpoint_object = [{
             "method": "get",
             "url": endpoint_url.lower(),
@@ -131,11 +134,16 @@ from utils import convert_db_model_to_restx_model , serialize \n\
 @{1}_namespace.route("/")\n\
 class {0}Api(Resource):\n\
 \n\
+    @{1}_namespace.expect({1}_id_parser) \n\
     def get(self):\n\
         try:\n\
-            {1}s = db.session.query({0}).all()\n\
-            {1}s = [row.serialize() for row in {1}s]\n\
-            return {1}s , 200 \n\
+            if {7}:\n\
+                {1} = db.session.query({0}).filter({5}).first() \n\
+                return {1}.serialize() , 200 \n\
+            else:\n\
+                {1}s = db.session.query({0}).all()\n\
+                {1}s = [row.serialize() for row in {1}s]\n\
+                return {1}s , 200 \n\
         except Exception as e:\n\
             print(e)\n\
             return str(e) , 400\n\
@@ -174,7 +182,7 @@ class {0}Api(Resource):\n\
             print(e)\n\
             return str(e) , 400\n\
 \n\
-'.format(model,model.lower(),model_create_string,parser_create_string,put_filter_primary_keys,delete_filter_primary_keys,update_model)
+'.format(model,model.lower(),model_create_string,parser_create_string,put_filter_primary_keys,delete_filter_primary_keys,update_model,get_check)
     
         
     def create_api_namespaces(self):

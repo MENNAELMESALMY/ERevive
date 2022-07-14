@@ -170,6 +170,14 @@ def cleanup_question(question,stop_words):
     return tokensDict,tokens
 
 def match_tokens_to_schema(tokens_dict,sql_schema,query_dict):
+    '''
+    match tokens to schema
+    update query_dict
+    return None
+    TODO:
+    1. Synonyms, abbreviations
+    2. Coverage -> how many tokens are matched to the schema || combinations
+    '''
     detectedEntities = []
     for _,value in tokens_dict.items():
       isEntity = False
@@ -277,6 +285,7 @@ def get_conjunctions_sets(tokens,query_dict,values_list,conditions_dict,where_di
   i = 1
   while i <= len(tokens)-1:
     if tokens[i] in conjunctions:
+      #TODO:check if tokens[i-1] and tokens[i+1] belong to same type (attributes / entities / aggregations)
       if tokens[i-1] not in cur_set: cur_set.append(tokens[i-1])
       if tokens[i+1] not in cur_set: cur_set.append(tokens[i+1])
       i+=1
@@ -297,6 +306,7 @@ def get_conjunctions_sets(tokens,query_dict,values_list,conditions_dict,where_di
       cur_set = []
       continue
     if len(cur_set)==0 and i+1 < len(tokens) and tokens[i+1] not in conjunctions:
+      # reconstructed_question  += " " + tokens[i]
       conj_type,new_names = get_conjunction_set_type([tokens[i]],query_dict,values_list,conditions_dict,where_dict,agg_dict)
       set_name = conj_type  + '_' + str(sets_count[conj_type])
       reconstructed_question += " " + set_name
@@ -309,7 +319,74 @@ def get_conjunctions_sets(tokens,query_dict,values_list,conditions_dict,where_di
     reconstructed_question += " " + set_name
     sets_count[conj_type] += 1
     conjunctions_sets[set_name] = new_names
+    # reconstructed_question += " " + tokens[-1]
   return conjunctions_sets,reconstructed_question
+
+##################################### updated ##########################################
+# def get_conjunctions_sets(tokens,query_dict,values_list,conditions_dict,where_dict):
+#   #tokens without stopwords and prepositions except conjunctions and negations
+#   sets_count = {'g':0,'a':0,'e':0,'garbage':0,'w':0,'v':0,'c':0,'o':0,'d':0,"gb":0}
+#   reconstructed_question = tokens[0]
+#   global conjunctions
+#   conjunctions_sets = {}
+#   cur_set = []
+#   i = 1
+#   while i <= len(tokens)-1:
+#     if tokens[i] in conjunctions:
+#       #TODO:check if tokens[i-1] and tokens[i+1] belong to same type (attributes / entities / aggregations)
+#       if tokens[i-1] not in cur_set: cur_set.append(tokens[i-1])
+#       if tokens[i+1] not in cur_set: cur_set.append(tokens[i+1])
+#       i+=1
+#     elif len(cur_set) > 0:
+#       conj_type,new_names = get_conjunction_set_type(cur_set,query_dict,values_list,conditions_dict,where_dict)
+#       if conj_type == 'garbage':
+#         ### for first element ###
+#         conj_type,new_names = get_conjunction_set_type(cur_set[0],query_dict,values_list,conditions_dict,where_dict)
+#         set_name = conj_type +'_'+str(sets_count[conj_type])
+#         reconstructed_question += " " + set_name
+#         sets_count[conj_type] += 1
+#         conjunctions_sets[set_name] = new_names
+#         if conj_type != "v":
+#           if (tokens[i+2] in conjunctions):
+#             i+=1
+#             continue
+#         else:
+#           print("cur_set[1uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu]",cur_set[1])
+#           conj_type,new_names = get_conjunction_set_type(cur_set[1],query_dict,values_list,conditions_dict,where_dict)
+#           set_name = conj_type +'_'+str(sets_count[conj_type])
+#           reconstructed_question += " " + set_name
+#           sets_count[conj_type] += 1
+#           conjunctions_sets[set_name] = new_names
+#         # for el in cur_set :
+#         #   conj_type,new_names = get_conjunction_set_type([el],query_dict,values_list,conditions_dict,where_dict)
+#         #   set_name = conj_type +'_'+str(sets_count[conj_type])
+#         #   reconstructed_question += " " + set_name
+#         #   sets_count[conj_type] += 1
+#         #   conjunctions_sets[set_name] = new_names
+#       else:   
+#         set_name = conj_type +'_'+str(sets_count[conj_type])
+#         reconstructed_question += " " + set_name
+#         sets_count[conj_type] += 1
+#         conjunctions_sets[set_name] = cur_set
+#       cur_set = []
+#       continue
+#     if len(cur_set)==0 and i+1 < len(tokens) and tokens[i+1] not in conjunctions:
+#       # reconstructed_question  += " " + tokens[i]
+#       conj_type,new_names = get_conjunction_set_type([tokens[i]],query_dict,values_list,conditions_dict,where_dict)
+#       set_name = conj_type  + '_' + str(sets_count[conj_type])
+#       reconstructed_question += " " + set_name
+#       sets_count[conj_type] += 1
+#       conjunctions_sets[set_name] = new_names
+#     i+=1
+#   if tokens[-2] not in conjunctions:
+#     conj_type,new_names = get_conjunction_set_type([tokens[-1]],query_dict,values_list,conditions_dict,where_dict)
+#     set_name = conj_type + '_' + str(sets_count[conj_type])
+#     reconstructed_question += " " + set_name
+#     sets_count[conj_type] += 1
+#     conjunctions_sets[set_name] = new_names
+#     # reconstructed_question += " " + tokens[-1]
+#   return conjunctions_sets,reconstructed_question
+#############################################################################
 
 def get_aggregates_in_question(query_dict,new_question,conjunctions_sets):
     '''
@@ -346,6 +423,7 @@ def get_aggregates_in_question(query_dict,new_question,conjunctions_sets):
 def get_conditions_filters(tokens,conditions_dict):
   joinedQuestion = " ".join(tokens)
   #in case of the word written as doesnot / donot / ...
+  #joinedQuestion = re.sub("n\'t|not",' not',joinedQuestion)
   for word in joinedQuestion.split():
     if word.endswith('not') or word.endswith("n\'t"):
       joinedQuestion = joinedQuestion.replace(word , "not")
@@ -355,6 +433,70 @@ def get_conditions_filters(tokens,conditions_dict):
       joinedQuestion = joinedQuestion.replace(' '+c,' '+key)
 
   return joinedQuestion.split()
+
+# def get_order_by_filters(reconstructed_question,query_dict,conjunctions_sets):
+#   # link order by (by nearest attribute)
+#   orderbyFound = False
+#   tempList = []
+#   words = reconstructed_question.split()
+#   for _,word in enumerate(words):
+#     if 'o_' in word: orderbyFound = True
+#     if orderbyFound:
+#       if 'a_' in word:
+#         tempList.extend(conjunctions_sets[word])
+#       if 'd_' in word and len(tempList) > 0:
+#         tempList.extend(conjunctions_sets[word])
+#   query_dict["orderby"].extend(["ORDER BY" , tempList])
+
+# def get_group_by_filters(reconstructed_question,query_dict,conjunctions_sets):
+#   groupbyFound = False
+#   tempList = []
+#   words = reconstructed_question.split()
+#   for _,word in enumerate(words):
+#     if 'gb_' in word: groupbyFound = True
+#     if groupbyFound:
+#       if 'a_' in word:
+#         tempList.extend(conjunctions_sets[word])
+#   query_dict["groupby"].extend(["GROUP BY" , tempList])
+
+# def get_where_filters(reconstructed_question,query_dict,conjunctions_sets):
+#     '''
+#     get where conditions in question
+#     return list of aggregates
+#     '''
+#     print("reconstructed_question",reconstructed_question)
+#     contitions = []
+#     inWhere = False
+#     words = reconstructed_question.split()
+#     for idx,word in enumerate(words):
+#       if 'w_' in word:inWhere = True;continue
+#       if inWhere:
+#         if 'a_' in word:
+#           contitions.append([word])
+#         elif 'v_' in word or 'c_' in word:
+#           if len(contitions) == 0:
+#             i = idx-1
+#             while i >= 0:
+#               if 'a_' in words[i]:
+#                 contitions.append([words[i]])
+#                 break
+#               i-=1
+#           if len(contitions) > 0: contitions[-1].append(word)
+#     for condition in contitions:
+#       where_clause = {
+#         "attr":[],
+#         "op":[],
+#         "val":[]
+#       }
+#       for idx,word in enumerate(condition):
+#         if 'a_' in word:
+#           where_clause['attr'].extend(conjunctions_sets[word])
+#         elif 'v_' in word:
+#           where_clause['val'].extend(conjunctions_sets[word])
+#         elif 'c_' in word:
+#           where_clause['op'].extend(conjunctions_sets[word])
+#       where_clause['op_val'] = list(zip(where_clause['op'],where_clause['val']))
+#       query_dict['where'].append(where_clause)
 
 def get_where_group_order_by_filters(reconstructed_question,query_dict,conjunctions_sets):
   ####################### get where #############################
@@ -496,6 +638,7 @@ def get_query_from_question(query_dict,usedAggrAttrs):
 
       finalPredictedQuery = finalPredictedQuery[:-2]
     else:
+      # attr = list(list(zip(*query_dict["attributes"]))[2])
       finalPredictedQuery += ",".join(query_dict["selectAttrs"])
     
     finalPredictedQuery += " FROM " + query_dict["entities"][0][1] + " WHERE "

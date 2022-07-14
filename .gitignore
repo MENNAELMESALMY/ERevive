@@ -145,7 +145,7 @@ src/SearchEngine/glove_vectors.model
 src/ImageProcessing/output/
 Interface_Vue/createFrontProject/FrontCode/
 notebooks/preparingDatasets/finalOutputs/
-# *.png
+*.png
 src/NlpToSql/datasets/*
 src/NlpToSql/not_done_dict/*
 src/SearchEngine/crawler

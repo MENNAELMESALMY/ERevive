@@ -285,7 +285,7 @@ flask-cors\n\
         return ' \n\
 export PYTHONPATH=$PWD \n\
 export FLASK_APP=__init__.py \n\
-export FLASK_DEBUG=1 \n\
+export FLASK_DEBUG=0 \n\
 . venv/bin/activate \n\
 \n\
 python -m flask run --host=localhost --port=3000 \n\

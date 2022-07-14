@@ -1,6 +1,6 @@
 import random
 
-from SearchEngine.clustering import updateQueryGroupBy
+#from SearchEngine.clustering import updateQueryGroupBy
 
 def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage, goals,origQuery,bestJoin):
     mappedEntitesNames = mappedEntitesDict.values()
@@ -106,6 +106,7 @@ def addJoinAttrs(joins,whereAttrs):
 
 import json
 def queryStructure(queryDict):
+    # print(f"/////////////////////\n{queryDict}\n//////////////////////////////")
     ob = {}
     ob["query"] = queryDict
     query = "SELECT "
@@ -144,8 +145,16 @@ def queryStructure(queryDict):
             if whereAttr[3] == "None":
                 whereAttr[3] = ""
 
+            
+
+            # print("query",query)
+            # print("whereAttr",whereAttr)
             if isinstance(whereAttr[2], str) and whereAttr[2]!="value":
-                whereAttr = [whereAttr[0],whereAttr[1],whereAttr[2],whereAttr[3]]
+                if type(whereAttr[0]) is tuple:
+                    attr_name = whereAttr[0][0]
+                else:
+                    attr_name = whereAttr[0]
+                whereAttr = [attr_name,whereAttr[1],whereAttr[2],whereAttr[3]]
                 whereAttr = ' '.join(whereAttr)
 
             else:
@@ -198,6 +207,7 @@ def queryStructure(queryDict):
 
     return query
 
+
 def getModelsObj(testSchema):
     models_obj = {}
     for model in testSchema.values():
@@ -205,7 +215,15 @@ def getModelsObj(testSchema):
             model["TableName"]:model["attributes"]
         })
     return models_obj
+
+
 def create_response_model(selectAttrs,aggrAttrs,entities,modelsObject):
+    #print("///////////////////")
+    #print("select",selectAttrs)
+    #print("aggr",aggrAttrs)
+    #print("entities",entities)
+    #print("modelsObject",modelsObject)
+
     pythondtypes_restmapping = {
     "str":"fields.String",
     "int":"fields.Integer",
@@ -217,7 +235,12 @@ def create_response_model(selectAttrs,aggrAttrs,entities,modelsObject):
     ui_response_model = {}
     db_selects= []
 
-    if (len(selectAttrs)==1 and selectAttrs[0][0]=="*") or (len(selectAttrs)==0 and len(aggrAttrs)==0):
+    get_all_entities = False
+    for attr in selectAttrs:
+        if attr[0] == "*":
+            get_all_entities = True
+
+    if (len(selectAttrs)==1 and selectAttrs[0][0]=="*") or get_all_entities or (len(selectAttrs)==0 and len(aggrAttrs)==0):
         response_model,ui_response_model =  get_astrisk_models(entities,modelsObject)
         response_model+=","
         selectAttrs=[]
@@ -229,7 +252,10 @@ def create_response_model(selectAttrs,aggrAttrs,entities,modelsObject):
             all_entities_astrisk.append(attr[0].split('.')[0])
         else:
             sel_len+=1
+
     all_entities_astrisk = list(set(all_entities_astrisk))
+    print(all_entities_astrisk)
+
     if len(all_entities_astrisk):
         response_model,ui_response_model =  get_astrisk_models(all_entities_astrisk,modelsObject)
         response_model+=","
@@ -263,6 +289,7 @@ def create_response_model(selectAttrs,aggrAttrs,entities,modelsObject):
     response_model = response_model[:-1]
     return response_model , ui_response_model ,db_selects
 
+
 def get_astrisk_models(entities,modelsObjects):
     all_models_response=''
     all_models_ui_response = {}
@@ -274,6 +301,8 @@ def get_astrisk_models(entities,modelsObjects):
         all_models_ui_response.update(entity_ui_model)
     all_models_response = all_models_response[:-1]
     return all_models_response , all_models_ui_response
+
+
 def get_attr_name_type(attrs,attr_type=None):
     attr_names = []
     for attr in attrs:

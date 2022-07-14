@@ -1,1 +1,154 @@
-{"articles": {"ForgeinKey": [{"ForignKeyTable": "comments", "ForignKeyTableAttributeName": "cid", "attributeName": "users_writes_userid", "dataType": "str", "patricipaction": "partial"}], "TableName": "articles", "TableType": "", "attributes": {"aid": "str", "textbody": "str", "timeatamp": "str", "title": "str", "users_writes_userid": "str"}, "isWeak": false, "primaryKey": ["aid"]}, "comments": {"ForgeinKey": [{"ForignKeyTable": "comments", "ForignKeyTableAttributeName": "cid", "attributeName": "articles_has_aid", "dataType": "str", "patricipaction": "partial"}, {"ForignKeyTable": "comments", "ForignKeyTableAttributeName": "cid", "attributeName": "users_posts_userid", "dataType": "str", "patricipaction": "partial"}], "TableName": "comments", "TableType": "", "attributes": {"articles_has_aid": "str", "cid": "str", "text": "str", "timestamp": "datetime", "users_posts_userid": "str"}, "isWeak": false, "primaryKey": ["cid"]}, "users": {"ForgeinKey": [], "TableName": "users", "TableType": "", "attributes": {"email": "str", "name": "str", "userid": "str"}, "isWeak": false, "primaryKey": ["userid"]}}
+{
+    "DEPARTMENT": {
+        "ForgeinKey": [
+            {
+                "ForignKeyTable": "EMPLOYEE",
+                "ForignKeyTableAttributeName": "ssn",
+                "attributeName": "EMPLOYEE_Manages_ssn",
+                "dataType": "str",
+                "patricipaction": "partial"
+            }
+        ],
+        "TableName": "DEPARTMENT",
+        "TableType": "",
+        "attributes": {
+            "EMPLOYEE_Manages_ssn": "str",
+            "name": "str",
+            "start_date": "datetime"
+        },
+        "isWeak": false,
+        "primaryKey": [
+            "name"
+        ]
+    },
+    "DEPARTMENT_location": {
+        "ForgeinKey": [
+            {
+                "ForignKeyTable": "DEPARTMENT",
+                "ForignKeyTableAttributeName": "name",
+                "attributeName": "DEPARTMENT_name",
+                "dataType": "str",
+                "patricipaction": "full"
+            }
+        ],
+        "TableName": "DEPARTMENT_location",
+        "TableType": "",
+        "attributes": {
+            "DEPARTMENT_name": "str",
+            "location": "str"
+        },
+        "isWeak": false,
+        "primaryKey": [
+            "location",
+            "DEPARTMENT_name"
+        ]
+    },
+    "DEPENDENT": {
+        "ForgeinKey": [
+            {
+                "ForignKeyTable": "EMPLOYEE",
+                "ForignKeyTableAttributeName": "ssn",
+                "attributeName": "Dependents_EMPLOYEE_ssn",
+                "dataType": "str",
+                "patricipaction": "partial"
+            }
+        ],
+        "TableName": "DEPENDENT",
+        "TableType": "",
+        "attributes": {
+            "Dependents_EMPLOYEE_ssn": "str",
+            "birth_date": "datetime",
+            "name": "str",
+            "relatlonship": "str",
+            "sex": "str"
+        },
+        "isWeak": true,
+        "primaryKey": [
+            "Dependents_EMPLOYEE_ssn"
+        ]
+    },
+    "EMPLOYEE": {
+        "ForgeinKey": [
+            {
+                "ForignKeyTable": "DEPARTMENT",
+                "ForignKeyTableAttributeName": "name",
+                "attributeName": "DEPARTMENT_Employed_name",
+                "dataType": "str",
+                "patricipaction": "full"
+            }
+        ],
+        "TableName": "EMPLOYEE",
+        "TableType": "",
+        "attributes": {
+            "DEPARTMENT_Employed_name": "str",
+            "addres": "str",
+            "birth_date": "datetime",
+            "first_name": "str",
+            "last_name": "str",
+            "middle_initis": "str",
+            "salary": "float",
+            "sex": "str",
+            "ssn": "str",
+            "start_date": "datetime",
+            "status": "str"
+        },
+        "isWeak": false,
+        "primaryKey": [
+            "ssn"
+        ]
+    },
+    "PROJECT": {
+        "ForgeinKey": [
+            {
+                "ForignKeyTable": "DEPARTMENT",
+                "ForignKeyTableAttributeName": "name",
+                "attributeName": "DEPARTMENT_Assigned_name",
+                "dataType": "str",
+                "patricipaction": "partial"
+            }
+        ],
+        "TableName": "PROJECT",
+        "TableType": "",
+        "attributes": {
+            "DEPARTMENT_Assigned_name": "str",
+            "budget": "float",
+            "location": "str",
+            "name": "str"
+        },
+        "isWeak": false,
+        "primaryKey": [
+            "name"
+        ]
+    },
+    "Works_EMPLOYEE_PROJECT": {
+        "ForgeinKey": [
+            {
+                "ForignKeyTable": "EMPLOYEE",
+                "ForignKeyTableAttributeName": "ssn",
+                "attributeName": "EMPLOYEE_ssn",
+                "dataType": "str",
+                "patricipaction": "full"
+            },
+            {
+                "ForignKeyTable": "PROJECT",
+                "ForignKeyTableAttributeName": "name",
+                "attributeName": "PROJECT_name",
+                "dataType": "str",
+                "patricipaction": "full"
+            }
+        ],
+        "TableName": "Works_EMPLOYEE_PROJECT",
+        "TableType": "",
+        "attributes": {
+            "EMPLOYEE_ssn": "str",
+            "PROJECT_name": "str",
+            "hours": "int",
+            "start_date": "datetime"
+        },
+        "isWeak": false,
+        "primaryKey": [
+            "EMPLOYEE_ssn",
+            "PROJECT_name"
+        ]
+    }
+}

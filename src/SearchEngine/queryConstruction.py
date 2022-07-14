@@ -106,8 +106,8 @@ def addJoinAttrs(joins,whereAttrs):
 
 import json
 def queryStructure(queryDict):
-    # ob = {}
-    # ob["query"] = queryDict
+    ob = {}
+    ob["query"] = queryDict
     query = "SELECT "
     ## concatenate aggregation functions
     if len(queryDict["aggrAttrs"]) > 0:
@@ -192,9 +192,9 @@ def queryStructure(queryDict):
 
     query = query.strip()
     query += ";"
-    # ob["constructed"] = query
-    # with open("debugConstructedQueries.json","a+") as file:
-    #     json.dump(ob,file)
+    ob["constructed"] = query
+    with open("debugConstructedQueries.json","a+") as file:
+        json.dump(ob,file)
 
     return query
 

@@ -308,7 +308,7 @@ export default {
       this.formData = {};
       for (let key in this.globalSchema) {
         let TableName = this.globalSchema[key]["TableName"];
-        this.formData[TableName] = [];
+        this.formData[TableName.toLowerCase()] = [];
         this.finalSchema[TableName] = {
           TableName: TableName,
           TableType: "",
@@ -333,7 +333,7 @@ export default {
           let options = listOfValues.split(",");
           if (fieldType == "checkbox") options = [attrName];
 
-          this.formData[TableName].push({
+          this.formData[TableName.toLowerCase()].push({
             field_name: attrName,
             field_type: fieldType,
             data_type: attrDataType,

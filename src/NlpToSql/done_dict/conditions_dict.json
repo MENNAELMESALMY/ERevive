@@ -1,0 +1,19 @@
+{
+    ">=":["greater than or equal" , "bigger than or equal" , "higher than or equal", "above or equal",
+    "not lower than" , "not smaller than" , "not less than" , "not below"],
+    "<=":["lower than or equal" , "smaller than or equal" , "less than or equal" , "below or equal",
+        "not greater than" , "not more than", "not bigger than" , "not higher than" , "not above"],
+    ">":["greater than" , "more than", "bigger than", "higher than" , "above"],
+    "<":["lower than" , "smaller than" , "less than" , "not exceeding" , "below" , "no more" , "not exceed" , "nothing more"],
+    "!=":["not equal", "without" , "never" , "not similar" , "not alike"],
+    "=":["equal" , "as" , "same" , "equivalent" , "match" , "similar", 
+        "identical" , "equally" , "alike" , "equalize"],
+    "BETWEEN":["to", "between","within the range" , "among" , "within" ,
+         "during" , "in range"],
+    "NOT_LIKE_S": ["not start" , "not begin","not prefix"],
+    "NOT_LIKE_E": ["not end" , "not finish"], 
+    "NOT_LIKE_C": ["not contain" , "not have","not substring",  "not include","not as substring" ],
+    "LIKE_S": ["start" , "begin","prefix"],
+    "LIKE_E": ["end" , "finish"], 
+    "LIKE_C": ["contain" , "have","substring",  "include","as substring" ]
+}

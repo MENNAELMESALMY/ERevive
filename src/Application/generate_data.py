@@ -87,21 +87,25 @@ def match(attr,faker_class):
 
 
 def get_keys_attrs(model):
+    pk_is_a_fk = False
     attributes = model["attributes"].copy()
     primary_keys = {}
     foriegn_keys = {}
     for fk in model["ForgeinKey"]:
         foriegn_keys[fk["attributeName"]] = fk
         del attributes[fk["attributeName"]]
+    print("////////////////////")
+    print(attributes)
 
     for pk in model["primaryKey"]:
         if pk in attributes.keys():
             primary_keys[pk] = attributes[pk]
             del attributes[pk]
         else:
-            primary_keys[pk] = foriegn_keys[pk]["dataType"]
+            pk_is_a_fk = True
+        #     primary_keys[pk] = foriegn_keys[pk]["dataType"]
     
-    return attributes, primary_keys, foriegn_keys
+    return attributes, primary_keys, foriegn_keys, pk_is_a_fk
 
 
 def mapping_model_to_faker(stop_words, classes, attributes, primary_keys):
@@ -152,7 +156,10 @@ def fill_model_statment(num_of_records, attr_pk_mapping, primary_keys):
                 values[i].append(value)
 
         i+=1
-    return values,stmt[:-2]
+
+    stmt = stmt[:-2] if len(stmt) else stmt
+
+    return values,stmt
 
 
 def get_pk_data(primary_keys,attr_pk_mapping,num_of_records):
@@ -169,7 +176,7 @@ def get_pk_data(primary_keys,attr_pk_mapping,num_of_records):
     return values
 
 
-def get_fk_data(model,pks_data,num_of_records):
+def get_fk_data(model,pks_data,num_of_records,is_pk_and_fk):
     stmt = ""
     values = []
     for fk in model:
@@ -177,9 +184,34 @@ def get_fk_data(model,pks_data,num_of_records):
         table = fk["ForignKeyTable"]
         attr = fk["ForignKeyTableAttributeName"]
         pk = pks_data[table][attr]
-        pk = random.choices(pk , k = num_of_records)
+        if is_pk_and_fk:
+            pk = random.sample(pk, k = num_of_records)
+            print(pk)
+        else:
+            pk = random.choices(pk , k = num_of_records)
         values.append(pk)
     return values,stmt[:-2]
+
+
+def get_insert_stmt(num_of_records,model_mapping,primary_keys,model_name,database,pks_data):
+    attr_data, attr_stmt = fill_model_statment(num_of_records, model_mapping, primary_keys)
+    #fk_data,fk_stmt = get_fk_data(model["ForgeinKey"],pks_data,num_of_records)
+    row_values = list(pks_data[model_name].values())
+
+    if len(attr_data): row_values.extend(attr_data)
+    #if len(fk_data): row_values.extend(fk_data)
+    row_values = list(zip(*row_values))
+
+    insert_stmt = "INSERT INTO {0}.{1} (".format(database,model_name)
+    for pk in primary_keys:
+        insert_stmt +=  pk + ', '
+
+    insert_stmt = insert_stmt[:-2]
+    if attr_stmt: insert_stmt += ", " + attr_stmt
+    insert_stmt += ") VALUES {0};".format(str(row_values)[1:-1])
+
+    return insert_stmt
+
 
 
 def __main__():
@@ -197,15 +229,17 @@ def __main__():
     stop_words = stopwords.words('english')
     attr_pk_mapping = {}
     models_fk = {}
+    models_pk = {}
     num_of_records = 100
 
     user="root"
     password="admin<3Super"
-    database="department"
+    database="company"
     connection_string = "mysql+mysqlconnector://{0}:{1}@127.0.0.1:3306/{2}".format(user, password, database) 
     engine = create_engine(connection_string)
 
     pks_data = {}
+    weak_pk = []
     stmts = []
     with engine.begin() as conn:
         start = timeit.default_timer()
@@ -213,10 +247,18 @@ def __main__():
         #insert attrs and primary keys
         for model_name , model in models.items():
             #print("//////////////////////////////////////")
-            attributes, primary_keys, foriegn_keys = get_keys_attrs(model)
+            attributes, primary_keys, foriegn_keys, pk_is_a_fk = get_keys_attrs(model)
+
+            if pk_is_a_fk:
+                weak_pk.append(model_name)
+                print(attributes, primary_keys, foriegn_keys)
+
+
             models_fk[model_name] = foriegn_keys
+            models_pk[model_name] = list(primary_keys.keys())
             attr_pk_mapping[model_name] = mapping_model_to_faker(stop_words, classes, attributes, primary_keys)
             pks_data[model_name] = get_pk_data(primary_keys,attr_pk_mapping[model_name],num_of_records)
+
 
         end = timeit.default_timer()  
         with open("timing.txt","w+") as file:
@@ -230,87 +272,76 @@ def __main__():
             json.dump(attr_pk_mapping , file)
 
         #print(pks_data)
+        weak_entites = []
         for model_name,model in models.items():
             #print("//////////////////////////////////////")
-            attr_data, attr_stmt = fill_model_statment(num_of_records, attr_pk_mapping[model_name], model["primaryKey"])
-            #fk_data,fk_stmt = get_fk_data(model["ForgeinKey"],pks_data,num_of_records)
-            row_values = list(pks_data[model_name].values())
+            if model_name in weak_pk:
+                print(model_name)
+                continue
 
-            if len(attr_data): row_values.extend(attr_data)
-            #if len(fk_data): row_values.extend(fk_data)
-            row_values = list(zip(*row_values))
-
-            insert_stmt = "INSERT INTO {0}.{1} (".format(database,model_name)
-            for pk in model["primaryKey"]:
-                insert_stmt +=  pk + ', '
-
-            insert_stmt = insert_stmt[:-2]
-            if attr_stmt: insert_stmt += ", " + attr_stmt
-            #if fk_stmt: insert_stmt += ", " + fk_stmt
-            insert_stmt += ") VALUES {0};".format(str(row_values)[1:-1])
-            #print(insert_stmt)
-
-            end = timeit.default_timer()
-            with open("timing.txt","a+") as file:
-                file.write(f"time for adding {model_name} attr and pk data {end-start} \n") 
-            start = timeit.default_timer()
-            # print(insert_stmt)
+            insert_stmt = get_insert_stmt(num_of_records, attr_pk_mapping[model_name],models_pk[model_name],model_name,database,pks_data)
             stmts.append(insert_stmt.replace("),","),\n").replace("VALUES","\nVALUES\n") + "\n")
             try:    
-                conn.execute(insert_stmt)
+                #conn.execute(insert_stmt)
                 #conn.execute("delete from {0}".format(model_name))
                 print(f"inserted in model {model_name} successfully")
             except Exception as e:
                 print(e)
                 #continue
+        print(len(stmts))
 
-            end = timeit.default_timer()
-            with open("timing.txt","a+") as file:
-                file.write(f"time for inserting {model_name} attr and pk data to DB {end-start} \n") 
-            start = timeit.default_timer()
-
+        
         #foriegn keys
         for model_name,model in models.items():
             if  len(model["ForgeinKey"]) == 0: continue
             #print("???????????????????????????????????????????????????/")
-            fk_data,fk_stmt = get_fk_data(model["ForgeinKey"],pks_data,num_of_records)
+            fk_data,fk_stmt = get_fk_data(model["ForgeinKey"],pks_data,num_of_records,(model_name in weak_pk))
             #print(fk_stmt)
             row_values = list(pks_data[model_name].values())
 
             if len(fk_data): row_values.extend(fk_data)
+
+
+            #no data was inserted before insert the whole table
+            attr_stmt = ""
+            if model_name in weak_pk: 
+                attr_data, attr_stmt = fill_model_statment(num_of_records, attr_pk_mapping[model_name], models_pk[model_name])
+                if len(attr_stmt):
+                    row_values.extend(attr_data)
+
             row_values = list(zip(*row_values))
 
             insert_stmt = "INSERT INTO {0}.{1} (".format(database,model_name)
-            for pk in model["primaryKey"]:
+            for pk in models_pk[model_name]:
                 insert_stmt +=  pk + ', '
 
-            insert_stmt = insert_stmt[:-2]
-            if fk_stmt: insert_stmt += ", " + fk_stmt
+            insert_stmt = insert_stmt[:-2] if len(models_pk[model_name]) else insert_stmt
+            if fk_stmt: insert_stmt += ", " + fk_stmt if len(models_pk[model_name]) else fk_stmt 
+            if attr_stmt: insert_stmt += ", " + attr_stmt
+
+            print(insert_stmt)
+
             insert_stmt += ") \nVALUES \n {0} ".format(str(row_values)[1:-1].replace("),","),\n"))
-            insert_stmt += "\nON DUPLICATE KEY UPDATE \n"
+            if model_name in weak_pk: 
+                insert_stmt += ";"
+            else:
+                insert_stmt += "\nON DUPLICATE KEY UPDATE \n"
+                fks_names = fk_stmt.split(', ')
+                for name in fks_names:
+                    insert_stmt +=  " {0} = VALUES({0}),\n" .format(name)
+                insert_stmt = insert_stmt[:-2] +';'
 
-            fks_names = fk_stmt.split(', ')
-            #print(fks_names)
-            for fk_name in fks_names:
-                insert_stmt +=  " {0} = VALUES({0}),\n" .format(fk_name)
-            insert_stmt = insert_stmt[:-2] +';'
-
-            end = timeit.default_timer()
-            with open("timing.txt","a+") as file:
-                file.write(f"time for adding {model_name} fk data {end-start} \n") 
-            start = timeit.default_timer()
-            
-            
             stmts.append(insert_stmt + "\n")
             try:
-                conn.execute(insert_stmt)
+                #conn.execute(insert_stmt)
                 print(f"inserted foriegn keys in model {model_name} successfully")
             except Exception as e:
                 print(e)
-            
-            end = timeit.default_timer()
-            with open("timing.txt","a+") as file:
-                file.write(f"time for inserting attr and fk data to DB {end-start} \n") 
+  
+        # try:
+        #     conn.execute("INSERT INTO company.DEPARTMENT_location (location) VALUES ('eOIGHqxEEJkCdbtncLbB')")
+        # except Exception as e:
+        #     print(e)
 
         
     stmts = '\n'.join(stmts)

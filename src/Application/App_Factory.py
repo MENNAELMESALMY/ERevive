@@ -1,5 +1,6 @@
 from .Api_Factory import ApiFactory
 from .generateModel import createAllModels
+from multiprocessing import Process
 import json
 import os
 import stat
@@ -69,7 +70,10 @@ def Create_Application(schema,clusters,user="root",password = "admin<3Super",db=
     create_app_run(api)
     create_app_setup(api)
     create_app_env(api)
-    create_app_utils(api) 
+    create_app_utils(api)
+    # with open("../generate_data.py","w+") as file:
+    #     file.write(api.create_generate_data())
+    
 
     os.chdir('./..')
 
@@ -288,7 +292,7 @@ def create_query_api_logic(endpoint_object,query,models_obj):
     parser = endpoint_object["endpoint_name"].lower()
     parse_args=""
     if len(params):
-        parse_args = "args = {0}_{1}_parser.parse_args()\n".format(parser,query["idx"])
+        parse_args = "args = {0}_parser.parse_args()\n".format(parser)
 
     #get select attrs
     db_query = "results = db.session.query("
@@ -589,14 +593,14 @@ def create_query_api_logic(endpoint_object,query,models_obj):
 
     #------------------------------------------------------------------
 
-    endpoint_name,ui_name = query_renaming(query["entities"],query["whereAttrs"],groupByAttrs,query["orderByAttrs"],True,is_group_all)
-    endpoint_url = '/'.join(query["entities"])+'/'+endpoint_name
-    parse_args = parse_args.replace(parser,endpoint_name.lower())
-    endpoint_object.update({
-        "endpoint_name":endpoint_name.lower()+"_"+str(query["idx"]),
-        "ui_name":ui_name.lower(),
-        "url":endpoint_url.lower(),
-        }) 
+    # endpoint_name,ui_name = query_renaming(query["entities"],query["whereAttrs"],groupByAttrs,query["orderByAttrs"],True,is_group_all)
+    # endpoint_url = '/'.join(query["entities"])+'/'+endpoint_name
+    # parse_args = parse_args.replace(parser,endpoint_name.lower())
+    # endpoint_object.update({
+    #     "endpoint_name":endpoint_name.lower()+"_"+str(query["idx"]),
+    #     "ui_name":ui_name.lower(),
+    #     "url":endpoint_url.lower(),
+    #     }) 
 
     #------------------------------------------------------------------
 

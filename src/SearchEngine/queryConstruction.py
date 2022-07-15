@@ -7,7 +7,10 @@ def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage, go
     query = {}
     mappedAttributesDict = {}
     #print(mappedAttributes)
+    attributes_coverage = 0
+    entities_coverage = sum([mapped[2] for mapped in mappedEntites])
     for attr in mappedAttributes:
+        attributes_coverage += attr[2]
         if attr[1] is not None:
             if attr[0] is None:
                 if "*" == attr[3]:
@@ -38,6 +41,11 @@ def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage, go
     query["mappedEntitesDict"] = mappedEntitesDict
     query["bestJoin"] = list(bestJoin)
     query["origQuery"] = origQuery
+
+    query["entities_closeness"]  = abs(len(query["entities"])-len(origQuery["entities"]))/(len(query["entities"])**2+len(origQuery["entities"])**2)
+    query["attributes_coverage"] = attributes_coverage
+    query["entities_coverage"]   = entities_coverage
+
     attrKeys = ['selectAttrs','groupByAttrs','aggrAttrs','orderByAttrs','whereAttrs','havingAttrs']
     for key in attrKeys:
         query[key] = []
@@ -286,7 +294,6 @@ def create_response_model(selectAttrs,aggrAttrs,entities,modelsObject):
             sel_len+=1
 
     all_entities_astrisk = list(set(all_entities_astrisk))
-    print(all_entities_astrisk)
 
     if len(all_entities_astrisk):
         response_model,ui_response_model =  get_astrisk_models(all_entities_astrisk,modelsObject)
@@ -311,7 +318,6 @@ def create_response_model(selectAttrs,aggrAttrs,entities,modelsObject):
         attr_type = attr[0][1] if ("*" not in attr[0][0] and attr[1] != "count") else "int"
         db_selects.append((attr_name,attr_type,attr_aggregation))
         attr_name = attr_aggregation+"_"+ (attr_name if "*" not in attr_name else "all")
-        if attr_name == "count_awards_players.playerID":print(attr)
         if attr_type in pythondtypes_restmapping:
             response_model+= "'"+attr_name+"' : "+pythondtypes_restmapping[attr_type]+","
             ui_response_model[attr_name] = attr_type
@@ -437,7 +443,6 @@ def create_query_ui_endpoint(q,modelsObjects):
         attr_name = attr[0][0]
         attr_type = attr[0][1]
         attr_aggregation = attr[1]
-        print(attr_aggregation)
         param_name = ""
         aggr = "_"+attr_aggregation +"_" if attr_aggregation and contain_aggr else ""
 

@@ -411,8 +411,8 @@ def get_aggr_attrs(aggr_attrs):
 def create_query_ui_endpoint(q,modelsObjects):
     query = q[0]
     endpoint_name,ui_name = query_renaming(query["entities"],query["whereAttrs"],query["updatedGroupByAttrs"],query["orderByAttrs"],True)
-    endpoint_name = endpoint_name.lower()+"_"+str(query["idx"])
-    ui_name = str(query["idx"]) + "-" + ui_name
+    endpoint_name = endpoint_name.lower()+"_"+str(query["idx"]) if query.get("idx") else endpoint_name.lower()
+    ui_name = str(query["idx"]) + "-" + ui_name if query.get("idx") else ui_name
 
     endpoint_url = '/'.join(query["entities"])+'/'+endpoint_name
     endpoint_method = "get"

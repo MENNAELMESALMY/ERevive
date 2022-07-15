@@ -374,6 +374,7 @@ import datetime \n\
 import itertools \n\
 import timeit \n\
 import os \n\
+import shutil \n\
 from nltk.stem import PorterStemmer \n\
 from nltk.corpus import stopwords \n\
 from sqlalchemy import create_engine \n\
@@ -580,14 +581,17 @@ def __main__(database): \n\
             insert_stmt = insert_stmt[:-2] +";" \n\n\
         stmts.append(insert_stmt) \n\n\
     currentPath = os.getcwd()  \n\
-    seedspath = os.path.join(currentPath, "seeds") \n\
+    seedspath = os.path.join(currentPath, "api/seeds") \n\
     if not os.path.exists(seedspath): \n\
+        os.makedirs(seedspath) \n\
+    else: \n\
+        shutil.rmtree(seedspath, ignore_errors=True) \n\
         os.makedirs(seedspath) \n\n\
     count = 0 \n\
     for stmt in stmts: \n\
-        path = "./seeds/" + str(count)+".sql" \n\
-        with open(path,"w+") as file: \n\
+        path = seedspath +"/"+ str(count)+".sql" \n\n\
+        with open(path,"w+") as file:  \n\
             file.write(stmt) \n\
-        count += 1 \n\n\
+        count += 1 \n\
 __main__("{1}") \n\
 '.format("" , self.db, "{"+"}" , "{"+"0}" , "{"+"1}" , "{","}")

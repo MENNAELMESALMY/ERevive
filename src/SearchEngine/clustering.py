@@ -21,7 +21,7 @@ def updateQueryGroupBy(query,testSchema):
     groupByAttrs = set([attr[0] for attr in query["groupByAttrs"]])
     models_obj = getModelsObj(testSchema)
     datatypes={}
-    if len(query["aggrAttrs"]) or agg_in_orderby:
+    if len(query["aggrAttrs"]) or agg_in_orderby or len(query["havingAttrs"])>1:
         orderByAttrs = [atr[0] for atr in query["orderByAttrs"] if not atr[1] or atr[1]==""]
         groupAttrs = orderByAttrs + query["selectAttrs"]
         selectAttrs = set()

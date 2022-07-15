@@ -133,7 +133,7 @@ def generate_large_cards(cluster_name,endpoint,directory,
     card_string += 'card_data: state => state.'\
                     +cluster_name+'.'+endpoint_name+',\n'
     card_string += '''}),},'''
-    if is_single_entity:
+    if len(param)>0:
         card_string += '''
         async beforeMount(){
             await this.call_request();

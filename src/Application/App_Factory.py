@@ -1,6 +1,6 @@
 from .Api_Factory import ApiFactory
 from .generateModel import createAllModels
-from multiprocessing import Process
+from .generate_data import generate_seeds
 import json
 import os
 import stat
@@ -44,11 +44,6 @@ def Create_Application(schema,clusters,user="root",password = "admin<3Super",db=
     os.chdir('api')
     models,modelsObjects = createAllModels(schema)  #should be replaced with nihal's models 
       
-    with open('../models.json','w') as f:
-        json.dump(models,f)
-
-    with open('../modelsObjects.json','w') as f:
-        json.dump(modelsObjects,f)
 
     api = ApiFactory(models,user,password,db,modelsObjects)
     apisFiles,crud_ui_out = api.create_models_apis()
@@ -71,10 +66,7 @@ def Create_Application(schema,clusters,user="root",password = "admin<3Super",db=
     create_app_setup(api)
     create_app_env(api)
     create_app_utils(api)
-    # with open("../generate_data.py","w+") as file:
-    #     file.write(api.create_generate_data())
-    
-
+    generate_seeds(db,modelsObjects)
     os.chdir('./..')
 
 

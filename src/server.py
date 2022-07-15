@@ -352,6 +352,9 @@ def get_application():
     with open('CreateFrontProject/userInterfaceInfo.json','w+') as file:
         json.dump(forms,file)
 
+    with open('CreateFrontProject/systemInfo.json','w+') as file:
+        json.dump(systemData,file)
+
     start_creating_application(finalSchema,clusters,systemData.get('databaseUsername'),systemData.get('databasePassword'),systemData.get('databaseName'))
 
     return jsonify({"success":"success"}) , 200

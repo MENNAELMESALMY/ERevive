@@ -77,6 +77,7 @@ def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage, go
                     else:
                         firstAttrIsUpdated = False
                         query[key].append(attr)
+            query[key] = convert_or_to_in(query[key])
         elif key == "havingAttrs":
             ## [aggr,attr,operation]
             for attr in currentAttributes:
@@ -92,7 +93,39 @@ def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage, go
             query[key] = list(set(query[key]))
         else:
             query[key] = [list(x) for x in set(tuple(x) for x in query[key])]
+    
     return query
+
+def convert_or_to_in(whereAttr):
+    merge = -1
+    i = 0
+    while i < len(whereAttr): 
+        attr = whereAttr[i]
+        curr_attr_name = attr[0][0] if len(attr[0]) else attr[0]
+        if len(attr) >=3 and (attr[3] == "or") and (i+1 < len(whereAttr)):
+            i+=1
+            next_attr = whereAttr[i]
+            next_attr_name = next_attr[0][0] if len(next_attr[0]) else next_attr[0]
+            while curr_attr_name == next_attr_name and i < len(whereAttr):
+                merge = True
+                is_or = len(whereAttr[i])>=3 and whereAttr[i][3] == "or"
+                whereAttr.pop(i)
+                if i < len(whereAttr) and is_or:
+                    next_attr = whereAttr[i]
+                    next_attr_name = next_attr[0][0] if len(next_attr[0]) else next_attr[0]
+                else:
+                    break
+
+            if merge:
+                if len(whereAttr[i-1]) >= 1:whereAttr[i-1][1] = "in"
+                if len(whereAttr[i-1]) >= 2:whereAttr[i-1][2] = "value"
+                if len(whereAttr[i-1]) >= 3:whereAttr[i-1][3] = ""
+
+        i+=1
+
+    return whereAttr
+                
+
 
 
 def addJoinAttrs(joins,whereAttrs):

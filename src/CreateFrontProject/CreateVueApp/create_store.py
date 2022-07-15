@@ -1,6 +1,8 @@
 def generate_store(endpoints,directory):
     store_string = '''
 import axios from "axios";
+import qs from "qs";
+
 const state = {
 '''
     for endpoint in endpoints:
@@ -27,6 +29,10 @@ const actions = {
         #print(endpoint['method'])
         if endpoint['method'] == 'get' or endpoint['method']=='delete':
             store_string += '\t\t\tparams: payload,'
+        
+        if endpoint['method'] == 'get':
+            store_string += '\n\t\t\tparamsSerializer: params => {qs.stringify(params, { arrayFormat: "repeat" })}'
+        
         if endpoint['method'] == 'post' or endpoint['method'] == 'put':
             store_string += '\t\t\tdata: payload,'
         

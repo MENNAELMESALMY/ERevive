@@ -331,7 +331,7 @@ def serialize_result(res):\n\
     serialized_result = res_dict.copy()\n\
     for attr_key, attr_value in res_dict.items():\n\
         print(attr_key, attr_value)\n\
-        if isinstance(attr_value,datetime): \n\
+        if isinstance(attr_value,datetime) or isinstance(attr_value,Decimal): \n\
             serialized_result[attr_key] = str(attr_value) \n\
             attr_value = str(attr_value) \n\
         if hasattr(attr_value, "__dict__"):\n\

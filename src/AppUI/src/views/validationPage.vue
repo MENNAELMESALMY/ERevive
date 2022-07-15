@@ -145,9 +145,7 @@
                 @click="delete_fk(entityIdx, fkIndex)"
               ></i>
             </div>
-            <select 
-            v-model="fk['attributeIdx']"
-            >
+            <select v-model="fk['attributeIdx']">
               <option
                 v-for="(attr, idx) in globalSchema[entityIdx]['attributes']"
                 :value="idx"

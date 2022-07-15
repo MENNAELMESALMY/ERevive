@@ -146,10 +146,10 @@ nlp = spacy.load('en_core_web_sm')
 import re
 
 
-conjunctions = ['and','or',',','and/or','also']
+conjunctions = ['and','or',',','addition','also']
 order_direction = ["descending" ,"desc", "descendingly"] #as by default will sort ASC
 order_dict = ["order" , "sort" , "arrange"]
-group_by_dict = ["every", "each"]
+group_by_dict = ["every", "each","group"]
 
 def cleanup_question(question,stop_words):
     '''
@@ -179,7 +179,8 @@ def match_tokens_to_schema(tokens_dict,sql_schema,query_dict):
         # first check if noun matches any of the entities
         for ob in sql_schema.values():
           entityName = ob["TableName"]
-          if lemma.lower() == entityName.lower():
+          entityLemma = nlp(entityName)
+          if lemma.lower() == entityLemma[0].lemma_.lower():
             query_dict["entities"].append((lemma,entityName))
             detectedEntities.append(entityName)
             isEntity = True
@@ -190,7 +191,8 @@ def match_tokens_to_schema(tokens_dict,sql_schema,query_dict):
           for ob in sql_schema.values():
             entityName = ob["TableName"]
             for attr in ob["attributes"].keys():
-              if lemma.lower() == attr.lower():
+              attrLemma = nlp(attr)
+              if lemma.lower() == attrLemma[0].lemma_.lower():
                 query_dict["attributes"].append((lemma,entityName,attr))
     # detecting attributes belong to entities detected only 
     attr_copy =  query_dict["attributes"][:]
@@ -218,7 +220,8 @@ def get_conjunction_set_type(conjunctions_set,query_dict\
     "w": 0,
     "o": 0,
     "d": 0,
-    "gb":0
+    "gb":0,
+    "j":0
   }
   setType = "garbage"
   tempConjunctions = conjunctions_set
@@ -261,6 +264,13 @@ def get_conjunction_set_type(conjunctions_set,query_dict\
     if item.lower() in group_by_dict: 
       tempConjunctions[idx] = "GROUP BY"
       typesCount["gb"] += 1
+    
+    if item.lower() in conjunctions:
+      if item.lower() == "also" or item.lower() == "addition":
+        tempConjunctions[idx] = "AND"
+      else:
+        tempConjunctions[idx] = item.upper()
+      typesCount["j"] += 1
 
     for k in typesCount.keys():
       if typesCount[k] == len(list(conjunctions_set)):
@@ -269,7 +279,7 @@ def get_conjunction_set_type(conjunctions_set,query_dict\
 
 def get_conjunctions_sets(tokens,query_dict,values_list,conditions_dict,where_dict,agg_dict):
   #tokens without stopwords and prepositions except conjunctions and negations
-  sets_count = {'g':0,'a':0,'e':0,'garbage':0,'w':0,'v':0,'c':0,'o':0,'d':0,"gb":0}
+  sets_count = {'g':0,'a':0,'e':0,'garbage':0,'w':0,'v':0,'c':0,'o':0,'d':0,"gb":0,"j":0}
   reconstructed_question = tokens[0]
   global conjunctions
   conjunctions_sets = {}
@@ -278,6 +288,7 @@ def get_conjunctions_sets(tokens,query_dict,values_list,conditions_dict,where_di
   while i <= len(tokens)-1:
     if tokens[i] in conjunctions:
       if tokens[i-1] not in cur_set: cur_set.append(tokens[i-1])
+      cur_set.append(tokens[i])
       if tokens[i+1] not in cur_set: cur_set.append(tokens[i+1])
       i+=1
     elif len(cur_set) > 0:
@@ -345,6 +356,7 @@ def get_aggregates_in_question(query_dict,new_question,conjunctions_sets):
 
 def get_conditions_filters(tokens,conditions_dict):
   joinedQuestion = " ".join(tokens)
+  joinedQuestion = joinedQuestion.replace(' as well as ',' and ') 
   #in case of the word written as doesnot / donot / ...
   for word in joinedQuestion.split():
     if word.endswith('not') or word.endswith("n\'t"):
@@ -498,11 +510,15 @@ def get_query_from_question(query_dict,usedAggrAttrs):
     else:
       finalPredictedQuery += ",".join(query_dict["selectAttrs"])
     
-    finalPredictedQuery += " FROM " + query_dict["entities"][0][1] + " WHERE "
+    finalPredictedQuery += " FROM " + query_dict["entities"][0][1]
     
     isLike = False
+    firstTurn = False
     for where_clause in query_dict["where"]:
       if len(where_clause["op_val"]) > 0:
+        if firstTurn == False:
+          finalPredictedQuery += " WHERE "
+          firstTurn = True
         finalPredictedQuery += "( "
         for idx,attr in enumerate(where_clause["attr"]):
           if where_clause["op"][0] == "BETWEEN":
@@ -615,7 +631,38 @@ def convertNlpToSQLQuery(sentence,finalSchema):
   return finalQuery
 
 
-finalQuery = convertNlpToSQLQuery(sentence,test_schema[0])
+test2 = {
+    1: {
+        "TableName": "articles",
+        "attributes":{
+            "aid": "str",
+            "textbody": "str",
+            "timestamp": "str",
+            "title": "str",
+            "users_writes_userid": "str",
+        }
+    },
+    2: {
+        "TableName": "users",
+        "attributes":{
+            "email": "str",
+            "name": "str",
+            "userid": "str"
+        }
+    },
+    3:{
+        "TableName": "comments",
+        "attributes":{
+            "articles_has_aid": "str",
+            "cid": "str",
+            "text": "str",
+            "timestamp": "int",
+            "users_posts_userid": "str"
+        }
+    }
+}
+sentence = "get title and textbody of articles whose title starts with (good)"
+finalQuery = convertNlpToSQLQuery(sentence,test2)
 print("finalQuery ==> " , finalQuery)
 
 '''

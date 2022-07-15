@@ -137,10 +137,6 @@ export default {
       databaseName: "",
     };
   },
-  mounted() {
-    this.$store.commit("triggerModals/setHeaderModal", "System Information");
-    this.$store.commit("triggerModals/setToPageFromModal", "/uploadPage");
-  },
   methods: {
     submitForm() {
       // this.$store.commit("triggerModals/toggleSavedModal");

@@ -25,8 +25,7 @@ const actions = {
         store_string += '\n\t\t\tmethod: "'+endpoint["method"]+'",\n'
         store_string += '\t\t\turl: "'+endpoint["url"]
         if endpoint["method"] != "get": store_string += '/",\n'
-        else: store_string+= '",\n'
-        #print(endpoint['method'])
+        else: store_string+= '",\n'        #print(endpoint['method'])
         if endpoint['method'] == 'get' or endpoint['method']=='delete':
             store_string += '\t\t\tparams: payload,'
         

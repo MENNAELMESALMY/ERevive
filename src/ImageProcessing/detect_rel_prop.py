@@ -213,11 +213,6 @@ def detect_participation(relations,edges):
             direct_path = None
             if(path):
                 entity["participation"],direct_path = check_participation(path,entity,relation,edges)
-                #if entity["name"] =="course_section" and relation["name"]=="has":
-                #    hasImg = edges.copy()
-                ##    for point in direct_path:
-                #       hasImg[point[0],point[1]]=100
-                #    cv.imwrite("has_path.png",hasImg)
             
                 paths.append(path) 
                 direct_paths.append(direct_path)
@@ -270,8 +265,6 @@ def cardinality(relations,img,binarizedImg):
     count = 0
     img=255-img
     binarizedImg = binarizedImg.astype(np.uint8)
-    #test = img.copy()
-    #temp = img.copy()
     for relation in relations.values():
         x,y,w,h = relation["bounding_box"]
         rows = [p[0] for p in relation["contour_cardinality"][0]]
@@ -298,25 +291,13 @@ def cardinality(relations,img,binarizedImg):
             for i in range(iterations):
                 if entity.get("paths") and len(entity["paths"])>i:
 
-                    pathX,pathY = get_correct_path_point(entity["paths"][i],(centerX,centerY))
-                    #if entity["name"] =="assignment" and relation["name"]=="has":
-                    #    hasImg = temp.copy()
-                    #    ##for point in entity["paths"][i]:
-                    #    ##    hasImg[point[0],point[1]]=100
-                    #    hasImg[pathX,pathY]=100
-                    #    hasImg[centerY,centerX]=100
-                    #    cv.imwrite("has.png",hasImg)
+                    pathX,pathY = get_correct_path_point(entity["paths"][i],(centerY,centerX))
                 else:
                     entity["cardinality"]="N"  
                     entity["uncertain"]=True
                     continue  
 
                 borderPoint = detectDirectionPath((pathX,pathY),(centerY,centerX),w,h,max_right,max_left,max_top,max_bottom,count,c2)
-                #if entity["name"] =="assignment" and relation["name"]=="has":
-                #    print(borderPoint,pathX,pathY,centerX,centerY)
-                #test[borderPoint[0],borderPoint[1]]=100
-                #test[centerY,centerX]=100
-                #cv.imwrite("test_"+relation["name"]+entity["name"]+".png",test)
                 y_wind = borderPoint[0]
                 x_wind = borderPoint[1]
                 cardinality_img = img.copy()
@@ -335,7 +316,6 @@ def cardinality(relations,img,binarizedImg):
                     wind_height = img.shape[0]-y_wind
                 
                 window = binarizedImg[y_wind:y_wind+wind_height,x_wind:x_wind+wind_width].copy()
-                #cv.imwrite("window_"+relation["name"]+entity["name"]+".png",window)
                 entity["cardinality"]=get_relation_cardinality(window)
                 c2 += 1
            

@@ -462,7 +462,7 @@ def create_query_ui_endpoint(q,modelsObjects):
     response_model = "{ "+response_model+" }"
     endpoint = {
         "method": endpoint_method,
-        "url": endpoint_url,
+        "url": endpoint_url.lower(),
         "queryParams": queryParams,
         "bodyParams": [],
         "response": ui_response_model,

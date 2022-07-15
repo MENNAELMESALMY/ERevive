@@ -1,5 +1,6 @@
 from .Api_Factory import ApiFactory
 from .generateModel import createAllModels
+from multiprocessing import Process
 import json
 import os
 import stat
@@ -69,7 +70,10 @@ def Create_Application(schema,clusters,user="root",password = "admin<3Super",db=
     create_app_run(api)
     create_app_setup(api)
     create_app_env(api)
-    create_app_utils(api) 
+    create_app_utils(api)
+    # with open("../generate_data.py","w+") as file:
+    #     file.write(api.create_generate_data())
+    
 
     os.chdir('./..')
 
@@ -288,7 +292,7 @@ def create_query_api_logic(endpoint_object,query,models_obj):
     parser = endpoint_object["endpoint_name"].lower()
     parse_args=""
     if len(params):
-        parse_args = "args = {0}_{1}_parser.parse_args()\n".format(parser,query["idx"])
+        parse_args = "args = {0}_parser.parse_args()\n".format(parser)
 
     #get select attrs
     db_query = "results = db.session.query("
@@ -420,16 +424,20 @@ def create_query_api_logic(endpoint_object,query,models_obj):
     # filters
     # Note aggregation in where is not valid
     # anding and oring not handled currently
+    is_oring = False
     whereAttr = set()
+
     filters = "\\\n\t\t\t\t.filter(" if len(query["whereAttrs"]) else ""
     for attr in query["whereAttrs"]:
         attr_name = attr[0][0]
         attr_opperator = attr[1]
         attr_opperator = attr_opperator.strip()
         #print(attr_name,attr_opperator)
+        and_or = attr[3] if len(attr) >= 3 else ""
         attr_opperator = "==" if attr_opperator == "=" else attr_opperator
         attr_opperator = "in_" if attr_opperator == "in" else attr_opperator
         attr_opperator = "notlike" if attr_opperator == "not like" else attr_opperator
+        
         #print(attr_name,attr_opperator)
         #removing duplicates for anding and oring
         ##########################
@@ -446,6 +454,12 @@ def create_query_api_logic(endpoint_object,query,models_obj):
         else:
             value = attr[2]
 
+        if is_oring: 
+            filters = filters[:-2] + " | "
+        if and_or == "or" or is_oring:
+            filters += "("
+        
+
         if attr_opperator in ["like","in_","notlike"]:
             filters += "{0}.{1}({2}), ".format(attr_name,attr_opperator,value)
 
@@ -455,10 +469,16 @@ def create_query_api_logic(endpoint_object,query,models_obj):
         else:
             filters += "{0} {1} {2}, ".format(attr_name,attr_opperator,value)
 
+        if and_or == "or" or is_oring:
+            filters = filters[:-2] + "), "
+            if not and_or: is_oring = False
+            else:is_oring = True  
+        else:
+            is_oring = False
+
     if len(filters):
         filters = filters[:-2] +")"
         db_query += filters
-    
     
     # group by
     # Note -> assumed if there is aggr then all attrs in select are in group by
@@ -573,14 +593,14 @@ def create_query_api_logic(endpoint_object,query,models_obj):
 
     #------------------------------------------------------------------
 
-    endpoint_name,ui_name = query_renaming(query["entities"],query["whereAttrs"],groupByAttrs,query["orderByAttrs"],True,is_group_all)
-    endpoint_url = '/'.join(query["entities"])+'/'+endpoint_name
-    parse_args = parse_args.replace(parser,endpoint_name.lower())
-    endpoint_object.update({
-        "endpoint_name":endpoint_name.lower()+"_"+str(query["idx"]),
-        "ui_name":ui_name.lower(),
-        "url":endpoint_url.lower(),
-        }) 
+    # endpoint_name,ui_name = query_renaming(query["entities"],query["whereAttrs"],groupByAttrs,query["orderByAttrs"],True,is_group_all)
+    # endpoint_url = '/'.join(query["entities"])+'/'+endpoint_name
+    # parse_args = parse_args.replace(parser,endpoint_name.lower())
+    # endpoint_object.update({
+    #     "endpoint_name":endpoint_name.lower()+"_"+str(query["idx"]),
+    #     "ui_name":ui_name.lower(),
+    #     "url":endpoint_url.lower(),
+    #     }) 
 
     #------------------------------------------------------------------
 

@@ -334,12 +334,16 @@ def start_creating_application(final_schema,clusters,user_name,password,db_name)
     Create_Application(final_schema,clusters,user_name,password,db_name)
     process = Process(target=lambda: os.system('python3 run.py &'))
     process.start()
+    # os.chdir('api')
+    # process = Process(target=lambda: os.system('python3 generate_data.py &'))
+    # process.start()
+    # os.chdir('./..')
     print("end creating application")
     os.chdir('./..')
     os.chdir('CreateFrontProject')
     process = Process(target=lambda: os.system('python3 run.py &'))
     process.start()
-    os.chdir('./..')
+    os.chdir('./..') #src
 
 
 
@@ -352,6 +356,9 @@ def get_application():
     print("systemData",systemData)
     with open('CreateFrontProject/userInterfaceInfo.json','w+') as file:
         json.dump(forms,file)
+
+    with open('CreateFrontProject/systemInfo.json','w+') as file:
+        json.dump(systemData,file)
 
     start_creating_application(finalSchema,clusters,systemData.get('databaseUsername'),systemData.get('databasePassword'),systemData.get('databaseName'))
 

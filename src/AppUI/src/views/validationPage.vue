@@ -588,8 +588,9 @@ export default {
       return this.errors.length == 0;
     },
   },
-  beforeMount() {
+  async beforeMount() {
     //await this.$store.dispatch("validation/getSchema");
+    await this.$store.dispatch("systemInput/getIpOutput");
     let entityIndex = 0;
     let invertedNamesList = {};
     for (let key in this.receivedSchema) {
@@ -685,5 +686,7 @@ export default {
       receivedSchema: (state) => state.systemInput.initialSchema,
     }),
   },
+  // async beforeMount() {
+  // },
 };
 </script>

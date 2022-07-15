@@ -24,18 +24,12 @@ def getMappedQueries(schemaGraph,rankedQueriesBySimilarity,testSchema,entityDict
         mappedEntites, mappedAttributes, goals,mappedEntitesDict,bestJoin =  mapToSchema(schemaGraph,q[0],testSchema,entityDict,schemaEntityNames)
         coverage = queryCoverage(mappedAttributes)
         query = constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,goals,q[0],bestJoin)
-               
+        
         queries.append(query)
-        #print("mappedAttributes: ",mappedAttributes)
-        #query = constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,compactness)
-        #queries.append(query)
   
     end = timeit.default_timer()
     print("mapToSchema Time: ",end-start)
-    # print("mappedAttributes: ",totalMappedAttributes , "totalAttributes: ",totalAttributes)
-    # print("percentage: ",totalMappedAttributes/totalAttributes)
-    # print(mappedEntites)
-    # print(mappedAttributes)
+
     return queries
 
 

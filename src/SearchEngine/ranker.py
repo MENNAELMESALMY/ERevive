@@ -114,6 +114,7 @@ def mapEntities(queryEntities,schemaEntityNames):
                     break
     return mappedEntitesDict,mappedEntities
 
+
 def getMatchScore(queryWords,schemaWords):
     # matchedWords / max(len(queryWords),len(schemaWords))
     queryVector = getKeyWordsVector(queryWords)
@@ -128,11 +129,21 @@ def constructDictionary(schema):
         entityDict[schema[key]["TableName"]] = key
     return entityDict
 
+def ifWordInWord(word_one,word_two):
+    if word_one in word_two or word_two in word_one: 
+        return True
+    elif abs(len(word_one)-len(word_two))<=2 and len(word_one)>=2 and len(word_two)>=2 and word_one[0:2]==word_two[0:2]:
+        if word_one[:-1] in word_two or word_two[:-1] in word_one\
+            or word_one[:-2] in word_two or word_two[:-2] in word_one or word_one[:-1] in word_two[:-1] or word_two[:-1] in word_one[:-1]\
+            or word_one[:-2] in word_two[:-2] or word_two[:-2] in word_one[:-2]:
+            return True
+    return False
 @lru_cache(maxsize=None)
 def mapAttrEntity(entityAttributes, attribute):
     MaxMatchScore,MatchedWord  = 0,None
     for attr in entityAttributes:
-        matchScore = getMatchScore(attribute,cleanEntityName(attr))
+        cleaned_attr = cleanEntityName(attr)
+        matchScore = getMatchScore(attribute,cleaned_attr)
         if matchScore > MaxMatchScore:
             MaxMatchScore = matchScore
             MatchedWord = [attr]
@@ -140,6 +151,24 @@ def mapAttrEntity(entityAttributes, attribute):
             MatchedWord.append(attr)
     if MatchedWord is not None:
         return (MatchedWord,MaxMatchScore)
+
+    MaxMatchScore,MatchedWord  = 0,None
+    for attr in entityAttributes:
+        cleaned_attr = cleanEntityName(attr)
+        dominator = max(len(cleaned_attr),len(attribute))
+        attr_score = 0
+        for word in attribute:
+            for other_word in cleaned_attr:
+                if ifWordInWord(word,other_word):
+                    attr_score += 1/dominator
+                    break
+        if attr_score > MaxMatchScore:
+            MaxMatchScore = attr_score
+            MatchedWord = [attr]
+        elif MaxMatchScore!=0 and attr_score == MaxMatchScore:
+            MatchedWord.append(attr)
+    if MatchedWord is not None:
+        return (MatchedWord,MaxMatchScore)            
     return None,0
 
 
@@ -190,7 +219,6 @@ def getAllAttributes(query):
         elif key == 'whereAttrs':
             whereAttributes = [[atr[0],atr[2]] if atr[2]!="value" else [atr[0]]  for atr in query[key]]
             attNames = set(flattenList(whereAttributes))
-            #print(key,attNames)
             attributes.update(attNames)
     return attributes
 
@@ -379,7 +407,6 @@ def rankCluster(cluster,queries,ngrams,unigram):
     cluster_queries=[]
     for idx in cluster:
         query = queries[idx]
-        query['rank'] = 0
         query['whereScore']=0
         query['selectScore']=0
         best_combination,best_combination_key = getBestCombination(ngrams,query['entities'])
@@ -393,8 +420,13 @@ def rankCluster(cluster,queries,ngrams,unigram):
         getAttrsProps(whereAttrs,"whereScore",query,whereAttrsNgrams,unigram["whereAtrrsDict"]) 
         getAttrsProps(selectAttrs,"selectScore",query,selectAttrsNgrams,unigram["selectAttrsDict"])
         cluster_queries.append(query)
-    sorted_queries = sorted(cluster_queries, key=lambda k: k['whereScore'], reverse=True)
-    return list(sorted_queries)
+    sorting_lambda = lambda q: (q["entities_closeness"] +q["attributes_coverage"] +q["entities_coverage"],q["whereScore"],q["selectScore"])
+    cluster_queries.sort(key=sorting_lambda,reverse=True)
+    cluster_queries = list(cluster_queries)
+    max_num = min(20,len(cluster_queries))
+    cluster_queries = cluster_queries[:max_num]
+    return cluster_queries
+
 def rankTopk(ranked_queries,maxNumOfQueries):
     entitiesGrams = loadEntitiesGrams()
     maxClusterScore = 0
@@ -432,14 +464,13 @@ def rankTopk(ranked_queries,maxNumOfQueries):
 def getRankedQueries(clusters,queries):
     ngrams,unigram = loadNgramsPickle()
     ranked_queries = []
-    clustersLength=[]
+    #clustersLength=[]
     for cluster in clusters:
         ranked = rankCluster(cluster,queries,ngrams,unigram)
-        clustersLength.append(len(ranked))
-        ranked_queries.append(ranked)
-    maxNumOfQueries = max(clustersLength)
-    ngrams,unigram = {},{}
-    ranked_queries = rankTopk(ranked_queries,maxNumOfQueries)
+        ranked_queries.append({'len':len(ranked),'queries':ranked})
+    #maxNumOfQueries = max(clustersLength)
+    #ngrams,unigram = {},{}
+    #ranked_queries = rankTopk(ranked_queries,maxNumOfQueries)
     return ranked_queries
     
 

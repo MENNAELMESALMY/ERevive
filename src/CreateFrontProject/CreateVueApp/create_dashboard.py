@@ -121,7 +121,7 @@ def generate_dashboard(cluster_name,endpoint,directory,
     dashboard_string += 'dashboard_data: state => state.'\
                     +cluster_name+'.'+endpoint_name+',\n'
     dashboard_string += '''}),},'''
-    if is_single_entity:
+    if len(param)>0:
         dashboard_string += '''
         async beforeMount(){
             await this.call_request();

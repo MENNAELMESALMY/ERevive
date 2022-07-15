@@ -79,7 +79,7 @@ def generate_dashboard(cluster_name,endpoint,directory,
     dashboard_string +=  "<tr v-for='(row,i) in dashboard_data' :key='i' class='data_rows'>\n"
     for header in table_headers_orig:
         dashboard_string += '\t\t\t<td>{{row.' + header + '}}</td>\n'
-    if is_single_entity:
+    if len(query_params)==0:
         dashboard_string += '''
                 <td class="editIcon" @click="route_edit(row)">
                     <i class="fa fa-edit"></i>
@@ -121,7 +121,7 @@ def generate_dashboard(cluster_name,endpoint,directory,
     dashboard_string += 'dashboard_data: state => state.'\
                     +cluster_name+'.'+endpoint_name+',\n'
     dashboard_string += '''}),},'''
-    if len(param)>0:
+    if len(query_params)==0:
         dashboard_string += '''
         async beforeMount(){
             await this.call_request();

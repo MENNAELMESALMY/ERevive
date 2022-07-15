@@ -22,6 +22,8 @@ const state = {
   queriesErrors: {},
   errorsClusters: [],
   setSeeds: false,
+  generatedSql: "",
+  finalSchema: {},
 };
 
 const mutations = {
@@ -100,6 +102,7 @@ const mutations = {
 const actions = {
   async postSearchEngineQueries({ commit, state }, payload) {
     let schema = { schema: payload.finalSchema };
+    state.finalSchema = payload.finalSchema;
     console.log("sending schema", schema);
     state.formData = payload.formData;
     try {
@@ -172,6 +175,20 @@ const actions = {
       .post("/seeds")
       .then(() => {
         state.setSeeds = true;
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  },
+  postConvertNlpToSql({ state }, payload) {
+    let sqlObject = {
+      finalSchema: state.finalSchema,
+      query: payload.query,
+    };
+    axios
+      .post("/nlptosql", sqlObject)
+      .then((response) => {
+        state.generatedSql = response.data.query;
       })
       .catch((error) => {
         console.log(error);

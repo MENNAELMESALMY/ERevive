@@ -26,6 +26,11 @@
         alt="schemaIcon"
         @click="routeToPage('schemaPage')"
       />
+      <img
+        src="../../public/assets/nlp.png"
+        alt="nlpIcon"
+        @click="routeToPage('nlpToSqlPage')"
+      />
     </div>
     <div class="mainContent">
       <savedModal v-if="savedModalState" />
@@ -91,6 +96,8 @@ export default {
           window.open("http://localhost:8081/", "_blank");
         } else if (page == "schemaPage") {
           this.$router.push("/schemaPage");
+        } else if (page == "nlpToSqlPage") {
+          this.$router.push("/nlpToSqlPage");
         }
       }
     },

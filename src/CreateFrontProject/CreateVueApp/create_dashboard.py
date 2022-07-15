@@ -120,11 +120,18 @@ def generate_dashboard(cluster_name,endpoint,directory,
     '''
     dashboard_string += 'dashboard_data: state => state.'\
                     +cluster_name+'.'+endpoint_name+',\n'
-    dashboard_string += '''}),},
+    dashboard_string += '''}),},'''
+    if is_single_entity:
+        dashboard_string += '''
+        async beforeMount(){
+            await this.call_request();
+        },
+        '''
+    dashboard_string += '''
     methods: {
-    call_request() {
+    async call_request() {
     '''
-    dashboard_string+= 'this.$store.dispatch("'+cluster_name +'/'+endpoint_name +'",\n\t\t {'
+    dashboard_string+= 'await this.$store.dispatch("'+cluster_name +'/'+endpoint_name +'",\n\t\t {'
     for param,_,_,_ in query_params:
         dashboard_string += "'"+param+"'" +': this.' + param.replace('.','_').replace(' ','_') + ',\n\t\t'
     dashboard_string += '''
@@ -144,6 +151,8 @@ def generate_dashboard(cluster_name,endpoint,directory,
     dashboard_string+= 'let route = "'+cluster_name +'_'+put_endpoint +'/"'
     for pk,_ in pks:
         dashboard_string += '+obj.' + pk + '+"_"'
+    
+    dashboard_string += f';\n\t\tthis.$store.commit("{cluster_name}/setCurObj", obj);'
 
     dashboard_string += ''';
     this.$router.push({

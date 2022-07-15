@@ -132,11 +132,18 @@ def generate_large_cards(cluster_name,endpoint,directory,
     '''
     card_string += 'card_data: state => state.'\
                     +cluster_name+'.'+endpoint_name+',\n'
-    card_string += '''}),},
+    card_string += '''}),},'''
+    if is_single_entity:
+        card_string += '''
+        async beforeMount(){
+            await this.call_request();
+        },
+        '''
+    card_string += '''
     methods: {
-    call_request() {
+    async call_request() {
     '''
-    card_string+= 'this.$store.dispatch("'+cluster_name +'/'+endpoint_name +'",\n\t\t {'
+    card_string+= 'await this.$store.dispatch("'+cluster_name +'/'+endpoint_name +'",\n\t\t {'
     for param,_,_,_ in query_params:
         card_string += "'"+param+"'" +': this.' + param.replace('.','_').replace(' ','_') + ',\n\t\t'
     card_string += '''
@@ -153,9 +160,11 @@ def generate_large_cards(cluster_name,endpoint,directory,
     },
     route_edit(obj) {
     '''
-    card_string+= 'let route = "'+cluster_name +'_'+put_endpoint +'/"'
+    card_string+= 'let route = "'+ cluster_name +'_'+put_endpoint +'/"'
     for pk,_ in pks:
         card_string += '+obj.' + pk + '+"_"'
+    
+    card_string += f';\n\t\tthis.$store.commit("{cluster_name}/setCurObj", obj);'
 
     card_string += ''';
     this.$router.push({

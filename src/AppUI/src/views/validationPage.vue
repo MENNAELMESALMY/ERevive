@@ -145,7 +145,9 @@
                 @click="delete_fk(entityIdx, fkIndex)"
               ></i>
             </div>
-            <select v-model="fk['attributeIdx']">
+            <select 
+            v-model="fk['attributeIdx']"
+            >
               <option
                 v-for="(attr, idx) in globalSchema[entityIdx]['attributes']"
                 :value="idx"
@@ -157,7 +159,10 @@
 
             <select
               v-model="fk['ForignKeyTableIdx']"
-              @change="fk['ForignKeyTableAttributeIdx'] = 0"
+              @change="
+                (fk['ForignKeyTableAttributeIdx'] = 0),
+                  (componentKey = (componentKey + 1) % 2)
+              "
             >
               <option
                 v-for="(

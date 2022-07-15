@@ -313,6 +313,7 @@ label {
         if not isPut:
             file.write('''
     <script>
+    import moment from "moment";
     export default {
         name:"formDesign",
         data(){
@@ -327,18 +328,28 @@ label {
         }
         },
         methods:{
-            submitForm(){
-                let formData = {
+            async submitForm(){
+                let formData = {};
+                let feild = "";
             ''')
             for req in requirments[cluster_name]:
                 file.write(f'''
-                {req["field_name"].replace(' ','_')}:this.{req["field_name"].replace(' ','_')},
-            ''')
-            file.write('''
-                }
-            ''')
+                    feild = this.{req["field_name"].replace(' ','_')};
+                    if(feild != "" && feild != null && feild != "None")
+                ''')
+                if req["field_type"] == "date":
+                    file.write(f'''
+                    formData["{req["field_name"].replace(' ','_')}"]= moment(String(this.{req["field_name"].replace(' ','_')})).format('YYYY-MM-DD HH:mm:ss'); ;
+                ''')
+                else:
+                    file.write(f'''
+                    formData["{req["field_name"].replace(' ','_')}"]=this.{req["field_name"].replace(' ','_')};
+                ''')
+                    
             file.write(f'''
-                this.$store.dispatch("{cluster_name}_cluster/{endpoint["endpoint_name"]}", formData);
+                await this.$store.dispatch("{cluster_name}_cluster/{endpoint["endpoint_name"]}", formData);
+                this.$router.push("{cluster_name}_cluster_{get_endpoint}");
+            
             ''')
             file.write('''
             }
@@ -350,6 +361,7 @@ label {
             file.write('''
     <script>
     import { mapState } from "vuex";
+    import moment from "moment";
 
     export default {
         name:"formDesign",
@@ -364,19 +376,28 @@ label {
         }
         },
         methods:{
-            submitForm(){
-                let formData = {
+            async submitForm(){
+                let formData = {};
+                let feild = "";
             ''')
             for req in requirments[cluster_name]:
                 file.write(f'''
-                {req["field_name"].replace(' ','_')}:this.{req["field_name"].replace(' ','_')},
-            ''')
+                    feild = this.{req["field_name"].replace(' ','_')};
+                    if(feild != "" && feild != null && feild != "None")
+                ''')
+                if req["field_type"] == "date":
+                    file.write(f'''
+                    formData["{req["field_name"].replace(' ','_')}"]= moment(String(this.{req["field_name"].replace(' ','_')})).format('YYYY-MM-DD HH:mm:ss'); ;
+                ''')
+                else:
+                    file.write(f'''
+                    formData["{req["field_name"].replace(' ','_')}"]=this.{req["field_name"].replace(' ','_')};
+                ''')
 
-            file.write('''
-                }
-            ''')
+
             file.write(f'''
-                this.$store.dispatch("{cluster_name}_cluster/{endpoint["endpoint_name"]}", formData);
+                await this.$store.dispatch("{cluster_name}_cluster/{endpoint["endpoint_name"]}", formData);
+                this.$router.push("/App/{cluster_name}_cluster_{get_endpoint}");
             ''')
             file.write('''
             }
@@ -385,27 +406,13 @@ label {
             ...mapState({
             ''')
             file.write(f'''
-            fulldata: state => state.{cluster_name}_cluster.{get_endpoint},''')
+            cur_item_in_store: state => state.{cluster_name}_cluster.cur_item_in_store,''')
             file.write('''
             }),},
             ''')
             file.write('''
             mounted() {
-                let id = this.$route.params.id;
-                const arrayIds = id.slice(0, -1).split("_");
-                let obj = this.fulldata.filter(function(elem) {
-                return (''')
-            match_obj_string = ""
-            for i,[pk,_] in enumerate(pks):
-                if i!=len(pks)-1:
-                    match_obj_string += f"elem.{pk} == arrayIds[{i}] && "
-                else:
-                    match_obj_string += f"elem.{pk} == arrayIds[{i}]"
-
-            file.write(match_obj_string)
-
-            file.write(''')
-                })[0];
+                let obj = this.cur_item_in_store;
             ''')
 
             link_data_string = ""

@@ -50,10 +50,6 @@
 <script>
 export default {
   name: "databaseSeeds",
-  mounted() {
-    this.$store.commit("triggerModals/setHeaderModal", "Database Seeds");
-    this.$store.commit("triggerModals/setToPageFromModal", "/lastPage");
-  },
   methods: {
     addSeeds() {
       this.$store.dispatch("predictedQueries/postAddSeeds");

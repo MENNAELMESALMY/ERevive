@@ -1,4 +1,3 @@
-import io
 import json
 import os
 import threading
@@ -357,6 +356,11 @@ def get_application():
 
     return jsonify({"success":"success"}) , 200
 
+@app.post('/nlptosql')
+def get_nlptosql():
+    print("start nlp to sql")
+    return "HELLO" , 200
+
 @app.get('/')
 def get_home():
     test = "SELECT DEPARTMENT_location.DEPARTMENT_name FROM DEPARTMENT_location WHERE DEPARTMENT_location.DEPARTMENT_name in value;"
@@ -379,6 +383,10 @@ def get_home():
 def options():
     return jsonify({'message': 'options'})
 
+# catch all 500 errors
+@app.errorhandler(500)
+def internal_error(error):
+    return jsonify({'message': '500 error'})
 
 
 if __name__ == '__main__':

@@ -145,7 +145,10 @@ def generate_large_cards(cluster_name,endpoint,directory,
     '''
     card_string+= 'await this.$store.dispatch("'+cluster_name +'/'+endpoint_name +'",\n\t\t {'
     for param,_,_,_ in query_params:
-        card_string += "'"+param+"'" +': this.' + param.replace('.','_').replace(' ','_') + ',\n\t\t'
+        if op == 'in':
+            card_string += "'"+param+"'" +': this.' + param.replace('.','_').replace(' ','_') + '.split(","),\n\t\t'
+        else:
+            card_string += "'"+param+"'" +': this.' + param.replace('.','_').replace(' ','_') + ',\n\t\t'
     card_string += '''
       });
     },

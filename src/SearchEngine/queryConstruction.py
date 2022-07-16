@@ -1,7 +1,7 @@
 import random
 from SearchEngine.clustering import updateQueryGroupBy
 
-def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage, goals,origQuery,bestJoin):
+def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage, goals,origQuery,bestJoin,testSchema):
     mappedEntitesNames = mappedEntitesDict.values()
     mappedEntitesDict.update({entity:entity for entity in goals if entity not in mappedEntitesNames})
     query = {}
@@ -42,7 +42,7 @@ def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage, go
     query["bestJoin"] = list(bestJoin)
     query["origQuery"] = origQuery
 
-    query["entities_closeness"]  = abs(len(query["entities"])-len(origQuery["entities"]))/(len(query["entities"])**2+len(origQuery["entities"])**2)
+    query["entities_closeness"]  = abs(len(query["entities"])-len(origQuery["entities"]))
     query["attributes_coverage"] = attributes_coverage
     query["entities_coverage"]   = entities_coverage
 
@@ -71,8 +71,9 @@ def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage, go
                 if firstAttrIsUpdated:
                     if attr[2] != "value":
                         if mappedAttributesDict.get(attr[2]) is not None:
-                            attr[2] = mappedAttributesDict[attr[2]]
-                            query[key].append(attr)
+                            if checkValidAttrWhere(attr[0],mappedAttributesDict.get(attr[2]),testSchema):
+                                attr[2] = mappedAttributesDict[attr[2]]
+                                query[key].append(attr)
                         firstAttrIsUpdated = False
                     else:
                         firstAttrIsUpdated = False
@@ -95,6 +96,31 @@ def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage, go
             query[key] = [list(x) for x in set(tuple(x) for x in query[key])]
     
     return query
+
+def getForgeinKey(testSchema):
+    models_obj = {}
+    for model in testSchema.values():
+        models_obj.update({
+            model["TableName"]:model["ForgeinKey"]
+        })
+    return models_obj
+
+def checkValidAttrWhere(attr_one,attr_two,testSchema):
+    fks = getForgeinKey(testSchema)
+
+    mapped_ent_one =  attr_one[0].split(".")[0] if attr_one[0].find(".") != -1 else None
+    mapped_ent_two =  attr_two[0].split(".")[0] if attr_two[0].find(".") != -1 else None
+    type_one = attr_one[1]
+    type_two = attr_two[1]
+    if type_one != type_two:
+        return False
+    if mapped_ent_one is not None and mapped_ent_two is not None:
+        ent_one_fks = fks[mapped_ent_one]
+        is_attr_one_valid_fk = sum([1 for fk in ent_one_fks if (fk["attributeName"] == attr_one[0].split(".")[-1]  and fk["ForignKeyTable"]==mapped_ent_two and fk["ForignKeyTableAttributeName"] == attr_two[0].split(".")[-1])]) > 0
+        is_attr_two_valid_fk = sum([1 for fk in ent_one_fks if (fk["attributeName"] == attr_two[0].split(".")[-1]  and fk["ForignKeyTable"]==mapped_ent_one and fk["ForignKeyTableAttributeName"] == attr_one[0].split(".")[-1])]) > 0
+        if is_attr_one_valid_fk or is_attr_two_valid_fk:
+            return True
+    return False
 
 def convert_or_to_in(whereAttr):
     merge = -1
@@ -255,6 +281,8 @@ def getModelsObj(testSchema):
             model["TableName"]:model["attributes"]
         })
     return models_obj
+
+
 
 
 def create_response_model(selectAttrs,aggrAttrs,entities,modelsObject):

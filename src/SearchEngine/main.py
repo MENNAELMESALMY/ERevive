@@ -23,7 +23,7 @@ def getMappedQueries(schemaGraph,rankedQueriesBySimilarity,testSchema,entityDict
     for q in rankedQueriesBySimilarity:
         mappedEntites, mappedAttributes, goals,mappedEntitesDict,bestJoin =  mapToSchema(schemaGraph,q[0],testSchema,entityDict,schemaEntityNames)
         coverage = queryCoverage(mappedAttributes)
-        query = constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,goals,q[0],bestJoin)
+        query = constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,goals,q[0],bestJoin,testSchema)
         
         queries.append(query)
   
@@ -152,7 +152,7 @@ def suggest_queries(testSchema):
 def getMappedQuery(schemaGraph,query,testSchema,entityDict,schemaEntityNames):
     mappedEntites, mappedAttributes, goals,mappedEntitesDict,bestJoin =  mapToSchema(schemaGraph,query,testSchema,entityDict,schemaEntityNames)
     coverage = queryCoverage(mappedAttributes)
-    query = constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,goals,query,bestJoin)
+    query = constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,goals,query,bestJoin,testSchema)
     return query
     
 

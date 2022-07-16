@@ -206,19 +206,20 @@ const actions = {
       console.log(err);
     }
   },
-  getIpOutput({ commit, state }) {
+  async getIpOutput({ commit, state }) {
     if (!state.ipOutPutReturned) {
-      axios
-        .get("/ipoutput")
-        .then((response) => {
-          console.log("ipoutput", response.data);
-          state.ipOutPutReturned = true;
-          commit("setIpOutputData", response.data);
-          router.push("/ipOutput");
-        })
-        .catch((error) => {
-          console.log(error);
+      try {
+        const response = await axios({
+          method: "get",
+          url: "/ipoutput",
+          data: {},
         });
+        commit("setIpOutputData", response.data);
+        state.ipOutPutReturned = true;
+        router.push("/ipOutput");
+      } catch (err) {
+        console.log(err);
+      }
     }
   },
 };

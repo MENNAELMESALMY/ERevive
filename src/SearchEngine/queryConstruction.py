@@ -99,6 +99,7 @@ def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage, go
 def convert_or_to_in(whereAttr):
     merge = -1
     i = 0
+    put_and_idx = []
     while i < len(whereAttr): 
         attr = whereAttr[i]
         curr_attr_name = attr[0][0] if len(attr[0]) else attr[0]
@@ -120,8 +121,15 @@ def convert_or_to_in(whereAttr):
                 if len(whereAttr[i-1]) >= 1:whereAttr[i-1][1] = "in"
                 if len(whereAttr[i-1]) >= 2:whereAttr[i-1][2] = "value"
                 if len(whereAttr[i-1]) >= 3:whereAttr[i-1][3] = ""
+                put_and_idx.append(i-1)
 
         i+=1
+
+    n = len(whereAttr)
+    for idx in put_and_idx:
+        attr = whereAttr[idx]
+        if idx < n-1 and len(attr[3]) == 0:
+            attr[3] = "and"
 
     return whereAttr
                 

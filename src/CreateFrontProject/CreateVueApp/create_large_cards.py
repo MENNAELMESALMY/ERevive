@@ -88,7 +88,7 @@ def generate_large_cards(cluster_name,endpoint,directory,
     
     card_string += '\t\t</div>'
 
-    if(is_single_entity):
+    if(len(query_params)==0):
         card_string += '''
             <div class="card_header">
                 <i  @click="route_edit(row)" class="fa fa-edit editIcon"></i>
@@ -121,7 +121,7 @@ def generate_large_cards(cluster_name,endpoint,directory,
 '''
     for param,_,op,_ in query_params:
         if op == 'between':
-            card_string += '\t\t'+param.replace('.','_').replace(' ','_') + ':' + '[0,100],\n'
+            card_string += '\t\t'+param.replace('.','_').replace(' ','_') + ':' + '["",""],\n'
         else:
             card_string += '\t\t'+param.replace('.','_').replace(' ','_') + ':' + '"",\n'
     card_string += '''
@@ -133,7 +133,7 @@ def generate_large_cards(cluster_name,endpoint,directory,
     card_string += 'card_data: state => state.'\
                     +cluster_name+'.'+endpoint_name+',\n'
     card_string += '''}),},'''
-    if len(param)>0:
+    if len(query_params)==0:
         card_string += '''
         async beforeMount(){
             await this.call_request();

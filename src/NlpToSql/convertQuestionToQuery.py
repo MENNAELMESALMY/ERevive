@@ -288,7 +288,7 @@ def get_conjunctions_sets(tokens,query_dict,values_list,conditions_dict,where_di
   while i <= len(tokens)-1:
     if tokens[i] in conjunctions:
       if tokens[i-1] not in cur_set: cur_set.append(tokens[i-1])
-      cur_set.append(tokens[i])
+      # cur_set.append(tokens[i])
       if tokens[i+1] not in cur_set: cur_set.append(tokens[i+1])
       i+=1
     elif len(cur_set) > 0:
@@ -492,8 +492,8 @@ def get_query_from_question(query_dict,usedAggrAttrs):
       else:
         for aggList in query_dict["agg"]:
           finalPredictedQuery += aggList[0] + ' ( ' + aggList[1] + ' ), '
-          foundAggBeforeWhere = True
-        finalPredictedQuery = finalPredictedQuery[:-2]
+          foundAggBeforeWhere = False
+        #finalPredictedQuery = finalPredictedQuery[:-2]
    
     if len(usedAggrAttrs) > 0:
       # delete attributes already taken in aggregation from the selection statment
@@ -515,10 +515,13 @@ def get_query_from_question(query_dict,usedAggrAttrs):
     isLike = False
     firstTurn = False
     for where_clause in query_dict["where"]:
-      if len(where_clause["op_val"]) > 0:
-        if firstTurn == False:
+      if firstTurn == False:
           finalPredictedQuery += " WHERE "
           firstTurn = True
+      if len(where_clause["op_val"]) > 0:
+        # if firstTurn == False:
+        #   finalPredictedQuery += " WHERE "
+        #   firstTurn = True
         finalPredictedQuery += "( "
         for idx,attr in enumerate(where_clause["attr"]):
           if where_clause["op"][0] == "BETWEEN":
@@ -587,18 +590,18 @@ query_dict = {
 
 
 ######################################## test sentences ########################################
-# sentence = "get names of employees who are in the department of sales"
-sentence = "get minimum and maximum and average of salary and age of the employee"
-sentence = "get minimum and maximum and average of salary and age of the employee where first_name and last_name not equal (mona)"
-sentence = "get first_name and last_name then minimum and maximum and average of salary and age of the employee for each salary where salary greater than (250) and age greater than (25) sorted by age desc then first_name then salary desc"
+#sentence = "get first_name and salary of employees sorted by age"
+sentence = "get minimum and maximum salary of employees for each age"
+sentence = "get first_name and maximum salary of employees"
+#sentence = "get first_name and last_name then minimum and maximum and average of salary and age of the employee for each salary where salary greater than (250) and age greater than (25) sorted by age desc then first_name then salary desc"
 #sentence = "get salary of employee which is greater than (200) and less than (500)"
 #sentence = "get first_name of employee where his salary exceeds the average of salary"
 #sentence = "get first_name of employee whose first_name doesn't start with (N)"
 #sentence = "get first_name and last_name of employee whose age in range of (20) to (30) and salary smaller than (2000)"
-# sentence = "get salary and age of the employee where salary greater than (250)"
-sentence = "get first_name of employees with salary equal to the greatest salary"
-sentence = "get first_name and last_name of employees whose first_name starts with (Nihal)"
-
+#sentence = "get salary and age of the employee where salary greater than (250)"
+#sentence = "get first_name of employees with salary equal to the greatest salary"
+#sentence = "get first_name and last_name of employees whose first_name starts with (Nihal)"
+#sentence = "get first_name and last_name of employees grouped by age whose salary equal to the maximum salary"
 
 
 def convertNlpToSQLQuery(sentence,finalSchema):
@@ -616,7 +619,6 @@ def convertNlpToSQLQuery(sentence,finalSchema):
   with open('done_dict/conditions_dict.json') as f:
     conditions_dict = json.load(f)
 
-  print(finalSchema)
   values = separate_values_in_question(sentence)
   tokens_dict,tokens = cleanup_question(sentence,stop_words)
   match_tokens_to_schema(tokens_dict,finalSchema,query_dict)
@@ -661,8 +663,9 @@ test2 = {
         }
     }
 }
-sentence = "get title and textbody of articles whose title starts with (good)"
-finalQuery = convertNlpToSQLQuery(sentence,test2)
+#sentence = "get title and textbody of articles whose title starts with (good)"
+sentence = "get first_name of employees ordered by salary then age"
+finalQuery = convertNlpToSQLQuery(sentence,test_schema[0])
 print("finalQuery ==> " , finalQuery)
 
 '''

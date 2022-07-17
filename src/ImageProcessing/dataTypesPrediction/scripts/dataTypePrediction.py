@@ -96,10 +96,14 @@ def predictWordsTypes(words):
 
     outTypes = [id_to_category[str(i)] for i in preds]
     #dic = dict(zip(words,outTypes))
+    for i,w in enumerate(cleaned_words):
+        if w.split(' ')[0] == "is":
+            outTypes[i] = "bool"
+
     return outTypes
 
 
 
-words = ["name","sex","birth_date","relationship","hours","name","budget","location","locations","ssn","status","salary","address","first_name","middle_initial","last_name","start_date"]
+words = ["is_availvabe","sex","birth_date","relationship","hours","name","budget","location","locations","ssn","status","salary","address","first_name","middle_initial","last_name","start_date"]
 #print(predictWordsTypes(words)[0])
 ##print(predictWordsTypes(words)[1])

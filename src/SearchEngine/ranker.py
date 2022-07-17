@@ -80,14 +80,14 @@ def rankQueriesSimilarities(quiries_keywords,quiries,er):
 def mapEntity(entityKeywords,schemaEntityNames):
     #print("mapEntity",entity,schemaEntityNames)
     entityKeywordsSplit = cleanEntityName(entityKeywords)
-    #if "department" in entityKeywords:
+    #if "song" in entityKeywords:
     #    print("mapEntity",entityKeywords,schemaEntityNames,entityKeywordsSplit)
     MaxMatchScore,MappedEntity  = 0,None
     for entity in schemaEntityNames:
         cleanName = cleanEntityName(entity)
         matchScore = getMatchScore(entityKeywordsSplit,cleanName)
-        #if "department" in entityKeywords:
-        #    print("scores",entityKeywords,entity,cleanName,matchScore,MaxMatchScore,MappedEntity)
+        #if "song" in entityKeywords:
+        #    print("scores",entityKeywords,entity,entityKeywordsSplit,cleanName,matchScore,MaxMatchScore,MappedEntity)
         if matchScore > MaxMatchScore:
             MaxMatchScore = matchScore
             MappedEntity = [entity]
@@ -375,7 +375,6 @@ def loadEntitiesGrams():
     return entitiesGrams
 def getBestCombination(ngrams,entities):
     entitiesOneHotVector=[]
-    #2kbr compination mwgoda
     for entity in list(set(entities)):
         entity = entity.split("_")
         entity = [get_lemma(word) for word in entity]
@@ -420,7 +419,7 @@ def rankCluster(cluster,queries,ngrams,unigram):
         getAttrsProps(whereAttrs,"whereScore",query,whereAttrsNgrams,unigram["whereAtrrsDict"]) 
         getAttrsProps(selectAttrs,"selectScore",query,selectAttrsNgrams,unigram["selectAttrsDict"])
         cluster_queries.append(query)
-    sorting_lambda = lambda q: (q["entities_closeness"] +q["attributes_coverage"] +q["entities_coverage"],q["whereScore"],q["selectScore"])
+    sorting_lambda = lambda q: (-1*len(q["goals"]),-1*q["entities_closeness"] ,q["attributes_coverage"] +q["entities_coverage"],q["whereScore"],q["selectScore"])
     cluster_queries.sort(key=sorting_lambda,reverse=True)
     cluster_queries = list(cluster_queries)
     max_num = min(20,len(cluster_queries))

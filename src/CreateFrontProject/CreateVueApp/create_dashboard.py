@@ -79,7 +79,7 @@ def generate_dashboard(cluster_name,endpoint,directory,
     dashboard_string +=  "<tr v-for='(row,i) in dashboard_data' :key='i' class='data_rows'>\n"
     for header in table_headers_orig:
         dashboard_string += '\t\t\t<td>{{row.' + header + '}}</td>\n'
-    if is_single_entity:
+    if len(query_params)==0:
         dashboard_string += '''
                 <td class="editIcon" @click="route_edit(row)">
                     <i class="fa fa-edit"></i>
@@ -108,7 +108,7 @@ def generate_dashboard(cluster_name,endpoint,directory,
 '''
     for param,_,op,_ in query_params:
         if op == 'between':
-            dashboard_string += '\t\t'+param.replace('.','_').replace(' ','_') + ':' + '[0,100],\n'
+            dashboard_string += '\t\t'+param.replace('.','_').replace(' ','_') + ':' + '["",""],\n'
         else:
             dashboard_string += '\t\t'+param.replace('.','_').replace(' ','_') + ':' + '"",\n'
     
@@ -121,7 +121,7 @@ def generate_dashboard(cluster_name,endpoint,directory,
     dashboard_string += 'dashboard_data: state => state.'\
                     +cluster_name+'.'+endpoint_name+',\n'
     dashboard_string += '''}),},'''
-    if is_single_entity:
+    if len(query_params)==0:
         dashboard_string += '''
         async beforeMount(){
             await this.call_request();
@@ -132,8 +132,11 @@ def generate_dashboard(cluster_name,endpoint,directory,
     async call_request() {
     '''
     dashboard_string+= 'await this.$store.dispatch("'+cluster_name +'/'+endpoint_name +'",\n\t\t {'
-    for param,_,_,_ in query_params:
-        dashboard_string += "'"+param+"'" +': this.' + param.replace('.','_').replace(' ','_') + ',\n\t\t'
+    for param,_,op,_ in query_params:
+        if op == 'in':
+            dashboard_string += "'"+param+"'" +': this.' + param.replace('.','_').replace(' ','_') + '.split(","),\n\t\t'
+        else:
+            dashboard_string += "'"+param+"'" +': this.' + param.replace('.','_').replace(' ','_') + ',\n\t\t'
     dashboard_string += '''
       });
     },

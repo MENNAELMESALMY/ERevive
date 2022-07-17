@@ -185,23 +185,24 @@ def detect_participation(relations,edges):
         
     entities_mem ={}
     relations_mem = {}
+    
     for relation in relations.values():
         rel_paths=[]
-        if relations_mem.get(relation["name"]) is not None:
-            relation["contour"] = relations_mem[relation["name"]]["contour"].copy()
-            relation["contour_participation"] = relations_mem[relation["name"]]["contour_participation"].copy()
-            relation["contour_cardinality"] = relations_mem[relation["name"]]["contour_cardinality"].copy()
+        if relations_mem.get(relation["idx"]) is not None:
+            relation["contour"] = relations_mem[relation["idx"]]["contour"].copy()
+            relation["contour_participation"] = relations_mem[relation["idx"]]["contour_participation"].copy()
+            relation["contour_cardinality"] = relations_mem[relation["idx"]]["contour_cardinality"].copy()
         else:
             relation["contour"] = filter_points(relation["contour"].copy(),edges.copy(),relation)
-            relations_mem[relation["name"]] = {"contour":relation["contour"].copy(),"contour_participation":relation["contour_participation"].copy(),"contour_cardinality":relation["contour_cardinality"].copy()}
+            relations_mem[relation["idx"]] = {"contour":relation["contour"].copy(),"contour_participation":relation["contour_participation"].copy(),"contour_cardinality":relation["contour_cardinality"].copy()}
         for entity in relation["entities"]:
-            if entities_mem.get(entity["name"]) is not None:
-                entity["contour"] = entities_mem[entity["name"]]["contour"].copy()  
-                entity["contour_participation"] = entities_mem[entity["name"]]["contour_participation"].copy()
-                entity["contour_cardinality"] = entities_mem[entity["name"]]["contour_cardinality"].copy()
+            if entities_mem.get(entity["idx"]) is not None:
+                entity["contour"] = entities_mem[entity["idx"]]["contour"].copy()  
+                entity["contour_participation"] = entities_mem[entity["idx"]]["contour_participation"].copy()
+                entity["contour_cardinality"] = entities_mem[entity["idx"]]["contour_cardinality"].copy()
             else:
                 entity["contour"] = filter_points(entity["contour"].copy(),edges.copy(),entity=entity)
-                entities_mem[entity["name"]] = {"contour":entity["contour"].copy(),"contour_participation":entity["contour_participation"].copy(),"contour_cardinality":entity["contour_cardinality"].copy()}
+                entities_mem[entity["idx"]] = {"contour":entity["contour"].copy(),"contour_participation":entity["contour_participation"].copy(),"contour_cardinality":entity["contour_cardinality"].copy()}
             entity_point = np.random.randint(0,len(entity["contour"]))
             entity_point = entity["contour"][entity_point]
             paths = []
@@ -212,6 +213,7 @@ def detect_participation(relations,edges):
             direct_path = None
             if(path):
                 entity["participation"],direct_path = check_participation(path,entity,relation,edges)
+            
                 paths.append(path) 
                 direct_paths.append(direct_path)
             if len(relation["entities"])==1:
@@ -228,7 +230,7 @@ def detect_participation(relations,edges):
                             
             entity.pop("relations",None)
             rel_paths.extend(paths)
-            entity["paths"] = direct_paths
+            entity["paths"] = direct_paths.copy()
         relation["paths"] = rel_paths.copy()
             
 def get_relations(binarizedImg,entities):
@@ -288,6 +290,7 @@ def cardinality(relations,img,binarizedImg):
                 iterations=2
             for i in range(iterations):
                 if entity.get("paths") and len(entity["paths"])>i:
+
                     pathX,pathY = get_correct_path_point(entity["paths"][i],(centerY,centerX))
                 else:
                     entity["cardinality"]="N"  

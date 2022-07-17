@@ -172,7 +172,7 @@ const actions = {
   },
   postAddSeeds({ state }) {
     axios
-      .post("/seeds")
+      .get("http://localhost:3000/seeds")
       .then(() => {
         state.setSeeds = true;
       })

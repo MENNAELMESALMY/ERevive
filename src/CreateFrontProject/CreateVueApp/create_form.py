@@ -334,7 +334,10 @@ label {
 
             link_data_string = ""
             for req in requirments[cluster_name]:
-                link_data_string += f"this.{req['field_name']}=obj.{req['field_name']};\n"
+                if req["field_type"] == "date":
+                    link_data_string += f"this.{req['field_name'].replace(' ','_')} = moment(String(obj.{req['field_name'].replace(' ','_')})).format('YYYY-MM-DD');"
+                else:
+                    link_data_string += f"this.{req['field_name']}=obj.{req['field_name']};\n"
             file.write(link_data_string)
             file.write('''
                 },

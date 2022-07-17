@@ -164,7 +164,7 @@ styleRoute = 'FrontCode/src/scss/'
 #     }
 #   ]
 # }
-f = open('../systemInfo.json','r')
+f = open('systemInfo.json','r')
 systemInfoObject = json.load(f)
 f.close()
 # open file clusters.json
@@ -547,7 +547,7 @@ with open(componentsRoute + "sideBar.vue", 'w') as f:
 <template>
   <div class="sideBar">
     <div class="header">
-      <h4>{systemInfoObject["name"]}</h4>
+      <h4>{systemInfoObject["systemName"]}</h4>
     </div>
   ''')
   f.write('''

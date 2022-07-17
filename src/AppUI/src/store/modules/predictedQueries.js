@@ -30,6 +30,9 @@ const mutations = {
   setQueries(state, queriesList) {
     state.queries = queriesList;
   },
+  setGeneratedSql(state, newQuery) {
+    state.generatedSql = newQuery;
+  },
   setLoadingTitle(state, title) {
     state.loadingTitle = title;
   },
@@ -180,7 +183,7 @@ const actions = {
         console.log(error);
       });
   },
-  postConvertNlpToSql({ state }, payload) {
+  postConvertNlpToSql({ state, commit }, payload) {
     let sqlObject = {
       finalSchema: state.finalSchema,
       query: payload.nlpQuestion,
@@ -189,7 +192,7 @@ const actions = {
     axios
       .post("/nlptosql", sqlObject)
       .then((response) => {
-        state.generatedSql = response.data.query;
+        commit("setGeneratedSql", response.data.query);
       })
       .catch((error) => {
         console.log(error);

@@ -177,7 +177,11 @@ def match_tokens_to_schema(tokens_dict,sql_schema,query_dict):
       if pos == "NOUN" or pos == "VERB":
         # print("my schema",sql_schema)
         # first check if noun matches any of the entities
+        print("//////////////////////////////")
+        print(sql_schema)
+        print(sql_schema.values())
         for ob in sql_schema.values():
+          print(ob)
           entityName = ob["TableName"]
           entityLemma = nlp(entityName)
           if lemma.lower() == entityLemma[0].lemma_.lower():
@@ -603,9 +607,9 @@ sentence = "get first_name and maximum salary of employees"
 #sentence = "get first_name and last_name of employees whose first_name starts with (Nihal)"
 #sentence = "get first_name and last_name of employees grouped by age whose salary equal to the maximum salary"
 
-
+import os
 def convertNlpToSQLQuery(sentence,finalSchema):
-
+  #os.chdir('NlpToSql')
   # load json files
   with open('done_dict/agg_dict.json') as f:
     agg_dict = json.load(f)
@@ -664,9 +668,9 @@ test2 = {
     }
 }
 #sentence = "get title and textbody of articles whose title starts with (good)"
-sentence = "get first_name of employees ordered by salary then age"
-finalQuery = convertNlpToSQLQuery(sentence,test_schema[0])
-print("finalQuery ==> " , finalQuery)
+# sentence = "get first_name of employees ordered by salary then age"
+# finalQuery = convertNlpToSQLQuery(sentence,test_schema[0])
+# print("finalQuery ==> " , finalQuery)
 
 '''
 #TODO: don't use all attributes in select   ==> done

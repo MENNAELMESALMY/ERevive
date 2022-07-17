@@ -8,7 +8,7 @@ from ImageProcessing import process_image
 from flask_cors import CORS 
 from SearchEngine import suggest_queries ,prepareClusters ,parse_query ,init_one_hot_vocab ,init
 from Application import Create_Application
-# from NlpToSql.convertQuestionToQuery import convertNlpToSQLQuery
+from NlpToSql.convertQuestionToQuery import convertNlpToSQLQuery
 from sqlvalidator import parse
 from multiprocessing import Process
 
@@ -364,15 +364,15 @@ def get_application():
 
     return jsonify({"success":"success"}) , 200
 
-# @app.post('/nlptosql')
-# def get_nlptosql():
-#     os.chdir('NlpToSql')
-#     print("hello")
-#     query = request.json.get('query')
-#     finalSchema =request.json.get('finalSchema')
-#     finalQuery = convertNlpToSQLQuery(query,finalSchema)
-#     os.chdir('./..')
-#     return jsonify({"query":finalQuery}) , 200
+@app.post('/nlptosql')
+def get_nlptosql():
+    os.chdir('NlpToSql')
+    print("hello")
+    query = request.json.get('query')
+    finalSchema =request.json.get('finalSchema')
+    finalQuery = convertNlpToSQLQuery(query,finalSchema)
+    os.chdir('./..')
+    return jsonify({"query":finalQuery}) , 200
 
 @app.get('/')
 def get_home():
@@ -403,5 +403,5 @@ def internal_error(error):
 
 
 if __name__ == '__main__':
-    app.run(port = 5000,debug=True)
+    app.run(port = 5000,debug=False)
 

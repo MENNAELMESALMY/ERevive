@@ -183,8 +183,9 @@ const actions = {
   postConvertNlpToSql({ state }, payload) {
     let sqlObject = {
       finalSchema: state.finalSchema,
-      query: payload.query,
+      query: payload.nlpQuestion,
     };
+    console.log("sqlObject", sqlObject);
     axios
       .post("/nlptosql", sqlObject)
       .then((response) => {

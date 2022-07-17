@@ -340,16 +340,11 @@ def create_card_design4 (filePath):
 </style>
 
 <script>
-import CardWithTag from "./cards/cardWithTag.vue";
-
 export default {
   name: "CardWrapper",
   props: {
     cardsColor: { type: String },
     cardsData: { type: Array },
-  },
-  components: {
-    CardWithTag,
   },
 };
 </script>

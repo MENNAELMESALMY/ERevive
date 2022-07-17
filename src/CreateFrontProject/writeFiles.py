@@ -221,9 +221,9 @@ with open(viewsRoute + "home.vue", 'w') as f:
   <div id="home">
    <div class="mainContent">
       <h2>Welcome to ERevive</h2>
-      <h3>{systemInfoObject["name"]}</h3>
+      <h3>{systemInfoObject["systemName"]}</h3>
       <p>
-        {systemInfoObject["description"]}
+        {systemInfoObject["systemDescription"]}
       </p>
       <router-link to="/App"><button>CONTINUE</button></router-link>
     </div>

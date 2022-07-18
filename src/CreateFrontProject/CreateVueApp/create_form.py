@@ -31,9 +31,9 @@ def createForm (requirments,cluster_name,endpoint,filePath,isPut=False,get_endpo
                     ''')
             elif req["field_type"] == "tel":
                 file.write('''
-            <input type="tel" id="textinputId" placeholder="123-12-123" pattern="[0-9]{3}-[0-9]{2}-[0-9]{3}" v-model="%s" %s %s/>
+            <input type="tel" id="textinputId" placeholder="123-12-123" pattern="[0-9]{3}-[0-9]{2}-[0-9]{3}" v-model="%s" />
             <br />
-                    ''' %req["field_name"].replace(' ','_') %required %disabled )
+                    ''' %req["field_name"].replace(' ','_') )
             elif req["field_type"] == "password":
                 file.write(f'''
             <input type="password" id="textinputId" placeholder="Enter {req["field_name"]}" v-model="{req["field_name"].replace(' ','_')}" {required} {disabled}/>

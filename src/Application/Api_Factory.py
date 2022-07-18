@@ -260,8 +260,6 @@ def run_seeds():\n\
     sort_lambda = lambda x: int(x.split(".")[0])\n\
     seeds_files.sort(key=sort_lambda)\n\
     try:\n\
-        for table in reversed(db.metadata.sorted_tables):\n\
-            db.session.execute(table.delete())\n\
         for seed_file in seeds_files:\n\
             seed_file_path = os.path.join(seeds_folder, seed_file)\n\
             with open(seed_file_path, "r") as f:\n\

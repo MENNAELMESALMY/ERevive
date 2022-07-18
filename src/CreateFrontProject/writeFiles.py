@@ -942,7 +942,7 @@ import router from "./router";
 import store from "./store";
 import axios from "axios";
 
-axios.defaults.baseURL = "http://localhost:3000/api/";
+axios.defaults.baseURL = "http://localhost:'''+systemInfoObject["port"]+'''/api/";
 createApp(App).use(router).use(store).mount('#app');
 
 //new Vue({

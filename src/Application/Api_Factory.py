@@ -13,12 +13,14 @@ class ApiFactory(object):
         self.crud_clusters = {}
 
 
-    def create_app_env(self):
+    def create_app_env(self,port):
         return ' \n\
 user="{0}" \n\
 password="{1}" \n\
 database="{2}" \n\
-'.format(self.user,self.password,self.db)
+port={3} \n\
+\n\
+'.format(self.user,self.password,self.db,port)
 
     def create_models_apis(self):
         Apis={}
@@ -255,21 +257,28 @@ def create_db(app): \n\
 def run_seeds():\n\
     seeds_folder = "seeds"\n\
     seeds_files = os.listdir(seeds_folder)\n\
-    seeds_files.sort()\n\
-    for seed_file in seeds_files:\n\
-        seed_file_path = os.path.join(seeds_folder, seed_file)\n\
-        with open(seed_file_path, "r") as f:\n\
-            sql = f.read()\n\
-        db.engine.execute(text(sql))\n\
-        db.session.commit()\n\
+    sort_lambda = lambda x: int(x.split(".")[0])\n\
+    seeds_files.sort(key=sort_lambda)\n\
+    try:\n\
+        for seed_file in seeds_files:\n\
+            seed_file_path = os.path.join(seeds_folder, seed_file)\n\
+            with open(seed_file_path, "r") as f:\n\
+                sql = f.read()\n\
+                db.session.execute(text(sql))\n\
+                db.session.commit()\n\
+    except Exception as e:\n\
+        print(e)\n\
 \n\
 '
     def create_app_init(self):
         return ' \n\
+from decouple import config \n\
 from flask import Blueprint , jsonify \n\
 from flask_migrate import Migrate \n\
 from app import create_app, create_db, db , run_seeds\n\
 from apis import api_namespaces \n\
+\n\
+port = config("port", default=3000, cast=int)\n\
 app = create_app() \n\
 from models import * \n\
 db = create_db(app) \n\
@@ -287,7 +296,7 @@ def seeds():\n\
         run_seeds()\n\
         return jsonify({"status": "seeds runned"})\n\
     except Exception as e:\n\
-        return jsonify({"status": "error", "error": str(e)})\n\
+        return jsonify({"status": "error", "error": str(e)}),400\n\
 \n\
 @app.route("/", methods=["OPTIONS"])\n\
 def options():\n\
@@ -295,10 +304,10 @@ def options():\n\
 \n\
 @app.errorhandler(500)\n\
 def internal_error(error):\n\
-    return jsonify({"message": "500 error"})\n\
+    return jsonify({"status": "error", "error": str(error)}) ,500\n\
 \n\
 if __name__ == "__main__":\n\
-    app.run(debug=True, port=3000)@app.get("/seeds")\n\
+    app.run(debug=True, port=port)\n\
 \n\
 '
     def create_app_requirements(self):

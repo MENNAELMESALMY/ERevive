@@ -3,7 +3,6 @@ def generate_dashboard(cluster_name,endpoint,directory,
     table_headers_orig = list(endpoint['response'].keys())
     table_headers = [header.replace('.',' ').replace('_',' ')  for header in table_headers_orig]
     table_headers_orig = [header.replace('.','_').replace('_','_')  for header in table_headers_orig]
-    # cluster_name = endpoint['cluster_name']
     endpoint_name = endpoint['endpoint_name']
     query_params = [(param,d,o,a) for param,d,o,a in endpoint['queryParams']]
     dashboard_string = '''<template>
@@ -64,7 +63,7 @@ def generate_dashboard(cluster_name,endpoint,directory,
 <div class="content">
         <div class="table_nav">
         '''
-    dashboard_string += '<h2>'+cluster_name+'</h2>'
+    dashboard_string += '<h2>'+cluster_name.replace("_cluster","").replace("_"," ")+'</h2>'
     dashboard_string +=    '''
     </div>
     '''
@@ -106,8 +105,10 @@ def generate_dashboard(cluster_name,endpoint,directory,
     data: function () {
     return {
 '''
-    for param,_,op,_ in query_params:
-        if op == 'between':
+    for param,datatype,op,_ in query_params:
+        if datatype == 'bool':
+            dashboard_string += '\t\t'+param.replace('.','_').replace(' ','_') + ':' + 'false,\n'
+        elif op == 'between':
             dashboard_string += '\t\t'+param.replace('.','_').replace(' ','_') + ':' + '["",""],\n'
         else:
             dashboard_string += '\t\t'+param.replace('.','_').replace(' ','_') + ':' + '"",\n'

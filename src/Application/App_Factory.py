@@ -38,7 +38,7 @@ def get_clusters():
     
 # Create Models method
 #def Create_Application(schema,clusters,user="nada",password = "Ringmybells5",db="default"):
-def Create_Application(schema,clusters,user="root",password = "admin<3Super",db="new_company"):
+def Create_Application(schema,clusters,user="root",password = "admin<3Super",db="new_company",port=3000):
     #print("Creating Application: ",schema)
     Create_Directory('api')
     os.chdir('api')
@@ -64,7 +64,7 @@ def Create_Application(schema,clusters,user="root",password = "admin<3Super",db=
     create_app_requirements(api)
     create_app_run(api)
     create_app_setup(api)
-    create_app_env(api)
+    create_app_env(api,port)
     create_app_utils(api)
     generate_seeds(db,modelsObjects)
     os.chdir('./..')
@@ -754,8 +754,8 @@ def create_app_utils(api):
     app_utils = api.create_app_utils()
     with open('utils.py', 'w') as f:
         f.write(app_utils)
-def create_app_env(api):
-    app_env = api.create_app_env()
+def create_app_env(api,port):
+    app_env = api.create_app_env(port)
     with open('.env','w') as f:
         f.write(app_env)
 

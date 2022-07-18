@@ -13,6 +13,7 @@ def create_dashboard_style(route):
         max-width:250px;
         background-color: rgba(241, 241, 241, 0.554);
         height: 100%;
+        height: auto;
         min-height:100vh;
         align-content: flex-start;
         padding: 20px;
@@ -78,13 +79,13 @@ def create_dashboard_style(route):
         margin:20px;
         border-collapse:collapse ;
         th{
-            color: rgb(87, 86, 86);
+            color: rgb(67, 66, 66);
             background-color: white;
             box-shadow: none;
             transition: none;
         }
         td{
-            color: rgb(133, 133, 133);
+            color: rgb(75, 74, 74);
         }
         th,td{
             padding: 10px 12px;
@@ -104,7 +105,7 @@ def create_dashboard_style(route):
     .table_nav{
         display:flex;
         justify-content: space-between;
-        min-width: calc(100vw - 700px);
+        min-width: calc(100vw - 600px);
         .buttons{
             display: flex;
             justify-content: space-evenly;
@@ -124,6 +125,15 @@ def create_dashboard_style(route):
     }
     h2,h3,h4{
         margin: 20px;
+        word-wrap: break-word;
+        line-break: anywhere;
+    }
+    h2{
+        font-size: 35px;
+        font-weight: bold;
+    }
+    h3,h4{
+        font-size: 30px;  
     }
 }
     
@@ -150,6 +160,5 @@ input[type=text]:focus,input[type=number]:focus,input[type=date]:focus{
     height: 17px;
     cursor: pointer;
   }  
-
     ''')
     f.close()

@@ -23,7 +23,7 @@ export default {
         {
           title: "1. Upload Image",
           description: "Upload ER Diagram Image",
-          image: require("../../../public/assets/dummyImage.png"),
+          image: require("../../../public/assets/upload.jpeg"),
           direction: "right",
         },
         {

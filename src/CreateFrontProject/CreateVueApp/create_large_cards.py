@@ -3,10 +3,8 @@ def generate_large_cards(cluster_name,endpoint,directory,
 
     table_headers_orig = list(endpoint['response'].keys())
 
-    table_headers = [header.replace('.',' ').replace('_',' ')  for header in table_headers_orig]
     table_headers_orig = [header.replace('.','_').replace('_','_')  for header in table_headers_orig]
 
-    # cluster_name = endpoint['cluster_name']
     endpoint_name = endpoint['endpoint_name']
     query_params = [(param,d,o,a) for param,d,o,a in endpoint['queryParams']]
     card_string = '''<template>
@@ -69,7 +67,7 @@ def generate_large_cards(cluster_name,endpoint,directory,
 <div class="content">
         <div class="table_nav">
         '''
-    card_string += '<h2>'+cluster_name+'</h2>'
+    card_string += '<h2>'+cluster_name.replace("_cluster","").replace("_"," ")+'</h2>'
     card_string +=    '''
     </div>
     '''
@@ -84,7 +82,7 @@ def generate_large_cards(cluster_name,endpoint,directory,
     card_string += "\t\t<div class='big_card'>"
 
     for header in table_headers_orig:
-        card_string += '\t\t\t<div class="attribute">'+header+' : {{row.' + header + '}}</div>\n'
+        card_string += '\t\t\t<div class="attribute"> <span style="fontWeight:bold;">'+header+' : </span>{{row.' + header + '}}</div>\n'
     
     card_string += '\t\t</div>'
 

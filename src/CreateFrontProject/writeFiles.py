@@ -408,7 +408,7 @@ export default {
     justify-content: space-between;
 }
 .rightContent{
-    width: calc(100% - 350px);
+    width: calc(100% - 370px);
     height: 100%;
     min-height:100vh;
 }
@@ -444,7 +444,7 @@ with open(componentsRoute + "queryCard.vue", 'w') as f:
       width: 100%;
       height: 100%;
       h3{
-          font-size: 20px;
+          font-size: 25px;
           font-weight: 700;
           color: #0f1136;
           word-wrap: break-word;
@@ -482,7 +482,7 @@ for cluster_name in cluster_names:
     f.write('''
 <template>
     <div class="''' + cluster_name + '''">
-      <div class="title">''' + cluster_name + '''</div>
+      <div class="title">''' + cluster_name.replace("_cluster","").replace("_"," ") + '''</div>
       <query-card v-for="(query, i) in queries" :key="i" :queryName="query" clusterName="''' + cluster_name + '''" />
       <router-link to="/App/post_''' + cluster_name +'''">
         <button class="addBtn">Add Object</button>
@@ -515,7 +515,7 @@ export default {
   width: 100%;
 }
 .title{
-  font-size: 30px;
+  font-size: 40px;
   font-weight: 700;
   margin-top: 30px;
   margin-bottom: 20px;
@@ -614,7 +614,6 @@ export default{
   font-weight: 700;
   font-size: 25px;
   word-wrap: break-word;
-  color: #C4AE78;
 }
 .clutsers {
   padding-top: 10px;
@@ -636,7 +635,7 @@ export default{
   font-size: 25px;
   word-wrap: break-word;
   font-weight: 700;
-  color: #DBC39A;
+  color: white;
   padding-top: 15px;
   padding-bottom: 15px;
   padding-left: 5px;

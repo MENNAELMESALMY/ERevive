@@ -1,6 +1,7 @@
 def create_large_card_style(route):
     f = open(route, 'w') 
     f.write('''
+
 .main_cards{
   display: flex;
   flex-direction: column;
@@ -11,9 +12,9 @@ def create_large_card_style(route):
 }
 .card_wrapper{
   display: flex;
-  box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
   justify-content: space-between;
-  margin: 20px;
+  margin: 30px;
   .card_header{
     width: 100px;
     display: flex;
@@ -50,6 +51,5 @@ def create_large_card_style(route):
 .attribute:hover {
     box-shadow: 0 5px 15px rgb(168, 167, 167);
 }
-
     ''')
     f.close()

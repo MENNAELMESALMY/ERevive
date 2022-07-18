@@ -1,6 +1,8 @@
 import json
 import os
 import threading
+import time
+import requests
 from SearchEngine.main import getMappedQuery
 from SearchEngine.queryConstruction import prepareQuery, queryStructure
 from flask import Flask, request, jsonify
@@ -8,7 +10,7 @@ from ImageProcessing import process_image
 from flask_cors import CORS 
 from SearchEngine import suggest_queries ,prepareClusters ,parse_query ,init_one_hot_vocab ,init
 from Application import Create_Application
-# from NlpToSql.convertQuestionToQuery import convertNlpToSQLQuery
+from NlpToSql.convertQuestionToQuery import convertNlpToSQLQuery
 from sqlvalidator import parse
 from multiprocessing import Process
 
@@ -334,10 +336,6 @@ def start_creating_application(final_schema,clusters,user_name,password,db_name)
     Create_Application(final_schema,clusters,user_name,password,db_name)
     process = Process(target=lambda: os.system('python3 run.py &'))
     process.start()
-    # os.chdir('api')
-    # process = Process(target=lambda: os.system('python3 generate_data.py &'))
-    # process.start()
-    # os.chdir('./..')
     print("end creating application")
     os.chdir('./..')
     os.chdir('CreateFrontProject')
@@ -346,6 +344,12 @@ def start_creating_application(final_schema,clusters,user_name,password,db_name)
     os.chdir('./..') #src
 
 
+def check_port(port):
+    try:
+        requests.get('http://localhost:'+str(port))
+        return True
+    except:
+        return False
 
 @app.post('/application')
 def get_application():
@@ -361,18 +365,20 @@ def get_application():
         json.dump(systemData,file)
 
     start_creating_application(finalSchema,clusters,systemData.get('databaseUsername'),systemData.get('databasePassword'),systemData.get('databaseName'))
-
+    while not check_port(3000):
+        time.sleep(5)
+    
     return jsonify({"success":"success"}) , 200
 
-# @app.post('/nlptosql')
-# def get_nlptosql():
-#     os.chdir('NlpToSql')
-#     print("hello")
-#     query = request.json.get('query')
-#     finalSchema =request.json.get('finalSchema')
-#     finalQuery = convertNlpToSQLQuery(query,finalSchema)
-#     os.chdir('./..')
-#     return jsonify({"query":finalQuery}) , 200
+@app.post('/nlptosql')
+def get_nlptosql():
+    os.chdir('NlpToSql')
+    print("hello")
+    query = request.json.get('query')
+    finalSchema =request.json.get('finalSchema')
+    finalQuery = convertNlpToSQLQuery(query,finalSchema)
+    os.chdir('./..')
+    return jsonify({"query":finalQuery}) , 200
 
 @app.get('/')
 def get_home():
@@ -403,5 +409,4 @@ def internal_error(error):
 
 
 if __name__ == '__main__':
-    app.run(port = 5000,debug=True)
-
+    app.run(port = 5000)

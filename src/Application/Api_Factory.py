@@ -260,8 +260,8 @@ def run_seeds():\n\
         seed_file_path = os.path.join(seeds_folder, seed_file)\n\
         with open(seed_file_path, "r") as f:\n\
             sql = f.read()\n\
-        db.engine.execute(text(sql))\n\
-        db.session.commit()\n\
+            db.engine.execute(text(sql))\n\
+            db.session.commit()\n\
 \n\
 '
     def create_app_init(self):
@@ -330,6 +330,7 @@ pip install -r requirements.txt \n\
         return ' \n\
 from datetime import datetime \n\
 from flask_restx import fields \n\
+from decimal import Decimal\n\
 def convert_db_model_to_restx_model(model): \n\
 \n\
     fields_dict = {} \n\

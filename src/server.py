@@ -51,169 +51,448 @@ def updateNewQuery(query):
 
 
 dummy = {
-    "DEPARTMENT": {
-        "TableName": "DEPARTMENT",
-        "TableType": "",
-        "attributes": {
-            "EMPLOYEE_Manages_ssn": "str",
-            "name": "str",
-            "start_date": "datetime"
-        },
-        "primaryKey": [
-            "name"
-        ],
-        "ForgeinKey": [
-            {
-                "attributeName": "EMPLOYEE_Manages_ssn",
-                "ForignKeyTable": "EMPLOYEE",
-                "ForignKeyTableAttributeName": "ssn",
-                "patricipaction": "partial",
-                "dataType": "str"
-            }
-        ],
-        "isWeak": False
-    },
-    "EMPLOYEE": {
-        "TableName": "EMPLOYEE",
-        "TableType": "",
-        "attributes": {
-            "DEPARTMENT_Employed_name": "str",
-            "EMPLOYEE_Supervision_ssn": "str",
-            "address": "str",
-            "ssn": "str",
-            "birth_date": "str",
-            "first_name": "str",
-            "last_name": "str",
-            "middle_initial": "str",
-            "salary": "float",
-            "sex": "str",
-            "start_date": "datetime",
-            "status": "str"
-        },
-        "primaryKey": [
-            "ssn"
-        ],
-        "ForgeinKey": [
-            {
-                "attributeName": "DEPARTMENT_Employed_name",
-                "ForignKeyTable": "DEPARTMENT",
-                "ForignKeyTableAttributeName": "name",
-                "patricipaction": "full",
-                "dataType": "str"
+    "schema": {
+        "document": {
+            "TableName": "document",
+            "TableType": "",
+            "attributes": {
+                "ID": "int",
+                "course_has_course_number_id": "int",
+                "name": "str",
+                "url": "str"
             },
-            {
-                "attributeName": "EMPLOYEE_Supervision_ssn",
-                "ForignKeyTable": "EMPLOYEE",
-                "ForignKeyTableAttributeName": "ssn",
-                "patricipaction": "partial",
-                "dataType": "str"
-            }
-        ],
-        "isWeak": False
-    },
-    "PROJECT": {
-        "TableName": "PROJECT",
-        "TableType": "",
-        "attributes": {
-            "DEPARTMENT_Assigned_name": "str",
-            "name": "str",
-            "budget": "float",
-            "location": "str"
+            "primaryKey": [
+                "ID"
+            ],
+            "ForgeinKey": [
+                {
+                    "attributeName": "course_has_course_number_id",
+                    "ForignKeyTable": "course",
+                    "ForignKeyTableAttributeName": "course_number_id",
+                    "patricipaction": "partial",
+                    "dataType": "int"
+                }
+            ],
+            "isWeak": False
         },
-        "primaryKey": [
-            "name"
-        ],
-        "ForgeinKey": [
-            {
-                "attributeName": "DEPARTMENT_Assigned_name",
-                "ForignKeyTable": "DEPARTMENT",
-                "ForignKeyTableAttributeName": "name",
-                "patricipaction": "partial",
-                "dataType": "str"
-            }
-        ],
-        "isWeak": False
-    },
-    "DEPENDENT": {
-        "TableName": "DEPENDENT",
-        "TableType": "",
-        "attributes": {
-            "sex": "str",
-            "Dependents_EMPLOYEE_ssn": "str",
-            "birth_date": "str",
-            "name": "str",
-            "relatlonship": "str"
-        },
-        "primaryKey": [
-            "Dependents_EMPLOYEE_ssn",
-            "name"
-        ],
-        "ForgeinKey": [
-            {
-                "attributeName": "Dependents_EMPLOYEE_ssn",
-                "ForignKeyTable": "EMPLOYEE",
-                "ForignKeyTableAttributeName": "ssn",
-                "patricipaction": "partial",
-                "dataType": "str"
-            }
-        ],
-        "isWeak": True
-    },
-    "DEPARTMENT_location": {
-        "TableName": "DEPARTMENT_location",
-        "TableType": "",
-        "attributes": {
-            "location": "str",
-            "DEPARTMENT_name": "str"
-        },
-        "primaryKey": [
-            "location",
-            "DEPARTMENT_name"
-        ],
-        "ForgeinKey": [
-            {
-                "attributeName": "DEPARTMENT_name",
-                "ForignKeyTable": "DEPARTMENT",
-                "ForignKeyTableAttributeName": "name",
-                "patricipaction": "full",
-                "dataType": "str"
-            }
-        ],
-        "isWeak": False
-    },
-    "Works_EMPLOYEE_PROJECT": {
-        "TableName": "Works_EMPLOYEE_PROJECT",
-        "TableType": "",
-        "attributes": {
-            "EMPLOYEE_ssn": "str",
-            "PROJECT_name": "str",
-            "hours": "int",
-            "start_date": "datetime"
-        },
-        "primaryKey": [
-            "EMPLOYEE_ssn",
-            "PROJECT_name"
-        ],
-        "ForgeinKey": [
-            {
-                "attributeName": "EMPLOYEE_ssn",
-                "ForignKeyTable": "EMPLOYEE",
-                "ForignKeyTableAttributeName": "ssn",
-                "patricipaction": "full",
-                "dataType": "str"
+        "course": {
+            "TableName": "course",
+            "TableType": "",
+            "attributes": {
+                "Building_belong_to_ID": "int",
+                "course_number_id": "int",
+                "credit": "str",
+                "department": "str",
+                "description": "str",
+                "subject_area": "str",
+                "title": "str"
             },
-            {
-                "attributeName": "PROJECT_name",
-                "ForignKeyTable": "PROJECT",
-                "ForignKeyTableAttributeName": "name",
-                "patricipaction": "full",
-                "dataType": "str"
-            }
-        ],
-        "isWeak": False
+            "primaryKey": [
+                "course_number_id"
+            ],
+            "ForgeinKey": [
+                {
+                    "attributeName": "Building_belong_to_ID",
+                    "ForignKeyTable": "Building",
+                    "ForignKeyTableAttributeName": "ID",
+                    "patricipaction": "partial",
+                    "dataType": "int"
+                }
+            ],
+            "isWeak": False
+        },
+        "course_section": {
+            "TableName": "course_section",
+            "TableType": "",
+            "attributes": {
+                "ID": "int",
+                "Profile_uri": "str",
+                "access_code": "str",
+                "course_belongs_to_course_number_id": "int",
+                "location": "str",
+                "title": "str"
+            },
+            "primaryKey": [
+                "ID"
+            ],
+            "ForgeinKey": [
+                {
+                    "attributeName": "course_belongs_to_course_number_id",
+                    "ForignKeyTable": "course",
+                    "ForignKeyTableAttributeName": "course_number_id",
+                    "patricipaction": "partial",
+                    "dataType": "int"
+                }
+            ],
+            "isWeak": False
+        },
+        "Building": {
+            "TableName": "Building",
+            "TableType": "",
+            "attributes": {
+                "ID": "int",
+                "address": "str",
+                "country": "str",
+                "fax": "str",
+                "name": "str",
+                "phone": "str",
+                "picture_url": "str",
+                "school_has_ID": "int",
+                "website": "str"
+            },
+            "primaryKey": [
+                "ID"
+            ],
+            "ForgeinKey": [
+                {
+                    "attributeName": "school_has_ID",
+                    "ForignKeyTable": "school",
+                    "ForignKeyTableAttributeName": "ID",
+                    "patricipaction": "partial",
+                    "dataType": "int"
+                }
+            ],
+            "isWeak": False
+        },
+        "assignment": {
+            "TableName": "assignment",
+            "TableType": "",
+            "attributes": {
+                "ID": "int",
+                "allow_comments": "int",
+                "course_section_has_ID": "int",
+                "description": "str",
+                "due_date": "datetime",
+                "grading_category": "str",
+                "publish_date": "datetime",
+                "remark": "str",
+                "title": "str",
+                "type": "str"
+            },
+            "primaryKey": [
+                "ID"
+            ],
+            "ForgeinKey": [
+                {
+                    "attributeName": "course_section_has_ID",
+                    "ForignKeyTable": "course_section",
+                    "ForignKeyTableAttributeName": "ID",
+                    "patricipaction": "partial",
+                    "dataType": "int"
+                }
+            ],
+            "isWeak": False
+        },
+        "school": {
+            "TableName": "school",
+            "TableType": "",
+            "attributes": {
+                "ID": "int",
+                "address": "str",
+                "country": "str",
+                "fax": "str",
+                "name": "str",
+                "phone": "str",
+                "picture_url": "str",
+                "website": "str"
+            },
+            "primaryKey": [
+                "ID"
+            ],
+            "ForgeinKey": [],
+            "isWeak": False
+        },
+        "user": {
+            "TableName": "user",
+            "TableType": "",
+            "attributes": {
+                "Building_has_ID": "int",
+                "ID": "int",
+                "Password": "str",
+                "email": "str",
+                "first_name": "str",
+                "garduation_date": "datetime",
+                "gender": "str",
+                "last_name": "str",
+                "middle_name": "str",
+                "name_titile_show": "str",
+                "name_title": "str",
+                "position": "int",
+                "school_has_ID": "int",
+                "username": "str"
+            },
+            "primaryKey": [
+                "ID"
+            ],
+            "ForgeinKey": [
+                {
+                    "attributeName": "Building_has_ID",
+                    "ForignKeyTable": "Building",
+                    "ForignKeyTableAttributeName": "ID",
+                    "patricipaction": "partial",
+                    "dataType": "int"
+                },
+                {
+                    "attributeName": "school_has_ID",
+                    "ForignKeyTable": "school",
+                    "ForignKeyTableAttributeName": "ID",
+                    "patricipaction": "partial",
+                    "dataType": "int"
+                }
+            ],
+            "isWeak": False
+        },
+        "Enrollment": {
+            "TableName": "Enrollment",
+            "TableType": "",
+            "attributes": {
+                "ID": "int",
+                "Status": "str",
+                "course_section_has_ID": "int",
+                "date": "datetime",
+                "is_admin": "bool",
+                "user_has_ID": "int"
+            },
+            "primaryKey": [
+                "ID"
+            ],
+            "ForgeinKey": [
+                {
+                    "attributeName": "course_section_has_ID",
+                    "ForignKeyTable": "course_section",
+                    "ForignKeyTableAttributeName": "ID",
+                    "patricipaction": "partial",
+                    "dataType": "int"
+                },
+                {
+                    "attributeName": "user_has_ID",
+                    "ForignKeyTable": "user",
+                    "ForignKeyTableAttributeName": "ID",
+                    "patricipaction": "partial",
+                    "dataType": "int"
+                }
+            ],
+            "isWeak": False
+        },
+        "events": {
+            "TableName": "events",
+            "TableType": "",
+            "attributes": {
+                "ID": "int",
+                "date": "datetime",
+                "description": "str",
+                "has_rsvp": "int",
+                "is_all_day": "bool",
+                "school_create_ID": "int",
+                "title": "str",
+                "type": "str",
+                "user_create_ID": "int"
+            },
+            "primaryKey": [
+                "ID"
+            ],
+            "ForgeinKey": [
+                {
+                    "attributeName": "school_create_ID",
+                    "ForignKeyTable": "school",
+                    "ForignKeyTableAttributeName": "ID",
+                    "patricipaction": "partial",
+                    "dataType": "int"
+                },
+                {
+                    "attributeName": "user_create_ID",
+                    "ForignKeyTable": "user",
+                    "ForignKeyTableAttributeName": "ID",
+                    "patricipaction": "partial",
+                    "dataType": "int"
+                }
+            ],
+            "isWeak": False
+        },
+        "grade": {
+            "TableName": "grade",
+            "TableType": "",
+            "attributes": {
+                "of_Enroliment_ID": "int",
+                "of_assignment_ID": "int",
+                "comment": "int",
+                "data": "str",
+                "is_final": "bool",
+                "value": "str"
+            },
+            "primaryKey": [
+                "of_Enroliment_ID",
+                "of_assignment_ID"
+            ],
+            "ForgeinKey": [
+                {
+                    "attributeName": "of_assignment_ID",
+                    "ForignKeyTable": "assignment",
+                    "ForignKeyTableAttributeName": "ID",
+                    "patricipaction": "partial",
+                    "dataType": "int"
+                },
+                {
+                    "attributeName": "of_Enroliment_ID",
+                    "ForignKeyTable": "Enrollment",
+                    "ForignKeyTableAttributeName": "ID",
+                    "patricipaction": "partial",
+                    "dataType": "int"
+                }
+            ],
+            "isWeak": True
+        },
+        "comment": {
+            "TableName": "comment",
+            "TableType": "",
+            "attributes": {
+                "date": "datetime",
+                "text": "str",
+                "user_id": "int"
+            },
+            "primaryKey": [
+                "date"
+            ],
+            "ForgeinKey": [
+                {
+                    "attributeName": "user_id",
+                    "ForignKeyTable": "user",
+                    "ForignKeyTableAttributeName": "ID",
+                    "patricipaction": "full",
+                    "dataType": "int"
+                }
+            ],
+            "isWeak": True
+        },
+        "blog": {
+            "TableName": "blog",
+            "TableType": "",
+            "attributes": {
+                "date": "datetime",
+                "is_closed": "bool",
+                "text": "str",
+                "title": "str",
+                "user_writes_ID": "int"
+            },
+            "primaryKey": [
+                "date"
+            ],
+            "ForgeinKey": [
+                {
+                    "attributeName": "user_writes_ID",
+                    "ForignKeyTable": "user",
+                    "ForignKeyTableAttributeName": "ID",
+                    "patricipaction": "partial",
+                    "dataType": "int"
+                }
+            ],
+            "isWeak": True
+        },
+        "attendence": {
+            "TableName": "attendence",
+            "TableType": "",
+            "attributes": {
+                "of_Enroliment_ID": "int",
+                "remark": "str"
+            },
+            "primaryKey": [
+                "of_Enroliment_ID"
+            ],
+            "ForgeinKey": [
+                {
+                    "attributeName": "of_Enroliment_ID",
+                    "ForignKeyTable": "Enrollment",
+                    "ForignKeyTableAttributeName": "ID",
+                    "patricipaction": "partial",
+                    "dataType": "int"
+                }
+            ],
+            "isWeak": True
+        },
+        "course_section_meeting_days": {
+            "TableName": "course_section_meeting_days",
+            "TableType": "",
+            "attributes": {
+                "course_section_ID": "int",
+                "meeting_days": "int"
+            },
+            "primaryKey": [
+                "course_section_ID",
+                "meeting_days"
+            ],
+            "ForgeinKey": [
+                {
+                    "attributeName": "course_section_ID",
+                    "ForignKeyTable": "course_section",
+                    "ForignKeyTableAttributeName": "ID",
+                    "patricipaction": "full",
+                    "dataType": "int"
+                }
+            ],
+            "isWeak": False
+        },
+        "course_section_class_periods": {
+            "TableName": "course_section_class_periods",
+            "TableType": "",
+            "attributes": {
+                "class_periods": "str",
+                "course_section_ID": "int"
+            },
+            "primaryKey": [
+                "class_periods",
+                "course_section_ID"
+            ],
+            "ForgeinKey": [
+                {
+                    "attributeName": "course_section_ID",
+                    "ForignKeyTable": "course_section",
+                    "ForignKeyTableAttributeName": "ID",
+                    "patricipaction": "full",
+                    "dataType": "int"
+                }
+            ],
+            "isWeak": False
+        },
+        "writes_user_comment_blog": {
+            "TableName": "writes_user_comment_blog",
+            "TableType": "",
+            "attributes": {
+                "blog_date": "datetime",
+                "comment_date": "datetime",
+                "user_ID": "int"
+            },
+            "primaryKey": [
+                "blog_date",
+                "comment_date",
+                "user_ID"
+            ],
+            "ForgeinKey": [
+                {
+                    "attributeName": "user_ID",
+                    "ForignKeyTable": "user",
+                    "ForignKeyTableAttributeName": "ID",
+                    "patricipaction": "full",
+                    "dataType": "int"
+                },
+                {
+                    "attributeName": "comment_date",
+                    "ForignKeyTable": "comment",
+                    "ForignKeyTableAttributeName": "date",
+                    "patricipaction": "full",
+                    "dataType": "datetime"
+                },
+                {
+                    "attributeName": "blog_date",
+                    "ForignKeyTable": "blog",
+                    "ForignKeyTableAttributeName": "date",
+                    "patricipaction": "full",
+                    "dataType": "datetime"
+                }
+            ],
+            "isWeak": False
+        }
     }
 }
-
 
 # with open('CreateFrontProject/userInterfaceInfo.json','w') as file:
 #     dummy_forms = json.load(file)
@@ -330,10 +609,10 @@ def get_validate():
 
 
     
-def start_creating_application(final_schema,clusters,user_name,password,db_name):
+def start_creating_application(final_schema,clusters,port,user_name,password,db_name):
     os.chdir('Application')
     print("start creating application")
-    Create_Application(final_schema,clusters,user_name,password,db_name)
+    Create_Application(final_schema,clusters,user_name,password,db_name,port)
     process = Process(target=lambda: os.system('python3 run.py &'))
     process.start()
     print("end creating application")
@@ -364,8 +643,8 @@ def get_application():
     with open('CreateFrontProject/systemInfo.json','w+') as file:
         json.dump(systemData,file)
 
-    start_creating_application(finalSchema,clusters,systemData.get('databaseUsername'),systemData.get('databasePassword'),systemData.get('databaseName'))
-    while not check_port(3000):
+    start_creating_application(finalSchema,clusters,systemData.get('port'),systemData.get('databaseUsername'),systemData.get('databasePassword'),systemData.get('databaseName'))
+    while not check_port(systemData.get('port')):
         time.sleep(5)
     
     return jsonify({"success":"success"}) , 200

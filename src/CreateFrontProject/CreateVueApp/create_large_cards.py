@@ -44,6 +44,8 @@ def generate_large_cards(cluster_name,endpoint,directory,
         if operator == 'between':
             card_string += f'\t\t<input placeholder="from" type="{datatype}" v-model="{param}[0]" class="{datatype}" required>\n'
             card_string += f'\t\t<input placeholder="to" type="{datatype}" v-model="{param}[1]" class="{datatype}" required>\n'
+        elif operator == 'in':
+            card_string += f'\t\t<input type="text" v-model="{param}" class="{datatype}" required>\n'
         else:
             if datatype=='checkbox':
                 card_string += f'\t\t<input type="{datatype}" v-model="{param}" class="{datatype}">\n' 

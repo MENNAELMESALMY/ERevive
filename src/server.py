@@ -5,7 +5,7 @@ import time
 import requests
 from SearchEngine.main import getMappedQuery
 from SearchEngine.queryConstruction import prepareQuery, queryStructure
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify ,send_file
 from ImageProcessing import process_image
 from flask_cors import CORS 
 from SearchEngine import suggest_queries ,prepareClusters ,parse_query ,init_one_hot_vocab ,init
@@ -51,7 +51,6 @@ def updateNewQuery(query):
 
 
 dummy = {
-    "schema": {
         "document": {
             "TableName": "document",
             "TableType": "",
@@ -313,7 +312,7 @@ dummy = {
             "TableName": "grade",
             "TableType": "",
             "attributes": {
-                "of_Enroliment_ID": "int",
+                "of_Enrollment_ID": "int",
                 "of_assignment_ID": "int",
                 "comment": "int",
                 "data": "str",
@@ -321,7 +320,7 @@ dummy = {
                 "value": "str"
             },
             "primaryKey": [
-                "of_Enroliment_ID",
+                "of_Enrollment_ID",
                 "of_assignment_ID"
             ],
             "ForgeinKey": [
@@ -333,7 +332,7 @@ dummy = {
                     "dataType": "int"
                 },
                 {
-                    "attributeName": "of_Enroliment_ID",
+                    "attributeName": "of_Enrollment_ID",
                     "ForignKeyTable": "Enrollment",
                     "ForignKeyTableAttributeName": "ID",
                     "patricipaction": "partial",
@@ -347,21 +346,12 @@ dummy = {
             "TableType": "",
             "attributes": {
                 "date": "datetime",
-                "text": "str",
-                "user_id": "int"
+                "text": "str"
             },
             "primaryKey": [
                 "date"
             ],
-            "ForgeinKey": [
-                {
-                    "attributeName": "user_id",
-                    "ForignKeyTable": "user",
-                    "ForignKeyTableAttributeName": "ID",
-                    "patricipaction": "full",
-                    "dataType": "int"
-                }
-            ],
+            "ForgeinKey": [],
             "isWeak": True
         },
         "blog": {
@@ -392,15 +382,15 @@ dummy = {
             "TableName": "attendence",
             "TableType": "",
             "attributes": {
-                "of_Enroliment_ID": "int",
+                "of_Enrollment_ID": "int",
                 "remark": "str"
             },
             "primaryKey": [
-                "of_Enroliment_ID"
+                "of_Enrollment_ID"
             ],
             "ForgeinKey": [
                 {
-                    "attributeName": "of_Enroliment_ID",
+                    "attributeName": "of_Enrollment_ID",
                     "ForignKeyTable": "Enrollment",
                     "ForignKeyTableAttributeName": "ID",
                     "patricipaction": "partial",
@@ -492,7 +482,7 @@ dummy = {
             "isWeak": False
         }
     }
-}
+
 
 # with open('CreateFrontProject/userInterfaceInfo.json','w') as file:
 #     dummy_forms = json.load(file)
@@ -659,6 +649,11 @@ def get_nlptosql():
     os.chdir('./..')
     return jsonify({"query":finalQuery}) , 200
 
+@app.get('/umlimage')
+def get_umlimage():
+    image_name = "Application/api/generated_schema.png"
+    return send_file(image_name, mimetype='image/png') , 200
+
 @app.get('/')
 def get_home():
     test = "SELECT DEPARTMENT_location.DEPARTMENT_name FROM DEPARTMENT_location WHERE DEPARTMENT_location.DEPARTMENT_name in value;"
@@ -684,8 +679,12 @@ def options():
 # catch all 500 errors
 @app.errorhandler(500)
 def internal_error(error):
+    #check if current path is src
+    if os.getcwd().split('/')[-1] != 'src':
+        os.chdir('../')
     return jsonify({'message': '500 error'})
 
 
 if __name__ == '__main__':
     app.run(port = 5000)
+    

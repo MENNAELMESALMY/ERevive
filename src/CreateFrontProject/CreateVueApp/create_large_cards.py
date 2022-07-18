@@ -6,6 +6,7 @@ def generate_large_cards(cluster_name,endpoint,directory,
     table_headers_orig = [header.replace('.','_').replace('_','_')  for header in table_headers_orig]
 
     endpoint_name = endpoint['endpoint_name']
+    ui_name = endpoint['ui_name']
     query_params = [(param,d,o,a) for param,d,o,a in endpoint['queryParams']]
     card_string = '''<template>
     <div class="dashboard">
@@ -71,7 +72,7 @@ def generate_large_cards(cluster_name,endpoint,directory,
     card_string +=    '''
     </div>
     '''
-    card_string += '<h3>'+endpoint_name+'</h3>'
+    card_string += '<h3>'+ui_name+'</h3>'
     card_string +='''
     <div>
 

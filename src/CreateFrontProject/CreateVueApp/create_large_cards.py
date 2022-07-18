@@ -119,8 +119,10 @@ def generate_large_cards(cluster_name,endpoint,directory,
     data: function () {
     return {
 '''
-    for param,_,op,_ in query_params:
-        if op == 'between':
+    for param,datatype,op,_ in query_params:
+        if datatype == 'bool':
+            card_string += '\t\t'+param.replace('.','_').replace(' ','_') + ':' + 'false,\n'
+        elif op == 'between':
             card_string += '\t\t'+param.replace('.','_').replace(' ','_') + ':' + '["",""],\n'
         else:
             card_string += '\t\t'+param.replace('.','_').replace(' ','_') + ':' + '"",\n'

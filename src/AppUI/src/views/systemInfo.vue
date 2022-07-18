@@ -21,6 +21,13 @@
             required
           />
           <input
+            type="number"
+            id="port"
+            placeholder="Enter Api Port"
+            v-model="port"
+            required
+          />
+          <input
             type="text"
             id="username"
             placeholder="Enter Database Username"
@@ -135,6 +142,7 @@ export default {
       username: "",
       password: "",
       databaseName: "",
+      port: "",
     };
   },
   methods: {
@@ -146,6 +154,7 @@ export default {
         databaseUsername: this.username,
         databasePassword: this.password,
         databaseName: this.databaseName,
+        port: this.port,
       });
       this.$router.push("/uploadPage");
     },

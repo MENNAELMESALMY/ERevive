@@ -408,7 +408,7 @@ export default {
     justify-content: space-between;
 }
 .rightContent{
-    width: calc(100% - 450px);
+    width: calc(100% - 350px);
     height: 100%;
     min-height:100vh;
 }
@@ -555,7 +555,7 @@ with open(componentsRoute + "sideBar.vue", 'w') as f:
       <li v-for="(card, i) in clustersNames" :key="i" class="cluster">
       <router-link :to="'/App/' + card">
         <div class="clusterName" :title="card" :id="'clustersID' + i">
-           {{ card.substring(0, 53) }}
+           {{ card.replace("_cluster","").replace("_"," ") }}
         </div>
       </router-link>
       </li>
@@ -585,7 +585,7 @@ export default{
   color: white;
   background-color: #0f1136;
   float: left;
-  width: 430px;
+  width: 350px;
   position: fixed;
   z-index: 1;
   top: 0;
@@ -612,6 +612,9 @@ export default{
 .footer {
   text-align: center;
   font-weight: 700;
+  font-size: 25px;
+  word-wrap: break-word;
+  color: #C4AE78;
 }
 .clutsers {
   padding-top: 10px;
@@ -630,9 +633,10 @@ export default{
   }
 }
 .clusterName {
-  font-size: 16px;
+  font-size: 25px;
+  word-wrap: break-word;
   font-weight: 700;
-  color: white;
+  color: #DBC39A;
   padding-top: 15px;
   padding-bottom: 15px;
   padding-left: 5px;
@@ -942,7 +946,7 @@ import router from "./router";
 import store from "./store";
 import axios from "axios";
 
-axios.defaults.baseURL = "http://localhost:3000/api/";
+axios.defaults.baseURL = "http://localhost:'''+systemInfoObject["port"]+'''/api/";
 createApp(App).use(router).use(store).mount('#app');
 
 //new Vue({

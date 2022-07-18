@@ -14,6 +14,7 @@ const state = {
   databaseName: "",
   databaseUsername: "",
   databasePassword: "",
+  port: 0,
   testSchema: {},
   schemaGraph: {},
   entityDict: {},
@@ -94,6 +95,7 @@ const mutations = {
     state.databaseName = systemObject.databaseName;
     state.databaseUsername = systemObject.databaseUsername;
     state.databasePassword = systemObject.databasePassword;
+    state.port = systemObject.port;
     console.log(state);
   },
   setQueriesErrors(state, errors) {
@@ -135,6 +137,7 @@ const actions = {
         databaseName: state.databaseName,
         databaseUsername: state.databaseUsername,
         databasePassword: state.databasePassword,
+        port: state.port,
       },
       clusters: state.predictedClusters,
       testSchema: state.testSchema,
@@ -175,7 +178,7 @@ const actions = {
   },
   postAddSeeds({ state }) {
     axios
-      .get("http://localhost:3000/seeds")
+      .get("http://localhost:" + state.port + "/seeds")
       .then(() => {
         state.setSeeds = true;
       })

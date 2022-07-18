@@ -10,6 +10,7 @@ const actions = {
       await axios.post("/searchengine", schema);
     } catch (err) {
       console.log(err);
+      router.push("/errorPage");
     }
   },
 };

@@ -13,6 +13,7 @@ import schemaPage from "../views/schemaPage.vue";
 import queriesErrors from "../views/queriesErrors.vue";
 import databaseSeeds from "../views/databaseSeeds.vue";
 import nlpToSqlPage from "../views/nlpToSqlPage.vue";
+import errorPage from "../views/errorPage.vue";
 import lastPage from "../views/lastPage.vue";
 
 Vue.use(VueRouter);
@@ -92,6 +93,12 @@ const routes = [
         path: "/nlpToSqlPage",
         name: "nlpToSqlPage",
         component: nlpToSqlPage,
+        children: [],
+      },
+      {
+        path: "/errorPage",
+        name: "errorPage",
+        component: errorPage,
         children: [],
       },
       {

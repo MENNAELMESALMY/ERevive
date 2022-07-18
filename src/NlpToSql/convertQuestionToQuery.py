@@ -668,11 +668,11 @@ test2 = {
         }
     }
 }
-sentence = "get title and textbody of articles whose title starts with (good)"
-sentence = "get employees ordered by salary then age whose salary is greater than (250) and age smaller than (10)"
-sentence = "get first_name and maximum salary of employees for each age"
-finalQuery = convertNlpToSQLQuery(sentence,test_schema[0])
-print("finalQuery ==> " , finalQuery)
+# sentence = "get title and textbody of articles whose title starts with (good)"
+# sentence = "get employees ordered by salary then age whose salary is greater than (250) and age smaller than (10)"
+# sentence = "get first_name and maximum salary of employees for each age"
+# finalQuery = convertNlpToSQLQuery(sentence,test_schema[0])
+# print("finalQuery ==> " , finalQuery)
 
 '''
 #TODO: don't use all attributes in select   ==> done

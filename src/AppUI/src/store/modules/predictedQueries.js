@@ -121,6 +121,7 @@ const actions = {
       router.push("/clustersPage");
     } catch (error) {
       console.log(error);
+      router.push("/errorPage");
     }
   },
   postStartApplication({ commit, state }) {
@@ -151,6 +152,7 @@ const actions = {
       })
       .catch((error) => {
         console.log(error);
+        router.push("/errorPage");
       });
   },
   postValidate({ commit, state }) {
@@ -184,6 +186,7 @@ const actions = {
       })
       .catch((error) => {
         console.log(error);
+        router.push("/errorPage");
       });
   },
   postConvertNlpToSql({ state, commit }, payload) {
@@ -199,6 +202,7 @@ const actions = {
       })
       .catch((error) => {
         console.log(error);
+        router.push("/errorPage");
       });
   },
 };

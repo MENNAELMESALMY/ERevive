@@ -91,7 +91,7 @@ export default {
         } else if (page == "database") {
           this.$router.push("/databaseSeeds");
         } else if (page == "api") {
-          window.open("http://localhost:3000/", "_blank");
+          window.open("http://localhost:3000/api/", "_blank");
         } else if (page == "front") {
           window.open("http://localhost:8081/", "_blank");
         } else if (page == "schemaPage") {

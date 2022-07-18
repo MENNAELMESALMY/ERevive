@@ -104,17 +104,6 @@
                 <input type="text" v-model="attr[4]" />
                 <!-- <input @change="change_name" type="text" v-model="attr[4]" /> -->
               </div>
-              <div v-if="attr[3] == 'number'">
-                <label>Minimum number</label>
-                <!-- <input @change="change_name" v-model="attr[5]" type="number" /> -->
-                <input v-model="attr[5]" type="number" />
-              </div>
-
-              <div v-if="attr[3] == 'number'">
-                <label>Maximum number</label>
-                <!-- <input @change="change_name" v-model="attr[6]" type="number" /> -->
-                <input v-model="attr[6]" type="number" />
-              </div>
             </div>
 
             <div>
@@ -326,8 +315,6 @@ export default {
           let attrIsPrimaryKey = this.globalSchema[key]["attributes"][attr][2];
           let fieldType = this.globalSchema[key]["attributes"][attr][3];
           let listOfValues = this.globalSchema[key]["attributes"][attr][4];
-          let minNum = this.globalSchema[key]["attributes"][attr][5];
-          let maxNum = this.globalSchema[key]["attributes"][attr][6];
           this.finalSchema[TableName]["attributes"][attrName] = attrDataType;
 
           if (attrIsPrimaryKey)
@@ -341,8 +328,6 @@ export default {
             field_type: fieldType,
             data_type: attrDataType,
             isRequired: attrIsPrimaryKey,
-            maxRange: parseInt(maxNum),
-            minRange: parseInt(minNum),
             options: options,
           });
         }
@@ -518,8 +503,6 @@ export default {
           let attrName = this.formData[key][attrIdx]["field_name"];
           let attrType = this.formData[key][attrIdx]["field_type"];
           let dataType = this.formData[key][attrIdx]["data_type"];
-          let maxRange = this.formData[key][attrIdx]["maxRange"];
-          let minRange = this.formData[key][attrIdx]["minRange"];
           let options = this.formData[key][attrIdx]["options"];
           if (attrType == "number")
             if (dataType != "int" && dataType != "float") {
@@ -570,14 +553,6 @@ export default {
             );
           }
 
-          if (attrType == "number" && minRange >= maxRange)
-            this.errors.push(
-              "Attribute " +
-                attrName +
-                " in table " +
-                key +
-                " has invalid range"
-            );
           if (this.requireOptions.includes(attrType) && options.length <= 1)
             this.errors.push(
               "Attribute " + attrName + " in table " + key + " has no options"

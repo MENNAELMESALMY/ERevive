@@ -164,7 +164,7 @@ styleRoute = 'FrontCode/src/scss/'
 #     }
 #   ]
 # }
-f = open('../systemInfo.json','r')
+f = open('systemInfo.json','r')
 systemInfoObject = json.load(f)
 f.close()
 # open file clusters.json
@@ -221,9 +221,9 @@ with open(viewsRoute + "home.vue", 'w') as f:
   <div id="home">
    <div class="mainContent">
       <h2>Welcome to ERevive</h2>
-      <h3>{systemInfoObject["name"]}</h3>
+      <h3>{systemInfoObject["systemName"]}</h3>
       <p>
-        {systemInfoObject["description"]}
+        {systemInfoObject["systemDescription"]}
       </p>
       <router-link to="/App"><button>CONTINUE</button></router-link>
     </div>
@@ -547,7 +547,7 @@ with open(componentsRoute + "sideBar.vue", 'w') as f:
 <template>
   <div class="sideBar">
     <div class="header">
-      <h4>{systemInfoObject["name"]}</h4>
+      <h4>{systemInfoObject["systemName"]}</h4>
     </div>
   ''')
   f.write('''

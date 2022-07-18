@@ -46,26 +46,10 @@ def createForm (requirments,cluster_name,endpoint,filePath,isPut=False,get_endpo
                     ''')
             elif req["field_type"] == "number":
                 numberinput = True
-                if req["minRange"] > 0 and req["maxRange"] == 0:
-                    file.write(f'''
-            <input type="number" id="numberinputId" placeholder="Enter {req["field_name"]}" min="{req["minRange"]}" v-model="{req["field_name"].replace(' ','_')}" {required} {disabled}/>
-            <br />
-                        ''')
-                if req["minRange"] == 0 and req["maxRange"] > 0:
-                   file.write(f'''
-            <input type="number" id="numberinputId" placeholder="Enter {req["field_name"]}" max="{req["maxRange"]}" v-model="{req["field_name"].replace(' ','_')}" {required} {disabled}/>
-            <br />
-                        ''')
-                if req["minRange"] > 0 and req["maxRange"] > 0:
-                    file.write(f'''
-            <input type="number" id="numberinputId" placeholder="Enter {req["field_name"]}" min="{req["minRange"]}" max="{req["maxRange"]}" v-model="{req["field_name"].replace(' ','_')}" {required} {disabled}/>
-            <br />
-                        ''')
-                if req["minRange"] == 0 and req["maxRange"] == 0:
-                    file.write(f'''
+                file.write(f'''
             <input type="number" id="numberinputId" placeholder="Enter {req["field_name"]}" v-model="{req["field_name"].replace(' ','_')}" {required} {disabled}/>
             <br />
-                        ''')
+                    ''')
             elif req["field_type"] == "radiobutton":
                 radio = True
                 for option in req["options"]:
@@ -334,7 +318,10 @@ label {
 
             link_data_string = ""
             for req in requirments[cluster_name]:
-                link_data_string += f"this.{req['field_name']}=obj.{req['field_name']};\n"
+                if req["field_type"] == "date":
+                    link_data_string += f"this.{req['field_name'].replace(' ','_')} = moment(String(obj.{req['field_name'].replace(' ','_')})).format('YYYY-MM-DD');"
+                else:
+                    link_data_string += f"this.{req['field_name']}=obj.{req['field_name']};\n"
             file.write(link_data_string)
             file.write('''
                 },

@@ -15,6 +15,7 @@ from .testing import *
 import cv2
 import os
 import timeit
+import json
 
 
 def changeContours(contours, img,idx):
@@ -139,6 +140,10 @@ def process_image(img_dir):
         #print(connectedComponents,relations)
         #print("///////////////////////////////////////////")
         #print(relations)
+        # we are debugging ------------------------
+        # with open("../output/relations.json","r") as file:
+        #     relations = json.load(file)
+
 
         schema = generateSchema(connectedComponents,relations,shapes_no)
         end = timeit.default_timer()

@@ -67,7 +67,7 @@ def generate_large_cards(cluster_name,endpoint,directory,
 <div class="content">
         <div class="table_nav">
         '''
-    card_string += '<h2>'+cluster_name.replace("_cluster","")+'</h2>'
+    card_string += '<h2>'+cluster_name.replace("_cluster","").replace("_"," ")+'</h2>'
     card_string +=    '''
     </div>
     '''

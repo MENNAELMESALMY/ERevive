@@ -140,10 +140,10 @@ class {0}Api(Resource):\n\
     def get(self):\n\
         try:\n\
             if {7}:\n\
-                {1} = db.session.query({0}).filter({5}).first() \n\
-                if not {1}: \n\
+                {1}s = db.session.query({0}).filter({5}).first() \n\
+                if not {1}s: \n\
                     return "not found" , 404\n\
-                return {1}.serialize() , 200 \n\
+                return {1}s.serialize() , 200 \n\
             else:\n\
                 {1}s = db.session.query({0}).all()\n\
                 if not {1}s: \n\

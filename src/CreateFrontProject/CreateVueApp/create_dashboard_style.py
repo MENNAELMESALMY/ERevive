@@ -22,7 +22,7 @@ def create_dashboard_style(route):
             margin-bottom: 20px;
             flex-wrap: wrap;
             label{
-                font-size: 13px;
+                font-size: 15px;
                 padding: 6px;
                 border-radius: 20px;
                 margin: 3px;
@@ -35,7 +35,7 @@ def create_dashboard_style(route):
             label:nth-child(3n+1){background-color: #38908f;}
         }
         p{
-            font-size: 18px;
+            font-size: 24px;
             font-weight: bold;
             color: #000;
         }

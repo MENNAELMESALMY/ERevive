@@ -57,7 +57,7 @@ def createForm (requirments,cluster_name,endpoint,filePath,isPut=False,get_endpo
             <input type="radio" id="radiobuttonId" value={option} v-model= "{req["field_name"].replace(' ','_')}" {required} {disabled}/>
             <label>{option}</label>
                         ''')
-            elif req["field_type"] == "checklist":
+            elif req["field_type"] == "checkbox":
                 checkbox = True
                 for option in req["options"]:
                         file.write(f'''

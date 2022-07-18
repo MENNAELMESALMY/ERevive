@@ -155,6 +155,8 @@ def get_pk_data(primary_keys,attr_pk_mapping,num_of_records):
             else: 
                 values[pk].append(value) 
     return values 
+
+
 def get_fk_data(model,pks_data,num_of_records,is_pk_and_fk): 
     stmt = "" 
     values = [] 
@@ -162,6 +164,12 @@ def get_fk_data(model,pks_data,num_of_records,is_pk_and_fk):
         stmt += fk["attributeName"] + ", " 
         table = fk["ForignKeyTable"] 
         attr = fk["ForignKeyTableAttributeName"] 
+        
+        # print("///////////////////////////////////////////////")
+        # print(pks_data.keys())
+        # print(pks_data[table].keys())
+        # print("table",table)
+        # print("attr",attr)
         pk = pks_data[table][attr] 
         if is_pk_and_fk: 
             pk = random.sample(pk, k = num_of_records) 
@@ -232,7 +240,8 @@ def generate_seeds(database,models):
             continue 
 
         insert_stmt = get_insert_stmt(num_of_records, attr_pk_mapping[model_name],models_pk[model_name],model_name,database,pks_data) 
-        stmts.append(insert_stmt.replace("),","),").replace("VALUES","VALUES")) 
+        stmts.append(insert_stmt.replace("),","),\n").replace("VALUES","\nVALUES\n") + "\n")
+
 
     for model_name,model in models.items(): 
         if  len(model["ForgeinKey"]) == 0: continue 
@@ -256,14 +265,14 @@ def generate_seeds(database,models):
         if fk_stmt: insert_stmt += ", " + fk_stmt if len(models_pk[model_name]) else fk_stmt  
         if attr_stmt: insert_stmt += ", " + attr_stmt 
 
-        insert_stmt += ") VALUES "+str(row_values)[1:-1].replace("),","),")+" " 
+        insert_stmt += ") \nVALUES \n "+str(row_values)[1:-1].replace("),","),\n")+" "
         if model_name in weak_pk: 
             insert_stmt += ";" 
         else: 
-            insert_stmt += " ON DUPLICATE KEY UPDATE " 
+            insert_stmt += "\nON DUPLICATE KEY UPDATE \n"
             fks_names = fk_stmt.split(", ") 
             for name in fks_names: 
-                insert_stmt +=  " "+name+" = VALUES("+name+"), " .format(name) 
+                insert_stmt +=  " "+name+" = VALUES("+name+"),\n" .format(name)
             insert_stmt = insert_stmt[:-2] +";" 
 
         stmts.append(insert_stmt) 

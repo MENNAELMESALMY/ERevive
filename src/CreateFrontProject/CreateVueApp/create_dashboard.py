@@ -43,6 +43,8 @@ def generate_dashboard(cluster_name,endpoint,directory,
         if operator == 'between':
             dashboard_string += f'\t\t<input placeholder="from" type="{datatype}" v-model="{param}[0]" class="{datatype}" required>\n'
             dashboard_string += f'\t\t<input placeholder="to" type="{datatype}" v-model="{param}[1]" class="{datatype}" required>\n'
+        elif operator == 'in':
+            dashboard_string += f'\t\t<input type="text" v-model="{param}" class="{datatype}" required>\n'
         else:
             if datatype=='checkbox':
                 dashboard_string += f'\t\t<input type="{datatype}" v-model="{param}" class="{datatype}">\n' 
@@ -136,7 +138,7 @@ def generate_dashboard(cluster_name,endpoint,directory,
     dashboard_string+= 'await this.$store.dispatch("'+cluster_name +'/'+endpoint_name +'",\n\t\t {'
     for param,_,op,_ in query_params:
         if op == 'in':
-            dashboard_string += "'"+param+"'" +': this.' + param.replace('.','_').replace(' ','_') + '.split(","),\n\t\t'
+            dashboard_string += "'"+param+"'" +': String(this.' + param.replace('.','_').replace(' ','_') + ').split(","),\n\t\t'
         else:
             dashboard_string += "'"+param+"'" +': this.' + param.replace('.','_').replace(' ','_') + ',\n\t\t'
     dashboard_string += '''

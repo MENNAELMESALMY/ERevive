@@ -513,6 +513,9 @@ def get_query_from_question(query_dict,usedAggrAttrs):
       finalPredictedQuery = finalPredictedQuery[:-2]
     else:
       finalPredictedQuery += ",".join(query_dict["selectAttrs"])
+
+    if (len(usedAggrAttrs) == 0 and len(query_dict["selectAttrs"]) == 0):
+      finalPredictedQuery = "SELECT *"
     
     finalPredictedQuery += " FROM " + query_dict["entities"][0][1]
     
@@ -526,7 +529,7 @@ def get_query_from_question(query_dict,usedAggrAttrs):
         # if firstTurn == False:
         #   finalPredictedQuery += " WHERE "
         #   firstTurn = True
-        finalPredictedQuery += "( "
+        # finalPredictedQuery += " "
         for idx,attr in enumerate(where_clause["attr"]):
           if where_clause["op"][0] == "BETWEEN":
             finalPredictedQuery += attr + " " + where_clause["op"][0] + " " + where_clause["val"][0] + " AND " + where_clause["val"][1]
@@ -554,7 +557,7 @@ def get_query_from_question(query_dict,usedAggrAttrs):
                 finalPredictedQuery += attr + " " + op + " " + val
                 finalPredictedQuery += " AND "
             finalPredictedQuery = finalPredictedQuery[:-5]
-          finalPredictedQuery += " )"
+          # finalPredictedQuery += " "
           if where_clause != query_dict["where"][-1]: finalPredictedQuery += " AND "
       elif len(query_dict["whereAggr"]) > 0:
         for attr,op in zip(where_clause["attr"],where_clause["op"]):
@@ -665,10 +668,11 @@ test2 = {
         }
     }
 }
-#sentence = "get title and textbody of articles whose title starts with (good)"
-# sentence = "get first_name of employees ordered by salary then age"
-# finalQuery = convertNlpToSQLQuery(sentence,test_schema[0])
-# print("finalQuery ==> " , finalQuery)
+sentence = "get title and textbody of articles whose title starts with (good)"
+sentence = "get employees ordered by salary then age whose salary is greater than (250) and age smaller than (10)"
+sentence = "get first_name and maximum salary of employees for each age"
+finalQuery = convertNlpToSQLQuery(sentence,test_schema[0])
+print("finalQuery ==> " , finalQuery)
 
 '''
 #TODO: don't use all attributes in select   ==> done

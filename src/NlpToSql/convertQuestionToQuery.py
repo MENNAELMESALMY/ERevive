@@ -581,18 +581,6 @@ def get_query_from_question(query_dict,usedAggrAttrs):
     
 
 
-query_dict = {
-  "entities":[],
-  "attributes": [],
-  "where": [],
-  "agg": [],
-  "groupby": [],
-  "orderby": [],
-  "whereAggr": [],
-  "selectAttrs": []
-}
-
-
 ######################################## test sentences ########################################
 #sentence = "get first_name and salary of employees sorted by age"
 sentence = "get minimum and maximum salary of employees for each age"
@@ -607,7 +595,6 @@ sentence = "get first_name and maximum salary of employees"
 #sentence = "get first_name and last_name of employees whose first_name starts with (Nihal)"
 #sentence = "get first_name and last_name of employees grouped by age whose salary equal to the maximum salary"
 
-import os
 def convertNlpToSQLQuery(sentence,finalSchema):
   #os.chdir('NlpToSql')
   # load json files
@@ -622,6 +609,17 @@ def convertNlpToSQLQuery(sentence,finalSchema):
 
   with open('done_dict/conditions_dict.json') as f:
     conditions_dict = json.load(f)
+
+  query_dict = {
+  "entities":[],
+  "attributes": [],
+  "where": [],
+  "agg": [],
+  "groupby": [],
+  "orderby": [],
+  "whereAggr": [],
+  "selectAttrs": []
+  }
 
   values = separate_values_in_question(sentence)
   tokens_dict,tokens = cleanup_question(sentence,stop_words)

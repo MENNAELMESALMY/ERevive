@@ -81,6 +81,7 @@ export default {
       this.$store.dispatch("predictedQueries/postConvertNlpToSql", {
         nlpQuestion: this.nlpQuestion,
       });
+      this.nlpQuestion.value = "";
     },
   },
 };

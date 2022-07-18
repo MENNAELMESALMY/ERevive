@@ -6,6 +6,7 @@ def generate_large_cards(cluster_name,endpoint,directory,
     table_headers_orig = [header.replace('.','_').replace('_','_')  for header in table_headers_orig]
 
     endpoint_name = endpoint['endpoint_name']
+    ui_name = endpoint['ui_name']
     query_params = [(param,d,o,a) for param,d,o,a in endpoint['queryParams']]
     card_string = '''<template>
     <div class="dashboard">
@@ -43,6 +44,8 @@ def generate_large_cards(cluster_name,endpoint,directory,
         if operator == 'between':
             card_string += f'\t\t<input placeholder="from" type="{datatype}" v-model="{param}[0]" class="{datatype}" required>\n'
             card_string += f'\t\t<input placeholder="to" type="{datatype}" v-model="{param}[1]" class="{datatype}" required>\n'
+        elif operator == 'in':
+            card_string += f'\t\t<input type="text" v-model="{param}" class="{datatype}" required>\n'
         else:
             if datatype=='checkbox':
                 card_string += f'\t\t<input type="{datatype}" v-model="{param}" class="{datatype}">\n' 
@@ -71,7 +74,7 @@ def generate_large_cards(cluster_name,endpoint,directory,
     card_string +=    '''
     </div>
     '''
-    card_string += '<h3>'+endpoint_name+'</h3>'
+    card_string += '<h3>'+ui_name+'</h3>'
     card_string +='''
     <div>
 
@@ -146,7 +149,7 @@ def generate_large_cards(cluster_name,endpoint,directory,
     card_string+= 'await this.$store.dispatch("'+cluster_name +'/'+endpoint_name +'",\n\t\t {'
     for param,_,_,_ in query_params:
         if op == 'in':
-            card_string += "'"+param+"'" +': this.' + param.replace('.','_').replace(' ','_') + '.split(","),\n\t\t'
+            card_string += "'"+param+"'" +':String(this.' + param.replace('.','_').replace(' ','_') + ').split(","),\n\t\t'
         else:
             card_string += "'"+param+"'" +': this.' + param.replace('.','_').replace(' ','_') + ',\n\t\t'
     card_string += '''

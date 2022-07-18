@@ -1,7 +1,7 @@
 <template>
   <div class="schemaPage">
     <div class="subTitle">Generated Schema !</div>
-    <img src="../../public/assets/generatedSchema.png" alt="generatedSchema" />
+    <img src="http://localhost:5000/umlimage" alt="generatedSchema" />
   </div>
 </template>
 

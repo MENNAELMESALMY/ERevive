@@ -7,10 +7,10 @@ ERevive efficiently extracts system essentials such as entities, relations, and 
 
 Check out our video demo to see ERevive in action!
 
-<video width="640" height="360" controls>
-  <source src="./Demo.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+
+https://github.com/MENNA123MAHMOUD/ERevive/assets/42938021/53206ff0-2a4f-4a97-8bd2-7caade96e6b2
+
+
 
 ## Project Document
 

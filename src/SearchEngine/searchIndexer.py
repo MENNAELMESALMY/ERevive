@@ -1,11 +1,14 @@
 import re
 #import spacy
 import numpy as np
-import globalVars
 from nltk.stem import WordNetLemmatizer
 from nltk import word_tokenize
 
 #nlp = spacy.load('en_core_web_sm')
+GlobalOneHotVocab = {}
+def init_one_hot_vocab(one_hot):
+    global GlobalOneHotVocab
+    GlobalOneHotVocab = one_hot
 
 def get_lemma(text):
     wordnet_lemmatizer = WordNetLemmatizer()
@@ -63,7 +66,7 @@ def oneHotVocabEncoding(vocab):
         for word in synList:
             if word in OneHotVocab.keys(): 
                 newWord = False
-                break
+                continue
             oneHotVec = np.zeros(len(vocab.keys()))
             oneHotVec[idx] = 1.0
             OneHotVocab[word] = oneHotVec
@@ -75,18 +78,16 @@ def oneHotVocabEncoding(vocab):
     return OneHotVocab
     
 def getKeyWordsVector(keyWords):
-    OneHotVocab = globalVars.OneHotVocab
-    uniqueValues = list(OneHotVocab.values())[0].shape[0]
+    uniqueValues = list(GlobalOneHotVocab.values())[0].shape[0]
     keyWordsVector = np.zeros((uniqueValues,1))
     for word in keyWords:
-        if word not in OneHotVocab:
+        if word not in GlobalOneHotVocab:
             continue
-        keyWordsVector=  np.logical_or(OneHotVocab[word],keyWordsVector)
+        keyWordsVector=  np.logical_or(GlobalOneHotVocab[word],keyWordsVector)
     return keyWordsVector*1.0
 
 def getQueriesMatrix(queriesKeywords):
-    OneHotVocab = globalVars.OneHotVocab
-    VocabSize = list(OneHotVocab.values())[0].shape[0]
+    VocabSize = list(GlobalOneHotVocab.values())[0].shape[0]
     queriesNum = len(queriesKeywords)
     queriesMatrix = np.zeros((queriesNum,VocabSize))
     for idx,keyWords in enumerate(queriesKeywords):

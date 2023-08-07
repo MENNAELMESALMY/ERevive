@@ -1,6 +1,0 @@
-from .DEPARTMENT import DEPARTMENT
-from .DEPARTMENT_Clocation import DEPARTMENT_Clocation
-from .EMPLOYEE import EMPLOYEE
-from .PROJECT import PROJECT
-from .DEPENDENT import DEPENDENT
-from .Works_EMPLOYEE_PROJECT import Works_EMPLOYEE_PROJECT

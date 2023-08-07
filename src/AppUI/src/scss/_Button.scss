@@ -1,0 +1,26 @@
+@import "./Colors.scss";
+
+.customBtn {
+    width: 200px;
+    height: 60px;
+    border: none;
+    color: white;
+    background-color: $darkBlue;
+    border-radius: 7px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+    transition: all 0.3s ease 0s;
+    font-size: 18px;
+    font-weight: 700;
+    outline: none;
+    cursor: pointer;
+  }
+  .customBtn:hover {
+    transform: translateY(-3px);
+    background-color: $lightBlue;
+  }
+
+@media (max-width: 768px) {
+  .customBtn {
+    width: 175px;
+  }
+}

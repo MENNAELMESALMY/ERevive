@@ -1,0 +1,1 @@
+This Folder is responsible for creating frontend project.

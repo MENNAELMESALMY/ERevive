@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+./vscode
 
 # C extensions
 *.so
@@ -132,3 +133,6 @@ dmypy.json
 #Pickles
 /src/SearchEngine/OneHotVocab.pickle
 src/SearchEngine/queriesMatrix.pickle
+
+## Js
+**/node_modules/

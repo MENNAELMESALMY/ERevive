@@ -1,0 +1,1 @@
+This Folder is responsible for creating backend API and DB Models as well as generating fake data to populate the prototype on startup.

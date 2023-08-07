@@ -1,102 +1,51 @@
 import json
 import tracemalloc
-from queryConstruction import constructQuery, queryStructure
-import globalVars
+from .queryConstruction import constructQuery, prepareClusters, queryStructure
+from .globalVars import *
 import timeit
 from collections import Counter
-from ranker import flatten_query_entities, getRankedQueries, mapToSchema,queryCoverage,mapAttrEntity,mapEntity,getListQueries,getNonZeroQueryHits,constructDictionary
-from clustering import *
-from numpy import load
+from .ranker import rankQueriesSimilarities,flatten_query_entities, getRankedQueries, mapToSchema,queryCoverage,mapAttrEntity,mapEntity,getListQueries,getNonZeroQueryHits,constructDictionary
+from .clustering import *
+from .searchIndexer import init_one_hot_vocab , cleanEntityName
 
-tracemalloc.start()
-print("Start Running: ",tracemalloc.get_traced_memory())
-
-print("loading data")
-listOfQueries = getListQueries()
-path = globalVars.path
-
-##########load schema###########
-with open(path+'/TestSchemas/sportsSchema.pickle','rb') as file:
-    testSchema = pickle.load(file)
-    
-print("testSchema: ",tracemalloc.get_traced_memory())
-tracemalloc.stop()
-
-tracemalloc.start()
-###########one hot encoding############
-#with open(path+'/SearchEngine/OneHotVocab.pickle','rb') as file:
-#    OneHotVocab = pickle.load(file)
-globalVars.init()
-
-OneHotVocab = globalVars.OneHotVocab 
-
-#OneHotVocab = globalVars.OneHotVocab
-print("OneHotVocab: ",tracemalloc.get_traced_memory())
-tracemalloc.stop()
-tracemalloc.start()
-print("one hot encoding test",OneHotVocab["movie"].shape)
-
-#queriesMatrix = load(path+'/SearchEngine/queriesMatrix.npy')
-#print("Query Matrix sample",queriesMatrix[10])
-flattened_query_entities = flatten_query_entities(listOfQueries)
-queriesMatrix = getQueriesMatrix(flattened_query_entities)
-print("Query Matrix size",queriesMatrix.shape)
-
-print("queriesMatrix: ",tracemalloc.get_traced_memory())
-tracemalloc.stop()
-
-tracemalloc.start()
-################get uery hits#################
-query = ["coach","team","player"] #Generated Keywords from shcema or KG //Future work
-queryOneHotVector = getKeyWordsVector(query).T
-queryHits = getQueryHits(queryOneHotVector,queriesMatrix)
+def cleanQuery(query):
+    cleaned_query = []
+    for q in query:
+        cleaned_entity = cleanEntityName(q)
+        cleaned_query.extend(cleaned_entity)
+    return cleaned_query
 
 
-nonZeroQueriesIndexs = getNonZeroQueryHits(queryHits)
-tracemalloc.stop()
 
-################calculate scores for top queries#################
-schemaEntityNames = [testSchema[idx]["TableName"] for idx in testSchema.keys()]
-entityDict = constructDictionary(testSchema)
-
-def getMappedQueries(finalQueriesIndexs):
+def getMappedQueries(schemaGraph,rankedQueriesBySimilarity,testSchema,entityDict,schemaEntityNames):
     queries = []
-    print("num of queries",len(finalQueriesIndexs))
     start = timeit.default_timer()
-    for idx in finalQueriesIndexs:
-        mappedEntites, mappedAttributes, goals,mappedEntitesDict,bestJoin =  mapToSchema(listOfQueries[idx],testSchema,entityDict,schemaEntityNames)
+    for q in rankedQueriesBySimilarity:
+        mappedEntites, mappedAttributes, goals,mappedEntitesDict,bestJoin =  mapToSchema(schemaGraph,q[0],testSchema,entityDict,schemaEntityNames)
         coverage = queryCoverage(mappedAttributes)
-        query = constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,idx,goals,listOfQueries[idx],bestJoin)
+        query = constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,goals,q[0],bestJoin,testSchema)
+        
         queries.append(query)
-        #print("mappedAttributes: ",mappedAttributes)
-        #query = constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,compactness)
-        #queries.append(query)
   
     end = timeit.default_timer()
     print("mapToSchema Time: ",end-start)
-    # print("mappedAttributes: ",totalMappedAttributes , "totalAttributes: ",totalAttributes)
-    # print("percentage: ",totalMappedAttributes/totalAttributes)
-    # print(mappedEntites)
-    # print(mappedAttributes)
-    return queries
-queries = getMappedQueries(nonZeroQueriesIndexs)
-print("mapEntity",mapEntity.cache_info())
-print("mapAttr",mapAttrEntity.cache_info())
-print("join",connectEntities.cache_info())
 
-clusteredQueries = getClusteredQueries(queries)
-mergedClusters = getMergdClusters(clusteredQueries,queries)
+    return queries
+
+
+
 def outQueries(outFileQueries,outFileClusters,allQueries):
     finalClusters = []
     for cluster in allQueries:
         clusterQueries = []
         for query in cluster["queries"]:
-            clusterQueries.append([queryStructure(query),query["origQuery"]["query"]])
+            clusterQueries.append([query,queryStructure(query),query["origQuery"]["query"]])
         finalClusters.append(clusterQueries)
 
     clusters = {}
     for i,c in enumerate(finalClusters):
         clusters["cluster#"+str(i)]=c
+
 
     with open(outFileQueries,'w') as file:
         jsonObj = json.dumps(clusters)
@@ -109,10 +58,98 @@ def outQueries(outFileQueries,outFileClusters,allQueries):
     with open(outFileClusters,'w') as file:
         jsonObj = json.dumps(clusters)
         file.write(jsonObj)
-rankedQueries = getRankedQueries(mergedClusters,queries)
-outQueries("finalMergedQueries.json","finalMergedClusters.json",rankedQueries)
-rankedQueries = getRankedQueries(clusteredQueries,queries)
-outQueries("finalQueries.json","finalClusters.json",rankedQueries)
+
+        
+def suggest_queries(testSchema):
+    tracemalloc.start()
+    print("Start Running: ",tracemalloc.get_traced_memory())
+
+    print("loading data")
+    listOfQueries = getListQueries()
+
+    
+    
+    print("testSchema: ",tracemalloc.get_traced_memory())
+    tracemalloc.stop()
+
+    tracemalloc.start()
+###########one hot encoding############
+#with open(path+'/SearchEngine/OneHotVocab.pickle','rb') as file:
+#    OneHotVocab = pickle.load(file)
+    OneHotVocab,schemaGraph = init(testSchema)
+    init_one_hot_vocab(OneHotVocab)
+
+    tracemalloc.stop()
+    tracemalloc.start()
+
+#queriesMatrix = load(path+'/SearchEngine/queriesMatrix.npy')
+#print("Query Matrix sample",queriesMatrix[10])
+    flattened_query_entities = flatten_query_entities(listOfQueries)
+    queriesMatrix = getQueriesMatrix(flattened_query_entities)
+    print("Query Matrix size",queriesMatrix.shape)
+
+    print("queriesMatrix: ",tracemalloc.get_traced_memory())
+    tracemalloc.stop()
+
+    tracemalloc.start()
+    ################get query hits#################
+
+    schemaEntityNames = [testSchema[idx]["TableName"] for idx in testSchema.keys()]
+    query = cleanQuery(schemaEntityNames) #Generated Keywords from shcema or KG //Future work
+    queryOneHotVector = getKeyWordsVector(query).T
+    queryHits = getQueryHits(queryOneHotVector,queriesMatrix)
+    nonZeroQueriesIndexs = getNonZeroQueryHits(queryHits)
+    nonZeroQueries = []
+    quiries_keywords = []
+    entities_keywords = list(set(query)) 
+    for idx in nonZeroQueriesIndexs:
+        query = listOfQueries[idx]
+        nonZeroQueries.append(query)    
+        entities = query["entities"]
+        selectAttrs = [attr.split('.')[-1] for attr in query["selectAttrs"]]
+        whereAttrs = [attr[0].split('.')[-1] for attr in query["whereAttrs"]]
+        keywords = []
+        keywords.extend(cleanQuery(entities))
+        keywords.extend(cleanQuery(selectAttrs))
+        keywords.extend(cleanQuery(whereAttrs))
+        keywords = list(set(keywords))
+        quiries_keywords.append(keywords)
+    
+    rankedQueriesBySimilarity = rankQueriesSimilarities(quiries_keywords,nonZeroQueries,entities_keywords)
+
+
+ 
+    tracemalloc.stop()
+
+    entityDict = constructDictionary(testSchema)
+    queries = getMappedQueries(schemaGraph,rankedQueriesBySimilarity,testSchema,entityDict,schemaEntityNames)
+
+    clusteredQueries = getClusteredQueries(queries)
+
+    finalClusters = []
+    for cluster in clusteredQueries:
+        clusterQueries = []
+        for idx in cluster:
+            query = queries[idx]
+            clusterQueries.append([query,queryStructure(query),query["origQuery"]["query"]])
+        finalClusters.append(clusterQueries)
+
+
+    mergedClusters = getMergdClusters(clusteredQueries,queries,testSchema)
+
+    rankedQueries = getRankedQueries(mergedClusters,queries)
+    outQueries("finalMergedQueries.json","finalMergedClusters.json",rankedQueries)
+
+    return rankedQueries , schemaGraph , testSchema , entityDict , schemaEntityNames
+
+def getMappedQuery(schemaGraph,query,testSchema,entityDict,schemaEntityNames):
+    mappedEntites, mappedAttributes, goals,mappedEntitesDict,bestJoin =  mapToSchema(schemaGraph,query,testSchema,entityDict,schemaEntityNames)
+    coverage = queryCoverage(mappedAttributes)
+    query = constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,goals,query,bestJoin,testSchema)
+    return query
+    
+
+    
 
 
 # handle alias nada,nihal

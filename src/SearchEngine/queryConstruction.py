@@ -1,11 +1,36 @@
-from utilities import flattenList
 import random
+from SearchEngine.clustering import updateQueryGroupBy
 
-def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,id, goals,origQuery,bestJoin):
+def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage, goals,origQuery,bestJoin,testSchema):
+    mappedEntitesNames = mappedEntitesDict.values()
+    mappedEntitesDict.update({entity:entity for entity in goals if entity not in mappedEntitesNames})
     query = {}
-    mappedAttributesDict = {attr[4]:attr[1] if attr[0] is None else attr[0]+"."+attr[1] for attr in mappedAttributes if attr[1] is not None}
+    mappedAttributesDict = {}
+    attributes_coverage = 0
+    entities_coverage = sum([mapped[2] for mapped in mappedEntites])
+    for attr in mappedAttributes:
+        attributes_coverage += attr[2]
+        if attr[1] is not None:
+            if attr[0] is None:
+                if "*" == attr[3]:
+                    mappedAttributesDict.update({
+                        "*":("*",None)
+                    })
+                else:
+                    mappedAttributesDict.update({
+                        attr[4]:(attr[1],attr[5])
+                    })
+            else:
+                if "*" in attr[3]:
+                    mappedAttributesDict.update({
+                        attr[4]:(attr[0]+"."+"*",None)
+                    })
+                else:
+                    mappedAttributesDict.update({
+                        attr[4]:(attr[0]+"."+attr[1],attr[5])
+                    })
+    #print(mappedAttributesDict)
     query["coverage"] = coverage
-    query["id"] = id
     query["entities"] = [ent for ent in mappedEntitesDict.values()]
     query["cleanedEntities"] = [ent[1] for ent in mappedEntites]
     query["goals"] = list(goals)
@@ -15,38 +40,50 @@ def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,id,
     query["mappedEntitesDict"] = mappedEntitesDict
     query["bestJoin"] = list(bestJoin)
     query["origQuery"] = origQuery
+
+    query["entities_closeness"]  = abs(len(query["entities"])-len(origQuery["entities"]))
+    query["attributes_coverage"] = attributes_coverage
+    query["entities_coverage"]   = entities_coverage
+
     attrKeys = ['selectAttrs','groupByAttrs','aggrAttrs','orderByAttrs','whereAttrs','havingAttrs']
     for key in attrKeys:
         query[key] = []
-        currentAttributes = origQuery[key]
+        currentAttributes = list(origQuery[key])
         if currentAttributes == []:
             continue
         ## take same tuples but instead replace attributes by their mapped attributes to schema
         if key == "aggrAttrs" or key == "orderByAttrs":
             for attr in currentAttributes:
                 ## [attr,count]
+                attr = list(attr)
                 if mappedAttributesDict.get(attr[0]) is not None:
+                    if key == "aggrAttrs" and len(attr)>1 and len(attr[1])==0:
+                        continue
                     attr[0] = mappedAttributesDict[attr[0]]
                     query[key].append(attr)
         elif key == "whereAttrs":
             ## [attr,condition,attr,...] or [attr,condition,value,...]
             firstAttrIsUpdated = False 
             for attr in currentAttributes:
+                attr = list(attr)
                 if mappedAttributesDict.get(attr[0]) is not None:
                     attr[0] = mappedAttributesDict[attr[0]]
                     firstAttrIsUpdated = True
                 if firstAttrIsUpdated:
                     if attr[2] != "value":
                         if mappedAttributesDict.get(attr[2]) is not None:
-                            attr[2] = mappedAttributesDict[attr[2]]
-                            query[key].append(attr)
-                            firstAttrIsUpdated = False
+                            if checkValidAttrWhere(attr[0],mappedAttributesDict.get(attr[2]),testSchema):
+                                attr[2] = mappedAttributesDict[attr[2]]
+                                query[key].append(attr)
+                        firstAttrIsUpdated = False
                     else:
                         firstAttrIsUpdated = False
                         query[key].append(attr)
+            query[key] = convert_or_to_in(query[key])
         elif key == "havingAttrs":
             ## [aggr,attr,operation]
             for attr in currentAttributes:
+                attr = list(attr)
                 if mappedAttributesDict.get(attr[1]) is not None:
                     attr[1] = mappedAttributesDict[attr[1]]
                     query[key].append(attr)
@@ -58,7 +95,73 @@ def constructQuery(mappedEntitesDict,mappedEntites,mappedAttributes,coverage,id,
             query[key] = list(set(query[key]))
         else:
             query[key] = [list(x) for x in set(tuple(x) for x in query[key])]
+    
     return query
+
+def getForgeinKey(testSchema):
+    models_obj = {}
+    for model in testSchema.values():
+        models_obj.update({
+            model["TableName"]:model["ForgeinKey"]
+        })
+    return models_obj
+
+def checkValidAttrWhere(attr_one,attr_two,testSchema):
+    fks = getForgeinKey(testSchema)
+
+    mapped_ent_one =  attr_one[0].split(".")[0] if attr_one[0].find(".") != -1 else None
+    mapped_ent_two =  attr_two[0].split(".")[0] if attr_two[0].find(".") != -1 else None
+    type_one = attr_one[1]
+    type_two = attr_two[1]
+    if type_one != type_two:
+        return False
+    if mapped_ent_one is not None and mapped_ent_two is not None:
+        ent_one_fks = fks[mapped_ent_one]
+        is_attr_one_valid_fk = sum([1 for fk in ent_one_fks if (fk["attributeName"] == attr_one[0].split(".")[-1]  and fk["ForignKeyTable"]==mapped_ent_two and fk["ForignKeyTableAttributeName"] == attr_two[0].split(".")[-1])]) > 0
+        is_attr_two_valid_fk = sum([1 for fk in ent_one_fks if (fk["attributeName"] == attr_two[0].split(".")[-1]  and fk["ForignKeyTable"]==mapped_ent_one and fk["ForignKeyTableAttributeName"] == attr_one[0].split(".")[-1])]) > 0
+        if is_attr_one_valid_fk or is_attr_two_valid_fk:
+            return True
+    return False
+
+def convert_or_to_in(whereAttr):
+    merge = -1
+    i = 0
+    put_and_idx = []
+    while i < len(whereAttr): 
+        attr = whereAttr[i]
+        curr_attr_name = attr[0][0] if len(attr[0]) else attr[0]
+        if len(attr) >=3 and (attr[3] == "or") and (i+1 < len(whereAttr)):
+            i+=1
+            next_attr = whereAttr[i]
+            next_attr_name = next_attr[0][0] if len(next_attr[0]) else next_attr[0]
+            while curr_attr_name == next_attr_name and i < len(whereAttr):
+                merge = True
+                is_or = len(whereAttr[i])>=3 and whereAttr[i][3] == "or"
+                whereAttr.pop(i)
+                if i < len(whereAttr) and is_or:
+                    next_attr = whereAttr[i]
+                    next_attr_name = next_attr[0][0] if len(next_attr[0]) else next_attr[0]
+                else:
+                    break
+
+            if merge:
+                if len(whereAttr[i-1]) >= 1:whereAttr[i-1][1] = "in"
+                if len(whereAttr[i-1]) >= 2:whereAttr[i-1][2] = "value"
+                if len(whereAttr[i-1]) >= 3:whereAttr[i-1][3] = ""
+                put_and_idx.append(i-1)
+
+        i+=1
+
+    n = len(whereAttr)
+    for idx in put_and_idx:
+        attr = whereAttr[idx]
+        if idx < n-1 and len(attr[3]) == 0:
+            attr[3] = "and"
+
+    return whereAttr
+                
+
+
 
 def addJoinAttrs(joins,whereAttrs):
     sep = 'and'
@@ -76,35 +179,33 @@ def addJoinAttrs(joins,whereAttrs):
     joins.extend(whereAttrs)
     return joins
 
+import json
 def queryStructure(queryDict):
+    ob = {}
+    ob["query"] = queryDict
     query = "SELECT "
-    ## concatenate aggregation functions
     if len(queryDict["aggrAttrs"]) > 0:
         for aggrAttr in queryDict["aggrAttrs"]:
-            query += aggrAttr[1] + ' ( ' + aggrAttr[0] + ' ), '
+            query += aggrAttr[1] + ' ( ' + aggrAttr[0][0] + ' ), '
 
-    ## concatenate select attributes
     if len(queryDict["selectAttrs"]) > 0:
         for selectAttr in queryDict["selectAttrs"]:
-            query += selectAttr + ', '
+            query += selectAttr[0] + ', '
         query = query[:-2]
     else:
         query += '*'
 
-    ## concatenate from attributes
     if len(queryDict["mappedEntitesDict"].values()) > 0:
         query += " FROM "
         for entity in queryDict["mappedEntitesDict"].values():
             query += entity + ', '
         query = query[:-2]
 
-    ## concatenate joins
     if len(list(queryDict["bestJoin"])) > 0 or len(queryDict["whereAttrs"]) > 0:
         query += " WHERE "
 
     whereConditions = addJoinAttrs(list(queryDict["bestJoin"]),queryDict["whereAttrs"])
     
-    ## concatenate where attributes
     if len(whereConditions) > 0:
         whereConditions.sort(key=lambda x: x[3] in ["and","or","in"], reverse=True)
         keepEnd = ""
@@ -112,43 +213,322 @@ def queryStructure(queryDict):
             keepEnd = whereAttr[3]
             if whereAttr[3] == "None":
                 whereAttr[3] = ""
-            whereAttr = ' '.join(whereAttr)
+
+            
+
+            if isinstance(whereAttr[2], str) and whereAttr[2]!="value":
+                if type(whereAttr[0]) is tuple:
+                    attr_name = whereAttr[0][0]
+                else:
+                    attr_name = whereAttr[0]
+                whereAttr = [attr_name,whereAttr[1],whereAttr[2],whereAttr[3]]
+                whereAttr = ' '.join(whereAttr)
+
+            else:
+                if whereAttr[2]!="value":
+                    whereAttr[2] = whereAttr[2][0]
+                whereAttr = [whereAttr[0][0],whereAttr[1],whereAttr[2],whereAttr[3]]
+                whereAttr = ' '.join(whereAttr)
+            
             if query[-1] == " ":
                 query = query[:-1]
             query = query + " " + whereAttr
-            # query = query[:-1]
         if keepEnd == "and":
             query = query[:-3]
         elif keepEnd in ["or","in"]:
             query = query[:-2]
 
-    ## concatenate group by attributes
     if len(queryDict["groupByAttrs"]) > 0:
         query += " GROUP BY "
         for groupbyAttr in queryDict["groupByAttrs"]:
-            query += groupbyAttr + ', '
+            query += groupbyAttr[0] + ', '
         query = query[:-2]
 
-    ## concatenate order by attributes
     if len(queryDict["orderByAttrs"]) > 0:
         query += " ORDER BY "
         orderFunction = ["ASC","DESC"]
         for orderbyAttr in queryDict["orderByAttrs"]:
             index = round(random.random())
             if orderbyAttr[1] != '':
-                query += orderbyAttr[1] + ' ( ' + orderbyAttr[0] + ' ) ' + orderFunction[index] + ', '
+                query += orderbyAttr[1] + ' ( ' + orderbyAttr[0][0] + ' ) ' + orderFunction[index] + ', '
             else:
-                query += orderbyAttr[0] + ' ' + orderFunction[index] + ', '
+                query += orderbyAttr[0][0] + ' ' + orderFunction[index] + ', '
         query = query[:-2]
 
-    ## concatenate having attributes
-    ## [aggr,attr,operation]
+
     if len(queryDict["havingAttrs"]) > 0:
         query += " HAVING "
         for havingAttr in queryDict["havingAttrs"]:
-            query += havingAttr[0] + ' ( ' + havingAttr[1] + ' ) ' + havingAttr[2] + " value " + " AND "
+            query += havingAttr[0] + ' ( ' + havingAttr[1][0] + ' ) ' + havingAttr[2] + " value " + " AND "
         query = query[:-5]
 
     query = query.strip()
     query += ";"
+    ob["constructed"] = query
+
+
     return query
+
+
+def getModelsObj(testSchema):
+    models_obj = {}
+    for model in testSchema.values():
+        models_obj.update({
+            model["TableName"]:model["attributes"]
+        })
+    return models_obj
+
+
+
+
+def create_response_model(selectAttrs,aggrAttrs,entities,modelsObject):
+    #print("///////////////////")
+    #print("select",selectAttrs)
+    #print("aggr",aggrAttrs)
+    #print("entities",entities)
+    #print("modelsObject",modelsObject)
+
+    pythondtypes_restmapping = {
+    "str":"fields.String",
+    "int":"fields.Integer",
+    "float":"fields.Float",
+    "bool":"fields.Boolean",
+    "datetime":"fields.DateTime"
+    }
+    response_model = ""
+    ui_response_model = {}
+    db_selects= []
+
+    get_all_entities = False
+    for attr in selectAttrs:
+        if attr[0] == "*":
+            get_all_entities = True
+
+    if (len(selectAttrs)==1 and selectAttrs[0][0]=="*") or get_all_entities or (len(selectAttrs)==0 and len(aggrAttrs)==0):
+        response_model,ui_response_model =  get_astrisk_models(entities,modelsObject)
+        response_model+=","
+        selectAttrs=[]
+
+    all_entities_astrisk=[]
+    sel_len=0
+    for attr in selectAttrs:   
+        if "*" in attr[0]:
+            all_entities_astrisk.append(attr[0].split('.')[0])
+        else:
+            sel_len+=1
+
+    all_entities_astrisk = list(set(all_entities_astrisk))
+
+    if len(all_entities_astrisk):
+        response_model,ui_response_model =  get_astrisk_models(all_entities_astrisk,modelsObject)
+        response_model+=","
+    for attr in selectAttrs:
+        attr_name = attr[0]
+        attr_type = attr[1]
+        if "*" in attr[0]:
+            continue
+        db_selects.append((attr_name,attr_type,None))
+
+        if attr_type in pythondtypes_restmapping:
+            response_model+= "'"+attr_name+"' : "+pythondtypes_restmapping[attr_type]+","
+            ui_response_model[attr_name] = attr_type
+        else:
+            response_model+=  "'"+attr_name+"' : fields.String,"
+            ui_response_model[attr_name] = "str"
+            
+    for attr in aggrAttrs:
+        attr_aggregation = attr[1]
+        attr_name = attr[0][0]
+        attr_type = attr[0][1] if ("*" not in attr[0][0] and attr[1] != "count") else "int"
+        db_selects.append((attr_name,attr_type,attr_aggregation))
+        attr_name = attr_aggregation+"_"+ (attr_name if "*" not in attr_name else "all")
+        if attr_type in pythondtypes_restmapping:
+            response_model+= "'"+attr_name+"' : "+pythondtypes_restmapping[attr_type]+","
+            ui_response_model[attr_name] = attr_type
+        else:
+            response_model+=  "'"+attr_name+"' : fields.String ,"
+            ui_response_model[attr_name] = "str"
+    response_model = response_model[:-1]
+    return response_model , ui_response_model ,db_selects
+
+
+def get_astrisk_models(entities,modelsObjects):
+    all_models_response=''
+    all_models_ui_response = {}
+    for entity in entities:
+        attrs = modelsObjects[entity].items()
+        attrs = [(entity+'.'+attr[0],attr[1]) for attr in attrs]        
+        entity_model,entity_ui_model,_ = create_response_model(attrs,[],entities,modelsObjects)
+        all_models_response+=entity_model+","
+        all_models_ui_response.update(entity_ui_model)
+    all_models_response = all_models_response[:-1]
+    return all_models_response , all_models_ui_response
+
+
+def get_attr_name_type(attrs,attr_type=None):
+    attr_names = []
+    for attr in attrs:
+        if type(attr[0])!=str:
+            attr_name = attr[0][0] 
+            if attr_type and attr[1] and attr[1] !="":
+                attr_name = attr_name.split('.')[0]+'.'+attr[1]+'_'+attr_name.split('.')[-1]
+        else:
+            attr_name = attr[0]
+            if attr[1] and attr[1] !="":
+                attr_name = attr[1]+"_"+attr_name
+        if attr_name.find('*')!=-1:   
+            attr_name = attr_name.replace('*','all')
+
+        if type(attr[0])!=str and len(attr) > 2 and attr[2] != "value":
+            attr_names.append(attr[2])    
+        attr_names.append(attr_name)
+    return attr_names
+
+def query_renaming(entities,whereAttrs,groupAttrs,orderAttrs,isUpdate=False,is_group_all=False):
+    where_attr = get_attr_name_type(whereAttrs)
+    if not isUpdate:
+        group_attr = get_attr_name_type(groupAttrs)
+    else:
+        group_attr = groupAttrs
+    if is_group_all:
+        group_attr = ["all"]
+
+    order_attr = get_attr_name_type(orderAttrs,"order")
+    where_attr = set([attr[attr.find(".")+1:] for attr in where_attr if attr != "*"])
+    order_attr = set([attr[attr.find(".")+1:] for attr in order_attr if attr != "*"])
+    group_attr = set([attr[attr.find(".")+1:] for attr in group_attr if attr != "*"])
+    endpoint_name = "get"+"_"+"_".join(entities)
+    ui_name = "get "+" ".join(entities)
+
+    
+    if len(where_attr) != 0:
+        endpoint_name += "_filteredby"+"_"+"_".join(where_attr)
+        ui_name += " filtered by "+" , ".join(where_attr)
+    if len(group_attr) != 0:
+        endpoint_name +="_groupedby"+ "_"+"_".join(group_attr)
+        ui_name += " grouped by "+" , ".join(group_attr)
+    if len(order_attr) != 0:
+        endpoint_name +="_orderedby"+ "_"+"_".join(order_attr)
+        ui_name += " ordered by "+" , ".join(order_attr)
+    
+    return endpoint_name,ui_name
+
+def get_aggr_attrs(aggr_attrs):
+    count_attrs = []
+    final_aggr_attr = []
+    remove_counts = False
+    for attr in aggr_attrs:
+        attr_aggregation = attr[1]
+        if attr_aggregation != "count":
+            final_aggr_attr.append(attr)
+        else:
+            count_attrs.append(attr)
+            if "*" in attr[0][0]:
+                final_aggr_attr.append(attr)
+                remove_counts = True
+    
+    if not remove_counts:
+        final_aggr_attr.extend(count_attrs)
+    
+    return final_aggr_attr
+
+def create_query_ui_endpoint(q,modelsObjects):
+    query = q[0]
+    endpoint_name,ui_name = query_renaming(query["entities"],query["whereAttrs"],query["updatedGroupByAttrs"],query["orderByAttrs"],True)
+    endpoint_name = endpoint_name.lower()+"_"+str(query["idx"]) if query.get("idx") else endpoint_name.lower()
+    ui_name = str(query["idx"]) + "-" + ui_name if query.get("idx") else ui_name
+
+    endpoint_url = '/'.join(query["entities"])+'/'+endpoint_name
+    endpoint_method = "get"
+    queryParams = []
+    for attr in query["whereAttrs"]:
+        if attr[2] != "value":
+            continue
+        attr_name = attr[0][0]
+        attr_type = attr[0][1]
+        attr_operator = attr[1]
+    
+        queryParams.append((attr_name,attr_type,attr_operator,None))
+
+    for attr in query["havingAttrs"]:
+     
+        attr_name = attr[1][0] if "*" not in attr[1][0] else "having_value"
+        attr_type = attr[1][1] if "*" not in attr[1][0] else "int"
+        attr_operator = attr[2]
+        attr_aggregation = attr[0]
+        
+        queryParams.append((attr_name,attr_type,attr_operator,attr_aggregation))
+
+    for attr in query["orderByAttrs"]:
+        if attr[0][0] == "*" and attr[1] is None:
+            continue
+
+        contain_aggr = len(query["aggrAttrs"]) > 0 or len(query["groupByAttrs"]) > 0
+        attr_name = attr[0][0]
+        attr_type = attr[0][1]
+        attr_aggregation = attr[1]
+        param_name = ""
+        aggr = "_"+attr_aggregation +"_" if attr_aggregation and contain_aggr else ""
+
+        if "*" in attr_name:
+            aggr = "_"+attr_aggregation +"_"
+            param_name = "is_order_of"+aggr+"of_rows_desc"
+        else:
+            attr_name = attr_name.split('.')[1]
+            aggr = "_" if not aggr else aggr
+            param_name = "is_order_of"+aggr+attr_name+"_desc"
+        queryParams.append((param_name,"bool",None,attr_aggregation))
+
+    #print(queryParams)
+
+    aggrAttrs = get_aggr_attrs(query["aggrAttrs"])
+    response_model , ui_response_model , db_selects = create_response_model(query["selectAttrs"],aggrAttrs,query["entities"],modelsObjects)
+    response_model = "{ "+response_model+" }"
+    endpoint = {
+        "method": endpoint_method,
+        "url": endpoint_url.lower(),
+        "queryParams": queryParams,
+        "bodyParams": [],
+        "response": ui_response_model,
+        "ui_name": ui_name.lower(),
+        "cluster_name": ("_".join(query["entities"])).lower(),
+        "endpoint_name":endpoint_name,
+        "is_single_entity":len(query["entities"])==1,
+        "query": q[1],
+        "queryObj":query,
+        "is_updated":False,
+    }
+    return response_model , endpoint , db_selects
+    
+def prepareQuery(query,modelsObjects=None,testSchema=None):
+    if modelsObjects is None:
+        modelsObjects = getModelsObj(testSchema)
+    updateQueryGroupBy(query[0],testSchema)
+    resource_model , endpoint_object , _ = create_query_ui_endpoint(query,modelsObjects)  # return to frontend
+    return  endpoint_object ,resource_model
+
+def prepareClusters(clusters,testSchema):
+    modelsObjects = getModelsObj(testSchema)
+    finalClusters = []
+    for cluster in clusters:
+        errors = []
+        finalCluster = []
+        idx = 0
+        for query in cluster:
+            cartesian = len(query[0]["entities"]) > 1 and len(query[0]["bestJoin"]) == 0
+            hasGroupBy = len(query[0]["groupByAttrs"]) != 0
+            if cartesian and hasGroupBy:
+                continue
+            query[0]["idx"] = idx
+            endpoint_object ,resource_model = prepareQuery(query,modelsObjects,testSchema)  # return to frontend
+       
+            if endpoint_object['endpoint_name'] not in errors:
+                errors.append(endpoint_object['endpoint_name'])
+            else:
+                print("ENDPOINT ALREADY EXISTS\n",query[0],endpoint_object['endpoint_name'])   
+                continue
+            finalCluster.append([endpoint_object,resource_model])
+            idx+=1
+        finalClusters.append(finalCluster)
+    return finalClusters
+    

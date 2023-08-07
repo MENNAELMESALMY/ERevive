@@ -29,8 +29,8 @@ Download our detailed project document to learn more:
 
 1. cd to the src folder
 2. run :
-> ./setup.sh
-> ./run.sh
+  - ./setup.sh
+  - ./run.sh
 
 ### Footnotes
 - The project was developed and tested on Linux Ubuntu OS
